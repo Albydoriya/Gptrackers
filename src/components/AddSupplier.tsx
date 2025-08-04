@@ -107,25 +107,51 @@ const AddSupplier: React.FC<AddSupplierProps> = ({ isOpen, onClose, onSupplierAd
     }
 
     setIsSubmitting(true);
+    setError(null);
 
     try {
-      const newSupplier: Supplier = {
-        id: crypto.randomUUID(),
+      // 1. Construct the supplier object for Supabase insertion
+      const supplierObject = {
         name: formData.name.trim(),
-        contactPerson: formData.contactPerson.trim(),
+        contact_person: formData.contactPerson.trim(),
         email: formData.email.trim(),
         phone: formData.phone.trim(),
         address: formData.address.trim(),
         rating: formData.rating,
-        deliveryTime: formData.deliveryTime,
-        paymentTerms: formData.paymentTerms,
-        isActive: formData.isActive
+        delivery_time: formData.deliveryTime,
+        payment_terms: formData.paymentTerms,
+        is_active: formData.isActive,
+        website: formData.website.trim() || null,
+        notes: formData.notes.trim() || null
       };
 
-      // Notify parent component
+      // 2. Insert the supplier into Supabase
+      const { data: insertedSupplier, error: insertError } = await supabase
+        .from('suppliers')
+        .insert([supplierObject])
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      // 3. Create the Supplier object for the callback using the returned data
+      const newSupplier: Supplier = {
+        id: insertedSupplier.id,
+        name: insertedSupplier.name,
+        contactPerson: insertedSupplier.contact_person,
+        email: insertedSupplier.email,
+        phone: insertedSupplier.phone,
+        address: insertedSupplier.address,
+        rating: insertedSupplier.rating,
+        deliveryTime: insertedSupplier.delivery_time,
+        paymentTerms: insertedSupplier.payment_terms,
+        isActive: insertedSupplier.is_active
+      };
+
+      // 4. Notify parent component
       onSupplierAdded(newSupplier);
       
-      // Reset form
+      // 5. Reset form
       setFormData({
         name: '',
         contactPerson: '',
@@ -140,10 +166,11 @@ const AddSupplier: React.FC<AddSupplierProps> = ({ isOpen, onClose, onSupplierAd
         notes: ''
       });
       
-      // Close modal
+      // 6. Close modal
       onClose();
     } catch (error) {
       console.error('Error adding supplier:', error);
+      setError(error.message || 'Failed to add supplier. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
