@@ -16,7 +16,6 @@ import {
   AlertCircle,
   Edit3
 } from 'lucide-react';
-import { getGlobalSuppliers } from '../data/mockData';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Part, Supplier, OrderPart } from '../types';
@@ -63,8 +62,8 @@ const CreateOrder: React.FC<CreateOrderProps> = ({ isOpen, onClose, onOrderCreat
     requestedBy: 'Current User'
   });
   const [availableParts, setAvailableParts] = useState<Part[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
 
-  const suppliers = getGlobalSuppliers();
   const categories = ['all', ...new Set(availableParts.map(p => p.category))];
   
   // Fetch parts from Supabase
@@ -102,6 +101,41 @@ const CreateOrder: React.FC<CreateOrderProps> = ({ isOpen, onClose, onOrderCreat
     };
 
     fetchParts();
+  }, []);
+
+  // Fetch suppliers from Supabase
+  useEffect(() => {
+    const fetchSuppliers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('suppliers')
+          .select('*')
+          .eq('is_active', true);
+
+        if (error) throw error;
+
+        const transformedSuppliers: Supplier[] = (data || []).map(supplier => ({
+          id: supplier.id,
+          name: supplier.name,
+          contactPerson: supplier.contact_person,
+          email: supplier.email,
+          phone: supplier.phone,
+          address: supplier.address,
+          rating: supplier.rating || 5.0,
+          deliveryTime: supplier.delivery_time || 5,
+          paymentTerms: supplier.payment_terms || 'Net 30',
+          isActive: supplier.is_active,
+          website: supplier.website,
+          notes: supplier.notes
+        }));
+
+        setSuppliers(transformedSuppliers);
+      } catch (error) {
+        console.error('Error fetching suppliers:', error);
+      }
+    };
+
+    fetchSuppliers();
   }, []);
 
   const filteredParts = availableParts.filter(part => {
