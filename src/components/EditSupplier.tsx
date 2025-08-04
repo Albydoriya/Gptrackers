@@ -15,6 +15,8 @@ import {
   Settings
 } from 'lucide-react';
 import { Supplier } from '../types';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 interface EditSupplierProps {
   isOpen: boolean;
@@ -54,6 +56,7 @@ const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplier
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const paymentTermsOptions = [
     'Net 15',
@@ -75,13 +78,14 @@ const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplier
         email: supplier.email,
         phone: supplier.phone,
         address: supplier.address,
-        rating: supplier.rating,
-        deliveryTime: supplier.deliveryTime,
+        rating: supplier.rating || 5.0,
+        deliveryTime: supplier.deliveryTime || 5,
         paymentTerms: supplier.paymentTerms,
         isActive: supplier.isActive,
         website: '',
         notes: ''
       });
+      setErrors({});
     }
   }, [supplier]);
 
@@ -124,8 +128,34 @@ const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplier
     }
 
     setIsSubmitting(true);
+    setError(null);
 
     try {
+      // 1. Construct the supplier object for Supabase update
+      const supplierUpdateObject = {
+        name: formData.name.trim(),
+        contact_person: formData.contactPerson.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        address: formData.address.trim(),
+        rating: formData.rating,
+        delivery_time: formData.deliveryTime,
+        payment_terms: formData.paymentTerms,
+        is_active: formData.isActive,
+        website: formData.website.trim() || null,
+        notes: formData.notes.trim() || null,
+        updated_at: new Date().toISOString()
+      };
+
+      // 2. Update the supplier in Supabase
+      const { error: updateError } = await supabase
+        .from('suppliers')
+        .update(supplierUpdateObject)
+        .eq('id', supplier.id);
+
+      if (updateError) throw updateError;
+
+      // 3. Create the updated Supplier object for the callback
       const updatedSupplier: Supplier = {
         ...supplier,
         name: formData.name.trim(),
@@ -139,13 +169,14 @@ const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplier
         isActive: formData.isActive
       };
 
-      // Notify parent component
+      // 4. Notify parent component (triggers re-fetch)
       onSupplierUpdated(updatedSupplier);
       
-      // Close modal
+      // 5. Close modal
       onClose();
     } catch (error) {
       console.error('Error updating supplier:', error);
+      setError(error.message || 'Failed to update supplier. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

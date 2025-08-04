@@ -58,8 +58,8 @@ const Suppliers: React.FC = () => {
         email: supplierData.email,
         phone: supplierData.phone,
         address: supplierData.address,
-        rating: supplierData.rating,
-        deliveryTime: supplierData.delivery_time,
+        rating: supplierData.rating || 5.0,
+        deliveryTime: supplierData.delivery_time || 5,
         paymentTerms: supplierData.payment_terms,
         isActive: supplierData.is_active
       }));
