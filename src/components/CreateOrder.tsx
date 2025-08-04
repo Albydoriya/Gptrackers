@@ -59,7 +59,7 @@ const CreateOrder: React.FC<CreateOrderProps> = ({ isOpen, onClose, onOrderCreat
     expectedDelivery: '',
     notes: '',
     priority: 'medium',
-    requestedBy: 'Current User'
+    requestedBy: user?.name || 'Current User'
   });
   const [availableParts, setAvailableParts] = useState<Part[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -335,7 +335,7 @@ const CreateOrder: React.FC<CreateOrderProps> = ({ isOpen, onClose, onOrderCreat
         expectedDelivery: '',
         notes: '',
         priority: 'medium',
-        requestedBy: 'Current User'
+        requestedBy: user?.name || 'Current User'
       });
 
     } catch (error: any) {
@@ -743,7 +743,8 @@ const CreateOrder: React.FC<CreateOrderProps> = ({ isOpen, onClose, onOrderCreat
                         type="text"
                         value={formData.requestedBy}
                         onChange={(e) => setFormData(prev => ({ ...prev, requestedBy: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+                        readOnly
                       />
                     </div>
                   </div>
