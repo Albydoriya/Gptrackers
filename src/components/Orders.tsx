@@ -116,7 +116,7 @@ const Orders: React.FC = () => {
         expectedDelivery: orderData.expected_delivery,
         actualDelivery: orderData.actual_delivery,
         notes: orderData.notes,
-        createdBy: orderData.created_by || 'Unknown',
+        createdBy: orderData.created_by || 'Unknown', // This will be the UUID from database
         priority: orderData.priority,
         shippingData: orderData.shipping_data,
         attachments: orderData.attachments

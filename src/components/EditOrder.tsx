@@ -73,6 +73,12 @@ const EditOrder: React.FC<EditOrderProps> = ({ isOpen, onClose, onOrderUpdated, 
   // Initialize form data when order changes
   useEffect(() => {
     if (order) {
+      // Get the user's full name from the createdBy field (which should contain the name, not UUID)
+      // If it's a UUID, we'll need to handle it differently
+      const requestedByName = order.createdBy && !order.createdBy.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i) 
+        ? order.createdBy 
+        : user?.name || 'Unknown User';
+
       setFormData({
         orderNumber: order.orderNumber,
         supplier: order.supplier,
@@ -80,12 +86,12 @@ const EditOrder: React.FC<EditOrderProps> = ({ isOpen, onClose, onOrderUpdated, 
         expectedDelivery: order.expectedDelivery,
         notes: order.notes || '',
         priority: order.priority || 'medium',
-        requestedBy: order.createdBy,
+        requestedBy: requestedByName,
         status: order.status
       });
       setSubmitError(null);
     }
-  }, [order]);
+  }, [order, user]);
 
   // Fetch parts from Supabase
   useEffect(() => {
