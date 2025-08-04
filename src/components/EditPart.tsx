@@ -162,7 +162,7 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
     try {
       // 1. Construct the updated part object for Supabase
       const updatedPartObject = {
-        partNumber: formData.partNumber.trim(),
+        part_number: formData.partNumber.trim(),
         name: formData.name.trim(),
         description: formData.description.trim(),
         category: formData.category,
