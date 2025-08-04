@@ -18,6 +18,14 @@ const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isVersionChecked, setIsVersionChecked] = useState(false);
 
+  // Ensure login screen always uses light theme
+  React.useEffect(() => {
+    if (!isAuthenticated) {
+      // Force light theme for login screen
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isAuthenticated]);
+
   // Version check and client-side data management
   React.useEffect(() => {
     const checkAppVersion = async () => {
@@ -86,6 +94,7 @@ const AppContent: React.FC = () => {
     
     checkAppVersion();
   }, []);
+
   // Handle theme changes from ThemeProvider
   const handleThemeChange = async (theme: 'light' | 'dark' | 'auto') => {
     if (user) {
