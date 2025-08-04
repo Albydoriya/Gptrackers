@@ -219,7 +219,6 @@ const PricingUpdateModal: React.FC<PricingUpdateModalProps> = ({
             .from('order_parts')
             .update({
               unit_price: updatedPart.unitPrice,
-              total_price: updatedPart.unitPrice * updatedPart.quantity
             })
             .eq('id', updatedPart.id);
           
