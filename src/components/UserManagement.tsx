@@ -27,10 +27,10 @@ interface UserProfile {
   role: 'admin' | 'manager' | 'buyer' | 'viewer';
   department: string | null;
   phone: string | null;
+  email: string | null;
   last_login: string | null;
   created_at: string;
   updated_at: string;
-  email?: string; // From auth.users
 }
 
 const UserManagement: React.FC = () => {
@@ -59,15 +59,15 @@ const UserManagement: React.FC = () => {
       // Get all user profiles with email from auth.users via a join or separate query
       const { data: profiles, error: profilesError } = await supabase
         .from('user_profiles')
-        .select('*')
+        .select('*, email')
         .order('created_at', { ascending: false });
 
       if (profilesError) throw profilesError;
 
-      // For each profile, try to get the email from the current user or use a placeholder
+      // Use the email from the user_profiles table
       const usersWithEmails = profiles?.map(profile => ({
         ...profile,
-        email: profile.id === user?.id ? user.email : 'user@example.com' // We can't access other users' emails from client
+        email: profile.email || 'N/A' // Use the fetched email, or 'N/A' if null
       })) || [];
 
       setUsers(usersWithEmails);

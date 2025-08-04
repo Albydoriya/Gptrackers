@@ -203,6 +203,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           .insert({
             id: supabaseUser.id,
             full_name: fullName,
+            email: supabaseUser.email,
             role: userRole.name,
             preferences: {},
             last_login: new Date().toISOString()
