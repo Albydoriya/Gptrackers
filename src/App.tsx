@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { APP_VERSION, VERSION_CONFIG, isMajorVersionChange, clearOutdatedClientData } from './config/appConfig';
 import LoginPage from './components/LoginPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navigation from './components/Navigation';
@@ -15,7 +16,76 @@ import UserManagement from './components/UserManagement';
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading, user, updateUserProfile } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [isVersionChecked, setIsVersionChecked] = useState(false);
 
+  // Version check and client-side data management
+  React.useEffect(() => {
+    const checkAppVersion = async () => {
+      try {
+        const lastAppVersion = localStorage.getItem(VERSION_CONFIG.VERSION_STORAGE_KEY);
+        
+        // Check if this is a new version
+        if (lastAppVersion !== APP_VERSION) {
+          console.log(`App version changed from ${lastAppVersion || 'unknown'} to ${APP_VERSION}`);
+          
+          // Determine if this is a major version change
+          const isMajorChange = isMajorVersionChange(lastAppVersion, APP_VERSION);
+          
+          if (isMajorChange) {
+            console.log('Major version change detected, clearing all client data');
+            // For major version changes, clear more aggressively
+            try {
+              // Clear specific keys but preserve Supabase auth data
+              clearOutdatedClientData();
+              
+              // Optionally clear all localStorage except Supabase auth keys
+              const supabaseKeys = Object.keys(localStorage).filter(key => 
+                key.startsWith('sb-') || key.includes('supabase')
+              );
+              const preservedData: Record<string, string> = {};
+              supabaseKeys.forEach(key => {
+                preservedData[key] = localStorage.getItem(key) || '';
+              });
+              
+              localStorage.clear();
+              
+              // Restore Supabase auth data
+              Object.entries(preservedData).forEach(([key, value]) => {
+                localStorage.setItem(key, value);
+              });
+              
+            } catch (error) {
+              console.error('Error during major version cleanup:', error);
+            }
+            
+            // Update version and force reload for major changes
+            localStorage.setItem(VERSION_CONFIG.VERSION_STORAGE_KEY, APP_VERSION);
+            
+            if (VERSION_CONFIG.FORCE_RELOAD_ON_MAJOR_VERSION) {
+              console.log('Forcing page reload due to major version change');
+              window.location.reload();
+              return;
+            }
+          } else {
+            console.log('Minor version change detected, clearing specific client data');
+            // For minor version changes, just clear potentially problematic data
+            clearOutdatedClientData();
+          }
+          
+          // Update the stored version
+          localStorage.setItem(VERSION_CONFIG.VERSION_STORAGE_KEY, APP_VERSION);
+        }
+        
+        setIsVersionChecked(true);
+      } catch (error) {
+        console.error('Error during version check:', error);
+        // If version check fails, still allow the app to continue
+        setIsVersionChecked(true);
+      }
+    };
+    
+    checkAppVersion();
+  }, []);
   // Handle theme changes from ThemeProvider
   const handleThemeChange = async (theme: 'light' | 'dark' | 'auto') => {
     if (user) {
@@ -31,12 +101,15 @@ const AppContent: React.FC = () => {
     }
   };
 
-  if (isLoading) {
+  // Show loading while checking version or authenticating
+  if (isLoading || !isVersionChecked) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-gray-600">
+            {!isVersionChecked ? 'Checking for updates...' : 'Loading...'}
+          </p>
         </div>
       </div>
     );
