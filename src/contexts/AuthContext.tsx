@@ -198,7 +198,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           .eq('id', supabaseUser.id)
           .single(),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Profile fetch timeout')), 30000)
+          setTimeout(() => reject(new Error('Profile fetch timeout')), 60000)
         )
       ]);
 
@@ -236,7 +236,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               last_login: new Date().toISOString()
             }),
           new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Profile creation timeout')), 30000)
+            setTimeout(() => reject(new Error('Profile creation timeout')), 60000)
           )
         ]);
 
