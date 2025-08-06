@@ -7,7 +7,8 @@ import {
   Users,
   UserCheck, 
   TrendingUp, 
-  Truck
+  Truck,
+  Bell
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import UserProfile from './UserProfile';
