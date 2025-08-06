@@ -65,6 +65,18 @@ export type OrderStatus =
   | 'delivered'
   | 'cancelled';
 
+export interface Notification {
+  id: string;
+  type: 'order_status' | 'low_stock' | 'price_change' | 'delivery' | 'approval' | 'system';
+  title: string;
+  message: string;
+  timestamp: string;
+  isRead: boolean;
+  priority: 'low' | 'medium' | 'high';
+  relatedId?: string | null;
+  actionUrl?: string | null;
+}
+
 interface StatusUpdate {
   id: string;
   orderId: string;

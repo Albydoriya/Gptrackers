@@ -26,10 +26,13 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
   const { 
     notifications, 
     unreadCount, 
+    isLoading: notificationsLoading,
+    error: notificationsError,
     markAsRead, 
     markAllAsRead, 
     deleteNotification, 
-    clearAll 
+    clearAll,
+    refetch: refetchNotifications
   } = useNotifications();
 
   const navItems = [
@@ -148,10 +151,13 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
         isOpen={isNotificationOpen}
         onClose={() => setIsNotificationOpen(false)}
         notifications={notifications}
+        isLoading={notificationsLoading}
+        error={notificationsError}
         onMarkAsRead={markAsRead}
         onMarkAllAsRead={markAllAsRead}
         onDeleteNotification={deleteNotification}
         onClearAll={clearAll}
+        onRefetch={refetchNotifications}
       />
     </>
   );

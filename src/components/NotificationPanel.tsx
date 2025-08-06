@@ -14,37 +14,32 @@ import {
   Trash2,
   MoreHorizontal
 } from 'lucide-react';
-
-export interface Notification {
-  id: string;
-  type: 'order_status' | 'low_stock' | 'price_change' | 'delivery' | 'approval' | 'system';
-  title: string;
-  message: string;
-  timestamp: string;
-  isRead: boolean;
-  priority: 'low' | 'medium' | 'high';
-  actionUrl?: string;
-  relatedId?: string;
-}
+import { Notification } from '../types';
 
 interface NotificationPanelProps {
   isOpen: boolean;
   onClose: () => void;
   notifications: Notification[];
+  isLoading?: boolean;
+  error?: string | null;
   onMarkAsRead: (id: string) => void;
   onMarkAllAsRead: () => void;
   onDeleteNotification: (id: string) => void;
   onClearAll: () => void;
+  onRefetch?: () => void;
 }
 
 const NotificationPanel: React.FC<NotificationPanelProps> = ({
   isOpen,
   onClose,
   notifications,
+  isLoading = false,
+  error = null,
   onMarkAsRead,
   onMarkAllAsRead,
   onDeleteNotification,
-  onClearAll
+  onClearAll,
+  onRefetch
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -172,18 +167,30 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
           {/* Action Buttons */}
           {notifications.length > 0 && (
             <div className="flex items-center space-x-2 mt-3">
+              {onRefetch && (
+                <button
+                  onClick={onRefetch}
+                  disabled={isLoading}
+                  className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 transition-colors disabled:opacity-50"
+                >
+                  <RefreshCw className={`h-3 w-3 ${isLoading ? 'animate-spin' : ''}`} />
+                  <span>Refresh</span>
+                </button>
+              )}
               {unreadCount > 0 && (
                 <button
+                  disabled={isLoading}
                   onClick={onMarkAllAsRead}
-                  className="flex items-center space-x-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium disabled:opacity-50"
                 >
                   <Check className="h-3 w-3" />
                   <span>Mark all read</span>
                 </button>
               )}
               <button
+                disabled={isLoading}
                 onClick={onClearAll}
-                className="flex items-center space-x-1 text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors"
+                className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm font-medium disabled:opacity-50"
               >
                 <Trash2 className="h-3 w-3" />
                 <span>Clear all</span>
@@ -194,13 +201,40 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
 
         {/* Notifications List */}
         <div className="flex-1 overflow-y-auto">
-          {notifications.length === 0 ? (
+          {/* Error State */}
+          {error && (
+            <div className="p-6 text-center">
+              <AlertTriangle className="h-8 w-8 text-red-500 dark:text-red-400 mx-auto mb-3" />
+              <h4 className="text-lg font-medium text-red-900 dark:text-red-100 mb-2">Failed to load notifications</h4>
+              <p className="text-red-700 dark:text-red-300 mb-4">{error}</p>
+              {onRefetch && (
+                <button
+                  onClick={onRefetch}
+                  className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 underline"
+                >
+                  Try again
+                </button>
+              )}
+            </div>
+          )}
+          
+          {/* Loading State */}
+          {isLoading && !error && (
+            <div className="p-8 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-4"></div>
+              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Loading notifications</h4>
+              <p className="text-gray-600 dark:text-gray-400">Fetching your latest notifications...</p>
+            </div>
+          )}
+          
+          {/* Empty State */}
+          {!isLoading && !error && notifications.length === 0 ? (
             <div className="p-8 text-center">
               <Bell className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
               <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No notifications</h4>
               <p className="text-gray-600 dark:text-gray-400">You're all caught up! New notifications will appear here.</p>
             </div>
-          ) : (
+          ) : !isLoading && !error && (
             <div className="divide-y divide-gray-100 dark:divide-gray-700">
               {sortedNotifications.map((notification) => (
                 <div
@@ -252,6 +286,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
                           )}
                           <button
                             onClick={() => onDeleteNotification(notification.id)}
+                            disabled={isLoading}
                             className="p-1 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
                             title="Delete notification"
                           >
@@ -260,6 +295,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
                         </div>
                       </div>
                     </div>
+                          disabled={isLoading}
                   </div>
                 </div>
               ))}

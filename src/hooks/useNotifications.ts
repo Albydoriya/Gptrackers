@@ -1,131 +1,224 @@
 import { useState, useEffect } from 'react';
-import { Notification } from '../components/NotificationPanel';
-
-// Mock notification generator for demonstration
-const generateMockNotifications = (): Notification[] => {
-  const notifications: Notification[] = [
-    {
-      id: '1',
-      type: 'order_status',
-      title: 'Order Status Updated',
-      message: 'Order ORD-2024-001 has been marked as "In Transit" by the supplier.',
-      timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
-      isRead: false,
-      priority: 'medium',
-      relatedId: 'ORD-2024-001'
-    },
-    {
-      id: '2',
-      type: 'low_stock',
-      title: 'Low Stock Alert',
-      message: 'High-Performance Processor (CPU-001) is running low. Current stock: 15 units (Min: 20)',
-      timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(), // 15 minutes ago
-      isRead: false,
-      priority: 'high',
-      relatedId: 'CPU-001'
-    },
-    {
-      id: '3',
-      type: 'delivery',
-      title: 'Delivery Completed',
-      message: 'Order ORD-2024-002 has been successfully delivered and received.',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-      isRead: false,
-      priority: 'medium',
-      relatedId: 'ORD-2024-002'
-    },
-    {
-      id: '4',
-      type: 'price_change',
-      title: 'Price Update Available',
-      message: 'New pricing received from TechParts Inc. for Memory Module 32GB - 5% decrease.',
-      timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), // 4 hours ago
-      isRead: true,
-      priority: 'low',
-      relatedId: 'MEM-512'
-    },
-    {
-      id: '5',
-      type: 'approval',
-      title: 'Order Requires Approval',
-      message: 'Order ORD-2024-003 ($2,575.00) is pending management approval.',
-      timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(), // 6 hours ago
-      isRead: true,
-      priority: 'medium',
-      relatedId: 'ORD-2024-003'
-    },
-    {
-      id: '6',
-      type: 'system',
-      title: 'System Maintenance',
-      message: 'Scheduled maintenance will occur tonight from 2:00 AM - 4:00 AM AEST.',
-      timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-      isRead: true,
-      priority: 'low'
-    }
-  ];
-
-  return notifications;
-};
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { Notification } from '../types';
 
 export const useNotifications = () => {
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Simulate loading notifications
-    const timer = setTimeout(() => {
-      setNotifications(generateMockNotifications());
+  // Fetch notifications from Supabase
+  const fetchNotifications = async () => {
+    if (!user?.id) {
       setIsLoading(false);
-    }, 500);
+      return;
+    }
 
-    return () => clearTimeout(timer);
-  }, []);
+    setIsLoading(true);
+    setError(null);
 
-  // Simulate real-time notifications
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (fetchError) throw fetchError;
+
+      // Transform Supabase data to match Notification interface
+      const transformedNotifications: Notification[] = (data || []).map(notification => ({
+        id: notification.id,
+        type: notification.type,
+        title: notification.title,
+        message: notification.message,
+        timestamp: notification.created_at,
+        isRead: notification.is_read,
+        priority: notification.priority,
+        relatedId: notification.related_id,
+        actionUrl: notification.action_url
+      }));
+
+      setNotifications(transformedNotifications);
+    } catch (err: any) {
+      console.error('Error fetching notifications:', err);
+      setError(err.message || 'Failed to fetch notifications');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Set up real-time subscription and fetch initial data
   useEffect(() => {
-    const interval = setInterval(() => {
-      // Randomly add new notifications (10% chance every 30 seconds)
-      if (Math.random() < 0.1) {
-        const newNotification: Notification = {
-          id: `notification-${Date.now()}`,
-          type: ['order_status', 'low_stock', 'delivery', 'price_change'][Math.floor(Math.random() * 4)] as Notification['type'],
-          title: 'New Update',
-          message: 'A new update is available for your attention.',
-          timestamp: new Date().toISOString(),
-          isRead: false,
-          priority: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)] as Notification['priority']
-        };
-        
-        setNotifications(prev => [newNotification, ...prev]);
-      }
-    }, 30000); // Check every 30 seconds
+    if (!user?.id) {
+      setNotifications([]);
+      setIsLoading(false);
+      return;
+    }
 
-    return () => clearInterval(interval);
-  }, []);
+    // Fetch initial notifications
+    fetchNotifications();
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === id 
-          ? { ...notification, isRead: true }
-          : notification
+    // Set up real-time subscription
+    const channel = supabase
+      .channel(`notifications_for_user_${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Real-time notification update:', payload);
+          
+          switch (payload.eventType) {
+            case 'INSERT':
+              // Add new notification to the beginning of the list
+              const newNotification: Notification = {
+                id: payload.new.id,
+                type: payload.new.type,
+                title: payload.new.title,
+                message: payload.new.message,
+                timestamp: payload.new.created_at,
+                isRead: payload.new.is_read,
+                priority: payload.new.priority,
+                relatedId: payload.new.related_id,
+                actionUrl: payload.new.action_url
+              };
+              setNotifications(prev => [newNotification, ...prev]);
+              break;
+              
+            case 'UPDATE':
+              // Update existing notification
+              setNotifications(prev => prev.map(notification =>
+                notification.id === payload.new.id
+                  ? {
+                      ...notification,
+                      type: payload.new.type,
+                      title: payload.new.title,
+                      message: payload.new.message,
+                      timestamp: payload.new.created_at,
+                      isRead: payload.new.is_read,
+                      priority: payload.new.priority,
+                      relatedId: payload.new.related_id,
+                      actionUrl: payload.new.action_url
+                    }
+                  : notification
+              ));
+              break;
+              
+            case 'DELETE':
+              // Remove deleted notification
+              setNotifications(prev => prev.filter(notification => 
+                notification.id !== payload.old.id
+              ));
+              break;
+          }
+        }
       )
+      .subscribe();
+
+    // Cleanup subscription on unmount or user change
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
+  const markAsRead = async (id: string) => {
+    if (!user?.id) return;
+
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', id)
+        .eq('user_id', user.id); // Ensure user can only update their own notifications
+
+      if (error) throw error;
+
+      // Update local state immediately for better UX
+      setNotifications(prev => 
+        prev.map(notification => 
+          notification.id === id 
+            ? { ...notification, isRead: true }
+            : notification
+        )
+      );
+    } catch (err: any) {
+      console.error('Error marking notification as read:', err);
+      setError(err.message || 'Failed to mark notification as read');
+    }
+  };
+
+  const markAllAsRead = async () => {
+    if (!user?.id) return;
+
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('user_id', user.id)
+        .eq('is_read', false); // Only update unread notifications
+
+      if (error) throw error;
+
+      // Update local state immediately for better UX
+      setNotifications(prev => 
+        prev.map(notification => ({ ...notification, isRead: true }))
+      );
+    } catch (err: any) {
+      console.error('Error marking all notifications as read:', err);
+      setError(err.message || 'Failed to mark all notifications as read');
+    }
+  };
+
+  const deleteNotification = async (id: string) => {
+    if (!user?.id) return;
+
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id); // Ensure user can only delete their own notifications
+
+      if (error) throw error;
+
+      // Update local state immediately for better UX
+      setNotifications(prev => prev.filter(notification => notification.id !== id));
+    } catch (err: any) {
+      console.error('Error deleting notification:', err);
+      setError(err.message || 'Failed to delete notification');
+    }
+  };
+
+  const clearAll = async () => {
+    if (!user?.id) return;
+
+    const confirmed = window.confirm(
+      'Are you sure you want to delete all notifications? This action cannot be undone.'
     );
-  };
+    
+    if (!confirmed) return;
 
-  const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notification => ({ ...notification, isRead: true }))
-    );
-  };
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('user_id', user.id);
 
-  const deleteNotification = (id: string) => {
-    setNotifications(prev => prev.filter(notification => notification.id !== id));
-  };
+      if (error) throw error;
 
-  const clearAll = () => {
-    setNotifications([]);
+      // Update local state immediately for better UX
+      setNotifications([]);
+    } catch (err: any) {
+      console.error('Error clearing all notifications:', err);
+      setError(err.message || 'Failed to clear all notifications');
+    }
   };
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -134,9 +227,11 @@ export const useNotifications = () => {
     notifications,
     unreadCount,
     isLoading,
+    error,
     markAsRead,
     markAllAsRead,
     deleteNotification,
-    clearAll
+    clearAll,
+    refetch: fetchNotifications
   };
 };
