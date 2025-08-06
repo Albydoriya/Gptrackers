@@ -138,30 +138,49 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     // Get initial session
     const getInitialSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      // If there's a refresh token error, clear the invalid session
-      if (error && (error.message.includes('Refresh Token Not Found') || error.message.includes('refresh_token_not_found'))) {
-        console.log('Invalid refresh token found, clearing session...');
-        await supabase.auth.signOut();
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        // If there's a refresh token error, clear the invalid session
+        if (error && (error.message.includes('Refresh Token Not Found') || error.message.includes('refresh_token_not_found'))) {
+          console.log('Invalid refresh token found, clearing session...');
+          await supabase.auth.signOut();
+          setUser(null);
+          return;
+        }
+        
+        if (session?.user && !error) {
+          try {
+            await createUserFromSession(session.user);
+          } catch (userCreationError) {
+            console.error('Error creating user from session:', userCreationError);
+            // If user creation fails, sign out to prevent stuck state
+            await supabase.auth.signOut();
+            setUser(null);
+          }
+        } else {
+          setUser(null);
+        }
+      } catch (sessionError) {
+        console.error('Error getting initial session:', sessionError);
         setUser(null);
+      } finally {
         setIsLoading(false);
-        return;
       }
-      
-      if (session?.user && !error) {
-        await createUserFromSession(session.user);
-      }
-      setIsLoading(false);
     };
 
     getInitialSession();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        await createUserFromSession(session.user);
-      } else if (event === 'SIGNED_OUT') {
+      try {
+        if (event === 'SIGNED_IN' && session?.user) {
+          await createUserFromSession(session.user);
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+        }
+      } catch (authChangeError) {
+        console.error('Error handling auth state change:', authChangeError);
         setUser(null);
       }
     });
@@ -172,11 +191,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const createUserFromSession = async (supabaseUser: SupabaseUser) => {
     try {
       // Try to get existing user profile
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile, error: profileError } = await Promise.race([
+        supabase
         .from('user_profiles')
         .select('*')
         .eq('id', supabaseUser.id)
-        .single();
+        .single(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Profile fetch timeout')), 10000)
+        )
+      ]);
 
       let userRole = getUserRole(supabaseUser.email || '');
       let fullName = supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User';
@@ -192,13 +216,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
         
         // Update last login for existing profile
-        await supabase
+        supabase
           .from('user_profiles')
           .update({ last_login: new Date().toISOString() })
-          .eq('id', supabaseUser.id);
+          .eq('id', supabaseUser.id)
+          .then(() => console.log('Last login updated'))
+          .catch(err => console.warn('Failed to update last login:', err));
       } else if (profileError?.code === 'PGRST116') {
         // Profile doesn't exist (PGRST116 = no rows found), create it
-        const { error: insertError } = await supabase
+        const { error: insertError } = await Promise.race([
+          supabase
           .from('user_profiles')
           .insert({
             id: supabaseUser.id,
@@ -207,7 +234,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             role: userRole.name,
             preferences: {},
             last_login: new Date().toISOString()
-          });
+          }),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Profile creation timeout')), 10000)
+          )
+        ]);
 
         if (insertError) {
           console.error('Error creating user profile:', insertError);
@@ -237,6 +268,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(userData);
     } catch (error) {
       console.error('Error creating user from session:', error);
+      // Don't throw the error, just log it and continue
+      // This prevents the app from getting stuck in loading state
     }
   };
 

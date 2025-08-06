@@ -119,6 +119,9 @@ const AppContent: React.FC = () => {
           <p className="text-gray-600">
             {!isVersionChecked ? 'Checking for updates...' : 'Loading...'}
           </p>
+          <p className="text-xs text-gray-500 mt-2">
+            If this takes too long, please refresh the page
+          </p>
         </div>
       </div>
     );

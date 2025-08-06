@@ -59,8 +59,23 @@ export const useNotifications = () => {
       return;
     }
 
-    // Fetch initial notifications
-    fetchNotifications();
+    // Fetch initial notifications with timeout
+    const fetchWithTimeout = async () => {
+      try {
+        await Promise.race([
+          fetchNotifications(),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Notifications fetch timeout')), 15000)
+          )
+        ]);
+      } catch (err) {
+        console.error('Error fetching notifications:', err);
+        setError('Failed to load notifications');
+        setIsLoading(false);
+      }
+    };
+    
+    fetchWithTimeout();
 
     // Set up real-time subscription with error handling
     let channel: any = null;
