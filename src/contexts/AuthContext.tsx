@@ -193,12 +193,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Try to get existing user profile
       const { data: profile, error: profileError } = await Promise.race([
         supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', supabaseUser.id)
-        .single(),
+          .from('user_profiles')
+          .select('*')
+          .eq('id', supabaseUser.id)
+          .single(),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Profile fetch timeout')), 10000)
+          setTimeout(() => reject(new Error('Profile fetch timeout')), 30000)
         )
       ]);
 
@@ -226,17 +226,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // Profile doesn't exist (PGRST116 = no rows found), create it
         const { error: insertError } = await Promise.race([
           supabase
-          .from('user_profiles')
-          .insert({
-            id: supabaseUser.id,
-            full_name: fullName,
-            email: supabaseUser.email,
-            role: userRole.name,
-            preferences: {},
-            last_login: new Date().toISOString()
-          }),
+            .from('user_profiles')
+            .insert({
+              id: supabaseUser.id,
+              full_name: fullName,
+              email: supabaseUser.email,
+              role: userRole.name,
+              preferences: {},
+              last_login: new Date().toISOString()
+            }),
           new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Profile creation timeout')), 10000)
+            setTimeout(() => reject(new Error('Profile creation timeout')), 30000)
           )
         ]);
 
@@ -268,8 +268,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(userData);
     } catch (error) {
       console.error('Error creating user from session:', error);
-      // Don't throw the error, just log it and continue
-      // This prevents the app from getting stuck in loading state
+      // Set user to null on error to ensure app doesn't get stuck
+      setUser(null);
     }
   };
 
