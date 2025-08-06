@@ -231,7 +231,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         permissions: userRole.permissions,
         department: profile?.department || undefined,
         lastLogin: new Date().toISOString(),
-        preferences: profile?.preferences || {}
+        preferences: profile?.preferences || { theme: 'light' }
       };
 
       setUser(userData);

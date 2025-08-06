@@ -97,7 +97,7 @@ const AppContent: React.FC = () => {
 
   // Handle theme changes from ThemeProvider
   const handleThemeChange = async (theme: 'light' | 'dark' | 'auto') => {
-    if (user) {
+    if (user && user.preferences) {
       try {
         const updatedPreferences = {
           ...user.preferences,

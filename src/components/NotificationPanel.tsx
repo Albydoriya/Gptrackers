@@ -12,9 +12,10 @@ import {
   CheckCircle,
   Settings,
   Trash2,
-  MoreHorizontal
+  MoreHorizontal,
+  RefreshCw
 } from 'lucide-react';
-import { Notification } from '../types';
+import type { Notification } from '../types';
 
 interface NotificationPanelProps {
   isOpen: boolean;
