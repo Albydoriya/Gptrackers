@@ -57,7 +57,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-8">
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-6">
                 {/* Logo Section */}
                 <div className="flex items-center space-x-3">
                   <img
