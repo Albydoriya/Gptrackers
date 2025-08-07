@@ -190,7 +190,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const createUserFromSession = async (supabaseUser: SupabaseUser) => {
     try {
+      console.log('Starting createUserFromSession for user:', supabaseUser.id);
+      
       // Try to get existing user profile
+      console.log('Attempting to fetch user profile from database...');
       const { data: profile, error: profileError } = await Promise.race([
         supabase
           .from('user_profiles')
@@ -198,15 +201,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           .eq('id', supabaseUser.id)
           .single(),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Profile fetch timeout')), 60000)
+          setTimeout(() => reject(new Error('Profile fetch timeout after 60 seconds')), 60000)
         )
-      ]);
+      ]) as [any, never];
+      
+      console.log('Profile fetch completed. Error:', profileError, 'Data exists:', !!profile);
 
       let userRole = getUserRole(supabaseUser.email || '');
       let fullName = supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User';
 
       // If profile exists, use the data from the profile
       if (profile && !profileError) {
+        console.log('Using existing profile data');
         const roleFromProfile = mockRoles.find(role => role.name === profile.role);
         if (roleFromProfile) {
           userRole = roleFromProfile;
@@ -216,14 +222,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
         
         // Update last login for existing profile
+        console.log('Updating last login timestamp (non-blocking)');
         supabase
           .from('user_profiles')
           .update({ last_login: new Date().toISOString() })
           .eq('id', supabaseUser.id)
-          .then(() => console.log('Last login updated'))
-          .catch(err => console.warn('Failed to update last login:', err));
+          .then(() => console.log('Last login updated successfully'))
+          .catch(err => console.warn('Failed to update last login (non-critical):', err));
       } else if (profileError?.code === 'PGRST116') {
         // Profile doesn't exist (PGRST116 = no rows found), create it
+        console.log('Profile not found, creating new profile...');
         const { error: insertError } = await Promise.race([
           supabase
             .from('user_profiles')
@@ -236,9 +244,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               last_login: new Date().toISOString()
             }),
           new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Profile creation timeout')), 60000)
+            setTimeout(() => reject(new Error('Profile creation timeout after 60 seconds')), 60000)
           )
-        ]);
+        ]) as [any, never];
+        
+        console.log('Profile creation completed. Error:', insertError);
 
         if (insertError) {
           console.error('Error creating user profile:', insertError);
@@ -249,10 +259,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           }
         }
       } else if (profileError) {
+        console.warn('Profile fetch error (non-critical):', profileError);
         // Some other error occurred, log it but continue
-        console.error('Error fetching user profile:', profileError);
       }
 
+      console.log('Creating user data object...');
       const userData: User = {
         id: supabaseUser.id,
         email: supabaseUser.email || '',
@@ -265,11 +276,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         preferences: profile?.preferences || { theme: 'light' }
       };
 
+      console.log('Setting user data in state');
       setUser(userData);
+      console.log('User session created successfully');
     } catch (error) {
       console.error('Error creating user from session:', error);
-      // Set user to null on error to ensure app doesn't get stuck
+      console.log('Setting user to null due to error');
       setUser(null);
+      // Clear any potentially corrupted auth data
+      try {
+        console.log('Clearing potentially corrupted auth session');
+        await supabase.auth.signOut();
+      } catch (signOutError) {
+        console.warn('Error during cleanup signOut:', signOutError);
+      }
     }
   };
 

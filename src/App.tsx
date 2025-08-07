@@ -43,25 +43,30 @@ const AppContent: React.FC = () => {
             console.log('Major version change detected, clearing all client data');
             // For major version changes, clear more aggressively
             try {
-              // Clear specific keys but preserve Supabase auth data
-              clearOutdatedClientData();
+              console.log('Starting aggressive localStorage cleanup for major version change');
               
-              // Optionally clear all localStorage except Supabase auth keys
+              // Get all Supabase auth keys before clearing
               const supabaseKeys = Object.keys(localStorage).filter(key => 
                 key.startsWith('sb-') || key.includes('supabase')
               );
+              console.log('Found Supabase auth keys:', supabaseKeys);
+              
               const preservedData: Record<string, string> = {};
               supabaseKeys.forEach(key => {
                 preservedData[key] = localStorage.getItem(key) || '';
               });
               
+              // Clear ALL localStorage data
+              console.log('Clearing all localStorage data');
               localStorage.clear();
               
               // Restore Supabase auth data
+              console.log('Restoring Supabase auth data');
               Object.entries(preservedData).forEach(([key, value]) => {
                 localStorage.setItem(key, value);
               });
               
+              console.log('localStorage cleanup completed successfully');
             } catch (error) {
               console.error('Error during major version cleanup:', error);
             }

@@ -279,6 +279,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
                           {!notification.isRead && (
                             <button
                               onClick={() => onMarkAsRead(notification.id)}
+                              disabled={isLoading}
                               className="p-1 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors"
                               title="Mark as read"
                             >
@@ -296,7 +297,6 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
                         </div>
                       </div>
                     </div>
-                          disabled={isLoading}
                   </div>
                 </div>
               ))}

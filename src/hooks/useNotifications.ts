@@ -23,9 +23,9 @@ export const useNotifications = () => {
       const { data, error: fetchError } = await supabase
         .from('notifications')
         .select('*')
-        .eq('user_id', user.id)
+          setTimeout(() => reject(new Error('Notifications fetch timeout after 30 seconds')), 30000)
         .order('created_at', { ascending: false })
-        .limit(50); // Limit to prevent large data loads
+      ]) as [any, never];
 
       if (fetchError) throw fetchError;
 
