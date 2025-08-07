@@ -194,16 +194,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       // Try to get existing user profile
       console.log('Attempting to fetch user profile from database...');
-      const { data: profile, error: profileError } = await Promise.race([
-        supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('id', supabaseUser.id)
-          .single(),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Profile fetch timeout after 60 seconds')), 60000)
-        )
-      ]) as [any, never];
+      const { data: profile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', supabaseUser.id)
+        .single();
       
       console.log('Profile fetch completed. Error:', profileError, 'Data exists:', !!profile);
 
@@ -232,21 +227,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } else if (profileError?.code === 'PGRST116') {
         // Profile doesn't exist (PGRST116 = no rows found), create it
         console.log('Profile not found, creating new profile...');
-        const { error: insertError } = await Promise.race([
-          supabase
-            .from('user_profiles')
-            .insert({
-              id: supabaseUser.id,
-              full_name: fullName,
-              email: supabaseUser.email,
-              role: userRole.name,
-              preferences: {},
-              last_login: new Date().toISOString()
-            }),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Profile creation timeout after 60 seconds')), 60000)
-          )
-        ]) as [any, never];
+        const { error: insertError } = await supabase
+          .from('user_profiles')
+          .insert({
+            id: supabaseUser.id,
+            full_name: fullName,
+            email: supabaseUser.email,
+            role: userRole.name,
+            preferences: {},
+            last_login: new Date().toISOString()
+          });
         
         console.log('Profile creation completed. Error:', insertError);
 
