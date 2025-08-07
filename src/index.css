@@ -67,4 +67,12 @@
   .dark .shadow-xl {
     @apply shadow-gray-900/50;
   }
+   
+   .dark .bg-red-50 {
+     @apply bg-gray-800;
+   }
+   
+   .dark .border-red-200 {
+     @apply border-red-700;
+   }
 }
