@@ -20,11 +20,15 @@ export const useNotifications = () => {
     setError(null);
 
     try {
-      const { data, error: fetchError } = await supabase
-        .from('notifications')
-        .select('*')
+      const { data, error: fetchError } = await Promise.race([
+        supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false }),
+        new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Notifications fetch timeout after 30 seconds')), 30000)
-        .order('created_at', { ascending: false })
+        )
       ]) as [any, never];
 
       if (fetchError) throw fetchError;
