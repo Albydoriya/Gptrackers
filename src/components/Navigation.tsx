@@ -56,14 +56,14 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-8">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 flex-none">
               <div className="flex items-center space-x-3">
                 {/* Logo Section */}
                 <div className="flex items-center space-x-3">
                   <img
                     src="https://libaopwjoduzlkvhtukb.supabase.co/storage/v1/object/public/company-assets//GoParts.png"
                     alt="GoParts Logo"
-                    className="h-50 w-auto object-contain rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
+                    className="h-8 w-auto object-contain rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
                   />
                   
                   {/* System Title */}
@@ -80,17 +80,17 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
               <div className="hidden lg:block h-8 w-px bg-gray-300 dark:bg-gray-600"></div>
             </div>
             
-            <div className="hidden md:flex space-x-1">
+            <div className="hidden md:flex space-x-3">
               {visibleNavItems.map((item) => {
                 const Icon = item.icon;
                 return (
                   <button
                     key={item.id}
                     onClick={() => onTabChange(item.id)}
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    className={`flex items-center space-x-3 w-full px-4 py-3 rounded-lg text-base font-medium transition-colors ${
                       activeTab === item.id
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                   >
                     <Icon className="h-4 w-4" />
