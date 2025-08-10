@@ -10,7 +10,8 @@ import {
   FileText,
   Save,
   User,
-  AlertCircle
+  AlertCircle,
+  Handshake
 } from 'lucide-react';
 import { Order, OrderStatus } from '../types';
 import { getStatusColor, getStatusLabel } from '../data/mockData';
@@ -55,7 +56,7 @@ const StatusUpdateModal: React.FC<StatusUpdateModalProps> = ({
     { 
       value: 'supplier_quoting' as OrderStatus, 
       label: 'Supplier Quoting', 
-      icon: AlertTriangle,
+      icon: Handshake,
       description: 'Waiting for Supplier Quotes',
       color: 'text-yellow-400'
     },
