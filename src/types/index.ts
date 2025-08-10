@@ -63,7 +63,8 @@ export type OrderStatus =
   | 'ordered'
   | 'in_transit'
   | 'delivered'
-  | 'cancelled';
+  | 'cancelled'
+  | 'supplier_quoting';
 
 export interface Notification {
   id: string;

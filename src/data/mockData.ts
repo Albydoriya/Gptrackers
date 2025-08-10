@@ -224,6 +224,7 @@ export const getStatusColor = (status: OrderStatus): string => {
     in_transit: 'bg-orange-100 text-orange-800',
     delivered: 'bg-green-100 text-green-800',
     cancelled: 'bg-red-100 text-red-800',
+    supplier_quoting: 'bg-indigo-100 text-indigo-800',
   };
   return colors[status];
 };
@@ -237,6 +238,7 @@ export const getStatusLabel = (status: OrderStatus): string => {
     in_transit: 'In Transit',
     delivered: 'Delivered',
     cancelled: 'Cancelled',
+    supplier_quoting: 'Supplier Quoting',
   };
   return labels[status];
 };
