@@ -193,6 +193,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } catch (sessionError) {
         console.error('Error getting initial session:', sessionError);
         console.log('AuthContext: Session fetch failed with error, setting user to null');
+        
+        // Check if this is a connection/timeout error
+        if (sessionError.message && sessionError.message.includes('timed out')) {
+          console.warn('Supabase connection timed out - this may indicate network issues or incorrect configuration');
+          console.warn('Please verify your VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file');
+        }
+        
         setUser(null);
       } finally {
         console.log('AuthContext: getInitialSession completed, setting isLoading to false');
