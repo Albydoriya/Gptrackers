@@ -11,7 +11,8 @@ import {
   MapPin,
   Calendar,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  Handshake
 } from 'lucide-react';
 import { getStatusColor, getStatusLabel } from '../data/mockData';
 import { supabase } from '../lib/supabase';
