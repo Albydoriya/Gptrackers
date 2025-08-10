@@ -138,8 +138,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     // Get initial session
     const getInitialSession = async () => {
+      console.log('AuthContext: Starting getInitialSession');
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        console.log('AuthContext: Attempting to get session...');
+        const { session, error } = await Promise.race([
+          supabase.auth.getSession().then(res => ({ session: res.data.session, error: res.error })),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Supabase session fetch timed out after 15 seconds')), 15000)
+          )
+        ]);
+        
+        console.log('AuthContext: Session retrieved, user:', session?.user?.id, 'error:', error);
         
         // Handle refresh token errors specifically
         if (error && (
@@ -148,6 +157,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           error.message.includes('Invalid Refresh Token')
         )) {
           console.log('Invalid or expired refresh token detected, clearing session...');
+          console.log('AuthContext: Clearing invalid session and setting isLoading to false');
           await supabase.auth.signOut();
           setUser(null);
           setIsLoading(false);
@@ -157,6 +167,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // Handle other authentication errors
         if (error) {
           console.error('Session retrieval error:', error);
+          console.log('AuthContext: Session error, clearing and setting isLoading to false');
           await supabase.auth.signOut();
           setUser(null);
           setIsLoading(false);
@@ -164,21 +175,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
         
         if (session?.user && !error) {
+          console.log('AuthContext: Valid session found, calling createUserFromSession');
           try {
             await createUserFromSession(session.user);
+            console.log('AuthContext: createUserFromSession completed successfully');
           } catch (userCreationError) {
             console.error('Error creating user from session:', userCreationError);
+            console.log('AuthContext: User creation failed, signing out');
             // If user creation fails, sign out to prevent stuck state
             await supabase.auth.signOut();
             setUser(null);
           }
         } else {
+          console.log('AuthContext: No valid session found, setting user to null');
           setUser(null);
         }
       } catch (sessionError) {
         console.error('Error getting initial session:', sessionError);
+        console.log('AuthContext: Session fetch failed with error, setting user to null');
         setUser(null);
       } finally {
+        console.log('AuthContext: getInitialSession completed, setting isLoading to false');
         setIsLoading(false);
       }
     };
@@ -205,6 +222,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const createUserFromSession = async (supabaseUser: SupabaseUser) => {
     try {
       console.log('Starting createUserFromSession for user:', supabaseUser.id);
+      console.log('createUserFromSession: Fetching user profile...');
       
       // Try to get existing user profile
       console.log('Attempting to fetch user profile from database...');
@@ -215,6 +233,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         .single();
       
       console.log('Profile fetch completed. Error:', profileError, 'Data exists:', !!profile);
+      console.log('createUserFromSession: Profile fetch result - data:', !!profile, 'error:', profileError);
 
       let userRole = getUserRole(supabaseUser.email || '');
       let fullName = supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User';
@@ -253,6 +272,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           });
         
         console.log('Profile creation completed. Error:', insertError);
+        console.log('createUserFromSession: Profile created/updated successfully');
 
         if (insertError) {
           console.error('Error creating user profile:', insertError);
@@ -264,10 +284,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
       } else if (profileError) {
         console.warn('Profile fetch error (non-critical):', profileError);
+        console.log('createUserFromSession: Non-critical profile error, continuing...');
         // Some other error occurred, log it but continue
       }
 
       console.log('Creating user data object...');
+      console.log('createUserFromSession: Finalizing user data');
       const userData: User = {
         id: supabaseUser.id,
         email: supabaseUser.email || '',
@@ -285,6 +307,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.log('User session created successfully');
     } catch (error) {
       console.error('Error creating user from session:', error);
+      console.error('createUserFromSession: Error during profile operation:', error);
       console.log('Setting user to null due to error');
       setUser(null);
       // Clear any potentially corrupted auth data
