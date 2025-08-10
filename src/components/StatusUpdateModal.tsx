@@ -58,7 +58,7 @@ const StatusUpdateModal: React.FC<StatusUpdateModalProps> = ({
       label: 'Supplier Quoting', 
       icon: Handshake,
       description: 'Waiting for Supplier Quotes',
-      color: 'text-yellow-700'
+      color: 'text-yellow-900'
     },
     { 
       value: 'pending_customer_approval' as OrderStatus, 
