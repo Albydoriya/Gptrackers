@@ -185,7 +185,7 @@ interface Database {
           id: string;
           order_number: string;
           supplier_id: string;
-          status: 'draft' | 'pending_approval' | 'approved' | 'ordered' | 'in_transit' | 'delivered' | 'cancelled';
+          status: 'draft' | 'pending_customer_approval' | 'approved' | 'ordered' | 'in_transit' | 'delivered' | 'cancelled';
           priority: 'low' | 'medium' | 'high';
           total_amount: number;
           order_date: string;
@@ -203,7 +203,7 @@ interface Database {
           id?: string;
           order_number: string;
           supplier_id: string;
-          status?: 'draft' | 'pending_approval' | 'approved' | 'ordered' | 'in_transit' | 'delivered' | 'cancelled';
+          status?: 'draft' | 'pending_customer_approval' | 'approved' | 'ordered' | 'in_transit' | 'delivered' | 'cancelled';
           priority?: 'low' | 'medium' | 'high';
           total_amount?: number;
           order_date?: string;
@@ -221,7 +221,7 @@ interface Database {
           id?: string;
           order_number?: string;
           supplier_id?: string;
-          status?: 'draft' | 'pending_approval' | 'approved' | 'ordered' | 'in_transit' | 'delivered' | 'cancelled';
+          status?: 'draft' | 'pending_customer_approval' | 'approved' | 'ordered' | 'in_transit' | 'delivered' | 'cancelled';
           priority?: 'low' | 'medium' | 'high';
           total_amount?: number;
           order_date?: string;
@@ -267,8 +267,8 @@ interface Database {
         Row: {
           id: string;
           order_id: string;
-          old_status: 'draft' | 'pending_approval' | 'approved' | 'ordered' | 'in_transit' | 'delivered' | 'cancelled' | null;
-          new_status: 'draft' | 'pending_approval' | 'approved' | 'ordered' | 'in_transit' | 'delivered' | 'cancelled';
+          old_status: 'draft' | 'pending_customer_approval' | 'approved' | 'ordered' | 'in_transit' | 'delivered' | 'cancelled' | null;
+          new_status: 'draft' | 'pending_customer_approval' | 'approved' | 'ordered' | 'in_transit' | 'delivered' | 'cancelled';
           notes: string | null;
           updated_by: string | null;
           created_at: string;
@@ -276,8 +276,8 @@ interface Database {
         Insert: {
           id?: string;
           order_id: string;
-          old_status?: 'draft' | 'pending_approval' | 'approved' | 'ordered' | 'in_transit' | 'delivered' | 'cancelled' | null;
-          new_status: 'draft' | 'pending_approval' | 'approved' | 'ordered' | 'in_transit' | 'delivered' | 'cancelled';
+          old_status?: 'draft' | 'pending_customer_approval' | 'approved' | 'ordered' | 'in_transit' | 'delivered' | 'cancelled' | null;
+          new_status: 'draft' | 'pending_customer_approval' | 'approved' | 'ordered' | 'in_transit' | 'delivered' | 'cancelled';
           notes?: string | null;
           updated_by?: string | null;
           created_at?: string;
@@ -285,8 +285,8 @@ interface Database {
         Update: {
           id?: string;
           order_id?: string;
-          old_status?: 'draft' | 'pending_approval' | 'approved' | 'ordered' | 'in_transit' | 'delivered' | 'cancelled' | null;
-          new_status?: 'draft' | 'pending_approval' | 'approved' | 'ordered' | 'in_transit' | 'delivered' | 'cancelled';
+          old_status?: 'draft' | 'pending_customer_approval' | 'approved' | 'ordered' | 'in_transit' | 'delivered' | 'cancelled' | null;
+          new_status?: 'draft' | 'pending_customer_approval' | 'approved' | 'ordered' | 'in_transit' | 'delivered' | 'cancelled';
           notes?: string | null;
           updated_by?: string | null;
           created_at?: string;
@@ -338,7 +338,7 @@ interface Database {
       [_ in never]: never;
     };
     Enums: {
-      order_status: 'draft' | 'pending_approval' | 'approved' | 'ordered' | 'in_transit' | 'delivered' | 'cancelled';
+      order_status: 'draft' | 'pending_customer_approval' | 'approved' | 'ordered' | 'in_transit' | 'delivered' | 'cancelled';
       priority_level: 'low' | 'medium' | 'high';
       notification_type: 'order_status' | 'low_stock' | 'price_change' | 'delivery' | 'approval' | 'system';
       user_role: 'admin' | 'manager' | 'buyer' | 'viewer';
