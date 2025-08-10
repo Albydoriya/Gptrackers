@@ -58,7 +58,7 @@ export interface PriceHistory {
 
 export type OrderStatus = 
   | 'draft'
-  | 'pending_approval'
+  | 'pending_customer_approval'
   | 'approved'
   | 'ordered'
   | 'in_transit'
