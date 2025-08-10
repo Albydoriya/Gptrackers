@@ -73,7 +73,7 @@ BEGIN
       notification_title,
       notification_message,
       CASE 
-        WHEN NEW.status = 'pending_approval' THEN 'medium'::priority_level
+        WHEN NEW.status = 'pending_customer_approval' THEN 'medium'::priority_level
         WHEN NEW.status = 'cancelled' THEN 'high'::priority_level
         ELSE 'low'::priority_level
       END,
