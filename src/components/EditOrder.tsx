@@ -377,7 +377,7 @@ const EditOrder: React.FC<EditOrderProps> = ({ isOpen, onClose, onOrderUpdated, 
 
   const statusOptions: { value: OrderStatus; label: string }[] = [
     { value: 'draft', label: 'Draft' },
-    { value: 'pending_approval', label: 'Pending Approval' },
+    { value: 'pending_customer_approval', label: 'Pending Approval' },
     { value: 'approved', label: 'Approved' },
     { value: 'ordered', label: 'Ordered' },
     { value: 'in_transit', label: 'In Transit' },
