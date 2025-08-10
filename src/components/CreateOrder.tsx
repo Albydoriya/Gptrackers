@@ -251,11 +251,11 @@ const CreateOrder: React.FC<CreateOrderProps> = ({ isOpen, onClose, onOrderCreat
     }
   };
 
-  const handleSubmit = (status: 'draft' | 'pending_approval') => {
+  const handleSubmit = (status: 'draft' | 'pending_customer_approval') => {
     createOrderInSupabase(status);
   };
 
-  const createOrderInSupabase = async (status: 'draft' | 'pending_approval') => {
+  const createOrderInSupabase = async (status: 'draft' | 'pending_customer_approval') => {
     if (!formData.supplier || formData.parts.length === 0 || !user) {
       setSubmitError('Please ensure all required fields are filled');
       return;
@@ -917,7 +917,7 @@ const CreateOrder: React.FC<CreateOrderProps> = ({ isOpen, onClose, onOrderCreat
                     )}
                   </button>
                   <button
-                    onClick={() => handleSubmit('pending_approval')}
+                    onClick={() => handleSubmit('pending_customer_approval')}
                     disabled={isSubmitting}
                     className={`flex items-center space-x-2 px-6 py-2 rounded-md transition-colors ${
                       isSubmitting
