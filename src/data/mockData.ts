@@ -232,7 +232,7 @@ export const getStatusColor = (status: OrderStatus): string => {
 export const getStatusLabel = (status: OrderStatus): string => {
   const labels = {
     draft: 'Draft',
-    pending_customer_approval: 'Pending Approval',
+    pending_customer_approval: 'Pending Customer Approval',
     approved: 'Approved',
     ordered: 'Ordered',
     in_transit: 'In Transit',
