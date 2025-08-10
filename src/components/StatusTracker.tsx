@@ -135,7 +135,7 @@ const StatusTracker: React.FC = () => {
       case 'draft':
         return <Clock className="h-4 w-4" />;
       case 'supplier_quoting':
-        return <AlertTriangle className="h-4 w-4" />;
+        return <Handshake className="h-4 w-4" />;
       case 'pending_customer_approval':
         return <AlertTriangle className="h-4 w-4" />;
       case 'approved':
