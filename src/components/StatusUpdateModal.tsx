@@ -53,10 +53,17 @@ const StatusUpdateModal: React.FC<StatusUpdateModalProps> = ({
       color: 'text-gray-600'
     },
     { 
-      value: 'pending_approval' as OrderStatus, 
-      label: 'Pending Approval', 
+      value: 'supplier_quoting' as OrderStatus, 
+      label: 'Supplier Quoting', 
       icon: AlertTriangle,
-      description: 'Waiting for management approval',
+      description: 'Waiting for Supplier Quotes',
+      color: 'text-yellow-400'
+    },
+    { 
+      value: 'pending_customer_approval' as OrderStatus, 
+      label: 'Pending Customer Approval', 
+      icon: AlertTriangle,
+      description: 'Waiting for customer approval',
       color: 'text-yellow-600'
     },
     { 
