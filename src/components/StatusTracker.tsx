@@ -114,7 +114,8 @@ const StatusTracker: React.FC = () => {
   const statusOptions = [
     { value: 'all', label: 'All Statuses' },
     { value: 'draft', label: 'Draft' },
-    { value: 'pending_approval', label: 'Pending Approval' },
+    { value: 'supplier_quoting', label: 'Supplier Quoting' },
+    { value: 'pending_customer_approval', label: 'Pending Customer Approval' },
     { value: 'approved', label: 'Approved' },
     { value: 'ordered', label: 'Ordered' },
     { value: 'in_transit', label: 'In Transit' },
@@ -123,7 +124,7 @@ const StatusTracker: React.FC = () => {
   ];
 
   const getStatusProgress = (status: OrderStatus) => {
-    const statusOrder: OrderStatus[] = ['draft', 'pending_approval', 'approved', 'ordered', 'in_transit', 'delivered'];
+    const statusOrder: OrderStatus[] = ['draft', 'supplier_quoting','pending_customer_approval', 'approved', 'ordered', 'in_transit', 'delivered'];
     const currentIndex = statusOrder.indexOf(status);
     return ((currentIndex + 1) / statusOrder.length) * 100;
   };
@@ -132,7 +133,9 @@ const StatusTracker: React.FC = () => {
     switch (status) {
       case 'draft':
         return <Clock className="h-4 w-4" />;
-      case 'pending_approval':
+      case 'supplier_quoting':
+        return <AlertTriangle className="h-4 w-4" />;
+      case 'pending_customer_approval':
         return <AlertTriangle className="h-4 w-4" />;
       case 'approved':
         return <CheckCircle className="h-4 w-4" />;
