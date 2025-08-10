@@ -41,7 +41,7 @@ BEGIN
 
   -- Create notification title and message based on status
   CASE NEW.status
-    WHEN 'pending_approval' THEN
+    WHEN 'pending_customer_approval' THEN
       notification_title := 'Order Requires Approval';
       notification_message := 'Order ' || NEW.order_number || ' ($' || NEW.total_amount || ') is pending management approval.';
     WHEN 'approved' THEN
