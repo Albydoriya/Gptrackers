@@ -159,7 +159,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onTabChange }) => {
   }, []);
 
   const totalOrders = orders.length;
-  const pendingOrders = orders.filter(o => ['pending_approval', 'approved', 'ordered'].includes(o.status)).length;
+  const pendingOrders = orders.filter(o => ['pending_customer_approval', 'approved', 'ordered'].includes(o.status)).length;
   const deliveredOrders = orders.filter(o => o.status === 'delivered').length;
   const totalValue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
   const lowStockParts = parts.filter(p => p.currentStock <= p.minStock).length;
