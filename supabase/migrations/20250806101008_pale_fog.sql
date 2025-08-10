@@ -82,7 +82,7 @@ BEGIN
   END IF;
 
   -- For approval status, also notify managers and admins
-  IF NEW.status = 'pending_approval' THEN
+  IF NEW.status = 'pending_customer_approval' THEN
     INSERT INTO notifications (user_id, type, title, message, priority, related_id)
     SELECT 
       user_id,
