@@ -85,84 +85,77 @@ export const useNotifications = () => {
     let channel: any = null;
     
     try {
-      // Only attempt real-time subscription if initial fetch was successful
-      if (!error) {
-        channel = supabase
-          .channel(`notifications_for_user_${user.id}`)
-          .on(
-            'postgres_changes',
-            {
-              event: '*',
-              schema: 'public',
-              table: 'notifications',
-              filter: `user_id=eq.${user.id}`
-            },
-            (payload) => {
-              console.log('Real-time notification update:', payload);
-              
-              try {
-                switch (payload.eventType) {
-                  case 'INSERT':
-                    // Add new notification to the beginning of the list
-                    const newNotification: Notification = {
-                      id: payload.new.id,
-                      type: payload.new.type,
-                      title: payload.new.title,
-                      message: payload.new.message,
-                      timestamp: payload.new.created_at,
-                      isRead: payload.new.is_read,
-                      priority: payload.new.priority,
-                      relatedId: payload.new.related_id,
-                      actionUrl: payload.new.action_url
-                    };
-                    setNotifications(prev => [newNotification, ...prev]);
-                    break;
-                    
-                  case 'UPDATE':
-                    // Update existing notification
-                    setNotifications(prev => prev.map(notification =>
-                      notification.id === payload.new.id
-                        ? {
-                            ...notification,
-                            type: payload.new.type,
-                            title: payload.new.title,
-                            message: payload.new.message,
-                            timestamp: payload.new.created_at,
-                            isRead: payload.new.is_read,
-                            priority: payload.new.priority,
-                            relatedId: payload.new.related_id,
-                            actionUrl: payload.new.action_url
-                          }
-                        : notification
-                    ));
-                    break;
-                    
-                  case 'DELETE':
-                    // Remove deleted notification
-                    setNotifications(prev => prev.filter(notification => 
-                      notification.id !== payload.old.id
-                    ));
-                    break;
-                }
-              } catch (realtimeError) {
-                console.error('Error processing real-time notification update:', realtimeError);
+      channel = supabase
+        .channel(`notifications_for_user_${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('Real-time notification update:', payload);
+            
+            try {
+              switch (payload.eventType) {
+                case 'INSERT':
+                  // Add new notification to the beginning of the list
+                  const newNotification: Notification = {
+                    id: payload.new.id,
+                    type: payload.new.type,
+                    title: payload.new.title,
+                    message: payload.new.message,
+                    timestamp: payload.new.created_at,
+                    isRead: payload.new.is_read,
+                    priority: payload.new.priority,
+                    relatedId: payload.new.related_id,
+                    actionUrl: payload.new.action_url
+                  };
+                  setNotifications(prev => [newNotification, ...prev]);
+                  break;
+                  
+                case 'UPDATE':
+                  // Update existing notification
+                  setNotifications(prev => prev.map(notification =>
+                    notification.id === payload.new.id
+                      ? {
+                          ...notification,
+                          type: payload.new.type,
+                          title: payload.new.title,
+                          message: payload.new.message,
+                          timestamp: payload.new.created_at,
+                          isRead: payload.new.is_read,
+                          priority: payload.new.priority,
+                          relatedId: payload.new.related_id,
+                          actionUrl: payload.new.action_url
+                        }
+                      : notification
+                  ));
+                  break;
+                  
+                case 'DELETE':
+                  // Remove deleted notification
+                  setNotifications(prev => prev.filter(notification => 
+                    notification.id !== payload.old.id
+                  ));
+                  break;
               }
+            } catch (realtimeError) {
+              console.error('Error processing real-time notification update:', realtimeError);
             }
-          )
-          .subscribe((status) => {
-            if (status === 'SUBSCRIBED') {
-              console.log('Successfully subscribed to notifications');
-            } else if (status === 'CHANNEL_ERROR') {
-              console.error('Error subscribing to notifications channel');
-            }
-          });
-      } else {
-        console.warn('Skipping real-time subscription due to initial fetch error');
-      }
+          }
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('Successfully subscribed to notifications');
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('Error subscribing to notifications channel');
+          }
+        });
     } catch (subscriptionError) {
       console.error('Error setting up real-time subscription:', subscriptionError);
-      // Don't let subscription errors prevent the app from working
-      console.warn('Continuing without real-time notifications due to subscription error');
     }
 
     // Cleanup subscription on unmount or user change

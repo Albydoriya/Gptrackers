@@ -11,8 +11,7 @@ import {
   MapPin,
   Calendar,
   Loader2,
-  RefreshCw,
-  Handshake
+  RefreshCw
 } from 'lucide-react';
 import { getStatusColor, getStatusLabel } from '../data/mockData';
 import { supabase } from '../lib/supabase';
@@ -135,7 +134,7 @@ const StatusTracker: React.FC = () => {
       case 'draft':
         return <Clock className="h-4 w-4" />;
       case 'supplier_quoting':
-        return <Handshake className="h-4 w-4" />;
+        return <AlertTriangle className="h-4 w-4" />;
       case 'pending_customer_approval':
         return <AlertTriangle className="h-4 w-4" />;
       case 'approved':
