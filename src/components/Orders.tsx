@@ -279,7 +279,7 @@ const Orders: React.FC = () => {
   const statusOptions = [
     { value: 'all', label: 'All Statuses' },
     { value: 'draft', label: 'Draft' },
-    { value: 'pending_approval', label: 'Pending Approval' },
+    { value: 'pending_customer_approval', label: 'Pending Approval' },
     { value: 'approved', label: 'Approved' },
     { value: 'ordered', label: 'Ordered' },
     { value: 'in_transit', label: 'In Transit' },
@@ -730,7 +730,7 @@ const Orders: React.FC = () => {
                            order.status === 'in_transit' ? '80%' :
                            order.status === 'ordered' ? '60%' :
                            order.status === 'approved' ? '40%' :
-                           order.status === 'pending_approval' ? '20%' : '10%'}
+                           order.status === 'pending_customer_approval' ? '20%' : '10%'}
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
@@ -740,7 +740,7 @@ const Orders: React.FC = () => {
                             order.status === 'in_transit' ? 'bg-orange-500 w-4/5' :
                             order.status === 'ordered' ? 'bg-blue-500 w-3/5' :
                             order.status === 'approved' ? 'bg-purple-500 w-2/5' :
-                            order.status === 'pending_approval' ? 'bg-yellow-500 w-1/5' : 'bg-gray-400 w-1/12'
+                            order.status === 'pending_customer_approval' ? 'bg-yellow-500 w-1/5' : 'bg-gray-400 w-1/12'
                           }`}
                         ></div>
                       </div>
