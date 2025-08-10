@@ -29,7 +29,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Create enum types
 CREATE TYPE order_status AS ENUM (
   'draft',
-  'pending_approval', 
+  'pending_customer_approval', 
   'approved',
   'ordered',
   'in_transit',
@@ -260,7 +260,7 @@ CREATE POLICY "Authorized users can update orders"
     auth.uid() IN (
       SELECT id FROM user_profiles WHERE role IN ('admin', 'manager')
     ) OR 
-    (created_by = auth.uid() AND status IN ('draft', 'pending_approval'))
+    (created_by = auth.uid() AND status IN ('draft', 'pending_customer_approval'))
   );
 
 -- RLS Policies for order parts
