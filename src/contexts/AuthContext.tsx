@@ -343,7 +343,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       // User will be set via the onAuthStateChange listener
     } catch (error: any) {
-      console.error('Sign in error:', error);
+      console.log('Sign in failed:', error.message || 'Invalid credentials');
       throw new Error(error.message || 'Failed to sign in');
     } finally {
       setIsLoading(false);
