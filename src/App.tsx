@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { APP_VERSION, VERSION_CONFIG, isMajorVersionChange, clearOutdatedClientData } from './config/appConfig';
+import { supabase } from './lib/supabase';
 import LoginPage from './components/LoginPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navigation from './components/Navigation';
@@ -41,44 +42,12 @@ const AppContent: React.FC = () => {
           
           if (isMajorChange) {
             console.log('Major version change detected, clearing all client data');
-            // For major version changes, clear more aggressively
-            try {
-              console.log('Starting aggressive localStorage cleanup for major version change');
-              
-              // Get all Supabase auth keys before clearing
-              const supabaseKeys = Object.keys(localStorage).filter(key => 
-                key.startsWith('sb-') || key.includes('supabase')
-              );
-              console.log('Found Supabase auth keys:', supabaseKeys);
-              
-              const preservedData: Record<string, string> = {};
-              supabaseKeys.forEach(key => {
-                preservedData[key] = localStorage.getItem(key) || '';
-              });
-              
-              // Clear ALL localStorage data
-              console.log('Clearing all localStorage data');
-              localStorage.clear();
-              
-              // Restore Supabase auth data
-              console.log('Restoring Supabase auth data');
-              Object.entries(preservedData).forEach(([key, value]) => {
-                localStorage.setItem(key, value);
-              });
-              
-              console.log('localStorage cleanup completed successfully');
-            } catch (error) {
-              console.error('Error during major version cleanup:', error);
-            }
+            // For major version changes, clear client data and sign out user
+            clearOutdatedClientData();
             
-            // Update version and force reload for major changes
-            localStorage.setItem(VERSION_CONFIG.VERSION_STORAGE_KEY, APP_VERSION);
-            
-            if (VERSION_CONFIG.FORCE_RELOAD_ON_MAJOR_VERSION) {
-              console.log('Forcing page reload due to major version change');
-              window.location.reload();
-              return;
-            }
+            // Sign out user to force fresh authentication flow
+            console.log('Signing out user due to major version change');
+            await supabase.auth.signOut();
           } else {
             console.log('Minor version change detected, clearing specific client data');
             // For minor version changes, just clear potentially problematic data
