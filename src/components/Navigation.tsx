@@ -55,7 +55,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
       <nav className="bg-white shadow-sm border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-8">
+          <div className="flex items-center space-x-12">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-6">
                 {/* Logo Section */}
@@ -63,7 +63,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
                   <img
                     src="https://libaopwjoduzlkvhtukb.supabase.co/storage/v1/object/public/company-assets//GoParts.png"
                     alt="GoParts Logo"
-                    className="h-50 w-auto object-contain rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
+                    className="h-10 w-auto object-contain rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
                   />
                   
                   {/* System Title */}
