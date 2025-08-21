@@ -176,7 +176,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setUser(null);
         }
       } catch (sessionError) {
-        console.error('Error getting initial session:', sessionError);
+        // Check if this is a refresh token error (expected scenario)
+        if (sessionError instanceof Error && (
+          sessionError.message.includes('Refresh Token Not Found') || 
+          sessionError.message.includes('refresh_token_not_found') ||
+          sessionError.message.includes('Invalid Refresh Token')
+        )) {
+          console.log('Session recovery failed due to invalid/expired refresh token, user will need to sign in again');
+        } else {
+          console.error('Error getting initial session:', sessionError);
+        }
         setUser(null);
       } finally {
         setIsLoading(false);
