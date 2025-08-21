@@ -165,7 +165,7 @@ const LoginPage: React.FC = () => {
                   <AlertCircle className="h-4 w-4 text-red-600" />
                   <span className="text-sm text-red-700">
                     {error === 'Invalid login credentials' 
-                      ? 'Invalid login credentials. Please check your email and password and try again.' 
+                      ? 'Incorrect email or password. Please try again.' 
                       : error}
                   </span>
                 </div>
