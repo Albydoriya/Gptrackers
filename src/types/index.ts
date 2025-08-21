@@ -58,6 +58,7 @@ export interface PriceHistory {
 
 export type OrderStatus = 
   | 'draft'
+  | 'supplier_quoting'
   | 'pending_customer_approval'
   | 'approved'
   | 'ordered'

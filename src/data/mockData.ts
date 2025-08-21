@@ -218,7 +218,8 @@ export const orders: Order[] = [
 export const getStatusColor = (status: OrderStatus): string => {
   const colors = {
     draft: 'bg-gray-100 text-gray-800',
-    pending_approval: 'bg-yellow-100 text-yellow-800',
+    supplier_quoting: 'bg-indigo-100 text-indigo-800',
+    pending_customer_approval: 'bg-yellow-100 text-yellow-800',
     approved: 'bg-blue-100 text-blue-800',
     ordered: 'bg-purple-100 text-purple-800',
     in_transit: 'bg-orange-100 text-orange-800',
@@ -231,7 +232,8 @@ export const getStatusColor = (status: OrderStatus): string => {
 export const getStatusLabel = (status: OrderStatus): string => {
   const labels = {
     draft: 'Draft',
-    pending_approval: 'Pending Approval',
+    supplier_quoting: 'Supplier Quoting',
+    pending_customer_approval: 'Pending Customer Approval',
     approved: 'Approved',
     ordered: 'Ordered',
     in_transit: 'In Transit',
