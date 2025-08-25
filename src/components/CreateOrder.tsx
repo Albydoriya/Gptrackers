@@ -251,11 +251,11 @@ const CreateOrder: React.FC<CreateOrderProps> = ({ isOpen, onClose, onOrderCreat
     }
   };
 
-  const handleSubmit = (status: 'draft' | 'pending_customer_approval') => {
+  const handleSubmit = (status: 'draft' | 'supplier_qouting') => {
     createOrderInSupabase(status);
   };
 
-  const createOrderInSupabase = async (status: 'draft' | 'pending_customer_approval') => {
+  const createOrderInSupabase = async (status: 'draft' | 'supplier_qouting') => {
     if (!formData.supplier || formData.parts.length === 0 || !user) {
       setSubmitError('Please ensure all required fields are filled');
       return;
