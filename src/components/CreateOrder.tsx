@@ -917,7 +917,7 @@ const CreateOrder: React.FC<CreateOrderProps> = ({ isOpen, onClose, onOrderCreat
                     )}
                   </button>
                   <button
-                    onClick={() => handleSubmit('pending_customer_approval')}
+                    onClick={() => handleSubmit('supplier_quoting')}
                     disabled={isSubmitting}
                     className={`flex items-center space-x-2 px-6 py-2 rounded-md transition-colors ${
                       isSubmitting
