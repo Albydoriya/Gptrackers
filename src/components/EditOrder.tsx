@@ -17,6 +17,7 @@ import {
   Edit3
 } from 'lucide-react';
 import { getStatusColor, getStatusLabel } from '../data/mockData';
+import { mapSupabaseStatusToFrontendStatus } from '../data/mockData';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Part, Supplier, OrderPart, Order, OrderStatus } from '../types';
@@ -87,7 +88,7 @@ const EditOrder: React.FC<EditOrderProps> = ({ isOpen, onClose, onOrderUpdated, 
         notes: order.notes || '',
         priority: order.priority || 'medium',
         requestedBy: requestedByName,
-        status: (order.status === 'pending_approval' ? 'pending_customer_approval' : order.status) as OrderStatus
+        status: mapSupabaseStatusToFrontendStatus(order.status)
       });
       setSubmitError(null);
     }
