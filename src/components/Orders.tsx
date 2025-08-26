@@ -280,6 +280,7 @@ const Orders: React.FC = () => {
   const statusOptions = [
     { value: 'all', label: 'All Statuses' },
     { value: 'draft', label: 'Draft' },
+    { value: 'supplier_quoting', label: 'Supplier Quoting' },
     { value: 'pending_customer_approval', label: 'Pending Approval' },
     { value: 'approved', label: 'Approved' },
     { value: 'ordered', label: 'Ordered' },
