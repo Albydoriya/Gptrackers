@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { mapFrontendStatusToSupabaseStatus } from '../data/mockData';
 import { Part, Supplier, OrderPart } from '../types';
 
 interface CreateOrderProps {
@@ -269,7 +270,7 @@ const CreateOrder: React.FC<CreateOrderProps> = ({ isOpen, onClose, onOrderCreat
       const orderObject = {
         order_number: formData.orderNumber,
         supplier_id: formData.supplier.id.trim(),
-        status,
+        status: mapFrontendStatusToSupabaseStatus(status),
         priority: formData.priority,
         total_amount: getTotalAmount(),
         order_date: new Date().toISOString().split('T')[0],

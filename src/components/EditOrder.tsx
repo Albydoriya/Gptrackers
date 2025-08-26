@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { getStatusColor, getStatusLabel } from '../data/mockData';
 import { mapSupabaseStatusToFrontendStatus } from '../data/mockData';
+import { mapFrontendStatusToSupabaseStatus } from '../data/mockData';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Part, Supplier, OrderPart, Order, OrderStatus } from '../types';
@@ -298,7 +299,7 @@ const EditOrder: React.FC<EditOrderProps> = ({ isOpen, onClose, onOrderUpdated, 
       const updatedOrderObject = {
         order_number: formData.orderNumber,
         supplier_id: formData.supplier.id.trim(),
-        status,
+        status: mapFrontendStatusToSupabaseStatus(status),
         priority: formData.priority,
         total_amount: getTotalAmount(),
         expected_delivery: formData.expectedDelivery,

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Order, OrderStatus } from '../types';
 import { getStatusColor, getStatusLabel } from '../data/mockData';
+import { mapFrontendStatusToSupabaseStatus } from '../data/mockData';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -114,7 +115,7 @@ const StatusUpdateModal: React.FC<StatusUpdateModalProps> = ({
     try {
       // Construct the update object
       const updateObject: any = {
-        status: selectedStatus,
+        status: mapFrontendStatusToSupabaseStatus(selectedStatus),
         updated_at: new Date().toISOString()
       };
 
