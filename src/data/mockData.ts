@@ -243,6 +243,21 @@ export const getStatusLabel = (status: OrderStatus): string => {
   return labels[status];
 };
 
+// Helper function to map Supabase status values to frontend status values
+export const mapSupabaseStatusToFrontendStatus = (supabaseStatus: string): OrderStatus => {
+  // Handle legacy 'pending_approval' status from database
+  if (supabaseStatus === 'pending_approval') {
+    return 'pending_customer_approval';
+  }
+  return supabaseStatus as OrderStatus;
+};
+
+// Helper function to map frontend status values to Supabase status values
+export const mapFrontendStatusToSupabaseStatus = (frontendStatus: OrderStatus): string => {
+  // All frontend status values should map directly to database values
+  return frontendStatus;
+};
+
 // Global suppliers array that can be modified
 let globalSuppliers = [...suppliers];
 

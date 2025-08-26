@@ -12,6 +12,7 @@ import {
   AlertCircle,
   RefreshCw
 } from 'lucide-react';
+import { mapSupabaseStatusToFrontendStatus } from '../data/mockData';
 import { supabase } from '../lib/supabase';
 import { Part, Order, Supplier } from '../types';
 
@@ -81,8 +82,7 @@ const Analytics: React.FC = () => {
           unitPrice: orderPart.unit_price,
           totalPrice: orderPart.total_price
         })),
-        status: orderData.status,
-        status: (orderData.status === 'pending_approval' ? 'pending_customer_approval' : orderData.status) as OrderStatus,
+        status: mapSupabaseStatusToFrontendStatus(orderData.status),
         totalAmount: orderData.total_amount,
         orderDate: orderData.order_date,
         expectedDelivery: orderData.expected_delivery,

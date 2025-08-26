@@ -12,6 +12,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { getStatusColor, getStatusLabel } from '../data/mockData';
+import { mapSupabaseStatusToFrontendStatus } from '../data/mockData';
 import { supabase } from '../lib/supabase';
 import { Part, Order } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -87,7 +88,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onTabChange }) => {
           unitPrice: orderPart.unit_price,
           totalPrice: orderPart.total_price
         })),
-        status: (orderData.status === 'pending_approval' ? 'pending_customer_approval' : orderData.status) as OrderStatus,
+        status: mapSupabaseStatusToFrontendStatus(orderData.status),
         totalAmount: orderData.total_amount,
         orderDate: orderData.order_date,
         expectedDelivery: orderData.expected_delivery,

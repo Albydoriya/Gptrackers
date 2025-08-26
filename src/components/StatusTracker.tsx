@@ -14,6 +14,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { getStatusColor, getStatusLabel } from '../data/mockData';
+import { mapSupabaseStatusToFrontendStatus } from '../data/mockData';
 import { supabase } from '../lib/supabase';
 import { OrderStatus, Order } from '../types';
 
@@ -78,7 +79,7 @@ const StatusTracker: React.FC = () => {
           unitPrice: orderPart.unit_price,
           totalPrice: orderPart.total_price
         })),
-        status: (orderData.status === 'pending_approval' ? 'pending_customer_approval' : orderData.status) as OrderStatus,
+        status: mapSupabaseStatusToFrontendStatus(orderData.status),
         totalAmount: orderData.total_amount,
         orderDate: orderData.order_date,
         expectedDelivery: orderData.expected_delivery,
