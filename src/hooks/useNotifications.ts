@@ -99,8 +99,18 @@ export const useNotifications = () => {
             console.log('Real-time notification update:', payload);
             
             try {
+              // Validate payload structure before processing
+              if (!payload || !payload.eventType) {
+                console.warn('Invalid payload received:', payload);
+                return;
+              }
+
               switch (payload.eventType) {
                 case 'INSERT':
+                  if (!payload.new || !payload.new.id) {
+                    console.warn('Invalid INSERT payload:', payload);
+                    return;
+                  }
                   // Add new notification to the beginning of the list
                   const newNotification: Notification = {
                     id: payload.new.id,
@@ -117,6 +127,10 @@ export const useNotifications = () => {
                   break;
                   
                 case 'UPDATE':
+                  if (!payload.new || !payload.new.id) {
+                    console.warn('Invalid UPDATE payload:', payload);
+                    return;
+                  }
                   // Update existing notification
                   setNotifications(prev => prev.map(notification =>
                     notification.id === payload.new.id
@@ -136,26 +150,41 @@ export const useNotifications = () => {
                   break;
                   
                 case 'DELETE':
+                  if (!payload.old || !payload.old.id) {
+                    console.warn('Invalid DELETE payload:', payload);
+                    return;
+                  }
                   // Remove deleted notification
                   setNotifications(prev => prev.filter(notification => 
                     notification.id !== payload.old.id
                   ));
                   break;
+                 
+                 default:
+                   console.warn('Unknown event type:', payload.eventType);
               }
             } catch (realtimeError) {
               console.error('Error processing real-time notification update:', realtimeError);
+              // Don't throw the error, just log it to prevent subscription failure
             }
           }
         )
-        .subscribe((status) => {
+        .subscribe((status, err) => {
           if (status === 'SUBSCRIBED') {
             console.log('Successfully subscribed to notifications');
           } else if (status === 'CHANNEL_ERROR') {
-            console.error('Error subscribing to notifications channel');
+            console.error('Error subscribing to notifications channel:', err);
+            setError('Failed to connect to real-time notifications');
+          } else if (status === 'TIMED_OUT') {
+            console.error('Notifications subscription timed out');
+            setError('Notifications connection timed out');
+          } else if (status === 'CLOSED') {
+            console.log('Notifications channel closed');
           }
         });
     } catch (subscriptionError) {
       console.error('Error setting up real-time subscription:', subscriptionError);
+      setError('Failed to set up notifications subscription');
     }
 
     // Cleanup subscription on unmount or user change
