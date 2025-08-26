@@ -87,7 +87,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onTabChange }) => {
           unitPrice: orderPart.unit_price,
           totalPrice: orderPart.total_price
         })),
-        status: orderData.status,
+        status: orderData.status === 'pending_approval' ? 'pending_customer_approval' : orderData.status,
         totalAmount: orderData.total_amount,
         orderDate: orderData.order_date,
         expectedDelivery: orderData.expected_delivery,

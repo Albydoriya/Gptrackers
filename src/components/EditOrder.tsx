@@ -87,7 +87,7 @@ const EditOrder: React.FC<EditOrderProps> = ({ isOpen, onClose, onOrderUpdated, 
         notes: order.notes || '',
         priority: order.priority || 'medium',
         requestedBy: requestedByName,
-        status: order.status
+        status: order.status === 'pending_approval' ? 'pending_customer_approval' : order.status
       });
       setSubmitError(null);
     }
