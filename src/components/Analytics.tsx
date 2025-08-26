@@ -82,6 +82,7 @@ const Analytics: React.FC = () => {
           totalPrice: orderPart.total_price
         })),
         status: orderData.status,
+        status: (orderData.status === 'pending_approval' ? 'pending_customer_approval' : orderData.status) as OrderStatus,
         totalAmount: orderData.total_amount,
         orderDate: orderData.order_date,
         expectedDelivery: orderData.expected_delivery,

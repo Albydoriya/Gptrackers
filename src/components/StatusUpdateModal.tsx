@@ -39,7 +39,7 @@ const StatusUpdateModal: React.FC<StatusUpdateModalProps> = ({
 
   React.useEffect(() => {
     if (order) {
-      setSelectedStatus(order.status === 'pending_approval' ? 'pending_customer_approval' : order.status);
+      setSelectedStatus((order.status === 'pending_approval' ? 'pending_customer_approval' : order.status) as OrderStatus);
       setNotes('');
       setError(null);
     }
