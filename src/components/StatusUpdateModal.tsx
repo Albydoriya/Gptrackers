@@ -39,7 +39,7 @@ const StatusUpdateModal: React.FC<StatusUpdateModalProps> = ({
 
   React.useEffect(() => {
     if (order) {
-      setSelectedStatus((order.status === 'pending_approval' ? 'pending_customer_approval' : order.status) as OrderStatus);
+      setSelectedStatus(order.status);
       setNotes('');
       setError(null);
     }
@@ -112,12 +112,9 @@ const StatusUpdateModal: React.FC<StatusUpdateModalProps> = ({
     setError(null);
     
     try {
-      // Convert legacy status to new enum value
-      const statusToSubmit = selectedStatus === 'pending_approval' ? 'pending_customer_approval' : selectedStatus;
-      
       // Construct the update object
       const updateObject: any = {
-        status: statusToSubmit,
+        status: selectedStatus,
         updated_at: new Date().toISOString()
       };
 
@@ -135,7 +132,7 @@ const StatusUpdateModal: React.FC<StatusUpdateModalProps> = ({
       if (updateError) throw updateError;
 
       // Success - call the callback and close modal
-      onStatusUpdate(order.id, statusToSubmit, notes.trim() || undefined);
+      onStatusUpdate(order.id, selectedStatus, notes.trim() || undefined);
       onClose();
     } catch (error: any) {
       console.error('Error updating status:', error);
