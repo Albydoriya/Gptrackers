@@ -254,11 +254,6 @@ export const mapSupabaseStatusToFrontendStatus = (supabaseStatus: string): Order
 
 // Helper function to map frontend status values to Supabase status values
 export const mapFrontendStatusToSupabaseStatus = (frontendStatus: OrderStatus): string => {
-  // Handle the specific case where frontend uses 'pending_customer_approval' 
-  // but database expects 'pending_approval'
-  if (frontendStatus === 'pending_customer_approval') {
-    return 'pending_approval';
-  }
   return frontendStatus;
 };
 
