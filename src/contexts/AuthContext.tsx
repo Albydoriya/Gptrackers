@@ -217,18 +217,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       // Try to get existing user profile
       console.log('Attempting to fetch user profile from database...');
-      const { data: profile, error: profileError } = await Promise.race([
+      const profileResult = await Promise.race([
         supabase
           .from('user_profiles')
           .select('*')
           .eq('id', supabaseUser.id)
-          .single(),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('User profile fetch timeout after 10 seconds')), 10000)
+          .single()
+          .then(result => ({ type: 'success', ...result })),
+        new Promise(resolve =>
+          setTimeout(() => resolve({ type: 'timeout', data: null, error: { message: 'Profile fetch timeout' } }), 10000)
         )
-      ]) as [any, never];
+      ]) as any;
       
-      console.log('Profile fetch completed. Error:', profileError, 'Data exists:', !!profile);
+      const { data: profile, error: profileError } = profileResult.type === 'timeout' 
+        ? { data: null, error: profileResult.error }
+        : profileResult;
+      
+      console.log('Profile fetch completed. Error:', profileError, 'Data exists:', !!profile, 'Timeout:', profileResult.type === 'timeout');
 
       let userRole = getUserRole(supabaseUser.email || '');
       let fullName = supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User';
@@ -252,9 +257,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           .eq('id', supabaseUser.id)
           .then(() => console.log('Last login updated successfully'))
           .catch(err => console.warn('Failed to update last login (non-critical):', err));
-      } else if (profileError?.code === 'PGRST116') {
-        // Profile doesn't exist (PGRST116 = no rows found), create it
-        console.log('Profile not found, creating new profile...');
+      } else if (profileError?.code === 'PGRST116' || profileResult.type === 'timeout') {
+        // Profile doesn't exist (PGRST116 = no rows found) or fetch timed out, create it
+        console.log(profileResult.type === 'timeout' ? 'Profile fetch timed out, creating new profile...' : 'Profile not found, creating new profile...');
         const { error: insertError } = await supabase
           .from('user_profiles')
           .insert({
@@ -273,7 +278,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           // If it's a duplicate key error, the profile was created by another session
           // Just continue with the existing profile
           if (insertError.code !== '23505') {
-            throw insertError;
+            console.warn('Profile creation failed, continuing with default user data:', insertError);
           }
         }
       } else if (profileError) {
