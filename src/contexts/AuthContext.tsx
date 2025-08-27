@@ -217,11 +217,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       // Try to get existing user profile
       console.log('Attempting to fetch user profile from database...');
-      const { data: profile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', supabaseUser.id)
-        .single();
+      const { data: profile, error: profileError } = await Promise.race([
+        supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', supabaseUser.id)
+          .single(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('User profile fetch timeout after 10 seconds')), 10000)
+        )
+      ]) as [any, never];
       
       console.log('Profile fetch completed. Error:', profileError, 'Data exists:', !!profile);
 
