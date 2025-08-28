@@ -145,9 +145,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (error && (
           error.message.includes('Refresh Token Not Found') || 
           error.message.includes('refresh_token_not_found') ||
-          error.message.includes('Invalid Refresh Token')
+          error.message.includes('Invalid Refresh Token') ||
+          error.message.includes('refresh_token_not_found') ||
+          error.code === 'refresh_token_not_found'
         )) {
           console.log('Invalid or expired refresh token detected, clearing session...');
+          // Clear any stored auth data
+          localStorage.removeItem('supabase.auth.token');
+          sessionStorage.removeItem('supabase.auth.token');
           await supabase.auth.signOut();
           setUser(null);
           setIsLoading(false);
@@ -157,6 +162,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // Handle other authentication errors
         if (error) {
           console.error('Session retrieval error:', error);
+          // Clear potentially corrupted auth data for any auth error
+          localStorage.removeItem('supabase.auth.token');
+          sessionStorage.removeItem('supabase.auth.token');
           await supabase.auth.signOut();
           setUser(null);
           setIsLoading(false);
@@ -169,6 +177,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           } catch (userCreationError) {
             console.error('Error creating user from session:', userCreationError);
             // If user creation fails, sign out to prevent stuck state
+            localStorage.removeItem('supabase.auth.token');
+            sessionStorage.removeItem('supabase.auth.token');
             await supabase.auth.signOut();
             setUser(null);
           }
@@ -180,9 +190,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (sessionError instanceof Error && (
           sessionError.message.includes('Refresh Token Not Found') || 
           sessionError.message.includes('refresh_token_not_found') ||
-          sessionError.message.includes('Invalid Refresh Token')
+          sessionError.message.includes('Invalid Refresh Token') ||
+          (sessionError as any).code === 'refresh_token_not_found'
         )) {
           console.log('Session recovery failed due to invalid/expired refresh token, user will need to sign in again');
+          // Clear any stored auth data
+          localStorage.removeItem('supabase.auth.token');
+          sessionStorage.removeItem('supabase.auth.token');
+          await supabase.auth.signOut();
         } else {
           console.error('Error getting initial session:', sessionError);
         }
@@ -201,9 +216,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           await createUserFromSession(session.user);
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
+        } else if (event === 'TOKEN_REFRESHED' && !session) {
+          // Handle case where token refresh failed
+          console.log('Token refresh failed, signing out user');
+          localStorage.removeItem('supabase.auth.token');
+          sessionStorage.removeItem('supabase.auth.token');
+          setUser(null);
         }
       } catch (authChangeError) {
         console.error('Error handling auth state change:', authChangeError);
+        // Clear auth data on any auth change error
+        localStorage.removeItem('supabase.auth.token');
+        sessionStorage.removeItem('supabase.auth.token');
         setUser(null);
       }
     });
