@@ -40,6 +40,11 @@ interface PartFormData {
   wholesaleMarkupPercentage: number;
   tradeMarkupPercentage: number;
   retailMarkupPercentage: number;
+  // New markup percentages
+  internalUsageMarkupPercentage: number;
+  wholesaleMarkupPercentage: number;
+  tradeMarkupPercentage: number;
+  retailMarkupPercentage: number;
 }
 
 const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, part }) => {
@@ -52,6 +57,10 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
     currentStock: 0,
     minStock: 0,
     specifications: {},
+    internalUsageMarkupPercentage: 0,
+    wholesaleMarkupPercentage: 0,
+    tradeMarkupPercentage: 0,
+    retailMarkupPercentage: 0
   });
 
   const [specKey, setSpecKey] = useState('');
@@ -95,6 +104,10 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
         currentStock: part.currentStock,
         minStock: part.minStock,
         specifications: { ...part.specifications },
+        internalUsageMarkupPercentage: part.internalUsageMarkupPercentage || 0,
+        wholesaleMarkupPercentage: part.wholesaleMarkupPercentage || 0,
+        tradeMarkupPercentage: part.tradeMarkupPercentage || 0,
+        retailMarkupPercentage: part.retailMarkupPercentage || 0
         internalUsageMarkupPercentage: part.internalUsageMarkupPercentage || 0,
         wholesaleMarkupPercentage: part.wholesaleMarkupPercentage || 0,
         tradeMarkupPercentage: part.tradeMarkupPercentage || 0,
@@ -183,6 +196,10 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
         wholesale_markup_percentage: formData.wholesaleMarkupPercentage,
         trade_markup_percentage: formData.tradeMarkupPercentage,
         retail_markup_percentage: formData.retailMarkupPercentage
+        internal_usage_markup_percentage: formData.internalUsageMarkupPercentage,
+        wholesale_markup_percentage: formData.wholesaleMarkupPercentage,
+        trade_markup_percentage: formData.tradeMarkupPercentage,
+        retail_markup_percentage: formData.retailMarkupPercentage
       };
 
       // 2. Update the main part details in Supabase
@@ -226,6 +243,10 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
         wholesaleMarkupPercentage: formData.wholesaleMarkupPercentage,
         tradeMarkupPercentage: formData.tradeMarkupPercentage,
         retailMarkupPercentage: formData.retailMarkupPercentage,
+        internalUsageMarkupPercentage: formData.internalUsageMarkupPercentage,
+        wholesaleMarkupPercentage: formData.wholesaleMarkupPercentage,
+        tradeMarkupPercentage: formData.tradeMarkupPercentage,
+        retailMarkupPercentage: formData.retailMarkupPercentage,
         priceHistory: formData.newPrice && formData.newSupplier && formData.priceUpdateReason 
           ? [...part.priceHistory, {
               date: new Date().toISOString().split('T')[0],
@@ -234,6 +255,23 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
               quantity: 1
             }]
           : [...part.priceHistory],
+        // Recalculate derived prices based on potentially new current price and updated markups
+        internalUsagePrice: (() => {
+          const currentPrice = formData.newPrice || getCurrentPrice();
+          return currentPrice * (1 + formData.internalUsageMarkupPercentage / 100);
+        })(),
+        wholesalePrice: (() => {
+          const currentPrice = formData.newPrice || getCurrentPrice();
+          return currentPrice * (1 + formData.wholesaleMarkupPercentage / 100);
+        })(),
+        tradePrice: (() => {
+          const currentPrice = formData.newPrice || getCurrentPrice();
+          return currentPrice * (1 + formData.tradeMarkupPercentage / 100);
+        })(),
+        retailPrice: (() => {
+          const currentPrice = formData.newPrice || getCurrentPrice();
+          return currentPrice * (1 + formData.retailMarkupPercentage / 100);
+        })()
         // Recalculate derived prices based on potentially new current price and updated markups
         internalUsagePrice: (() => {
           const currentPrice = formData.newPrice || getCurrentPrice();
@@ -827,6 +865,103 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
                       </div>
                     </div>
                   )}
+                </div>
+
+                {/* Pricing Tiers Markup Section */}
+                <div className="mb-8">
+                  <h4 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                    <DollarSign className="h-4 w-4 mr-2 text-green-600 dark:text-green-400" />
+                    Pricing Tiers Markups (%)
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Internal Usage Markup (%)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.internalUsageMarkupPercentage || ''}
+                        onChange={(e) => handleInputChange('internalUsageMarkupPercentage', parseFloat(e.target.value) || 0)}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Wholesale Markup (%)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.wholesaleMarkupPercentage || ''}
+                        onChange={(e) => handleInputChange('wholesaleMarkupPercentage', parseFloat(e.target.value) || 0)}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Trade Markup (%)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.tradeMarkupPercentage || ''}
+                        onChange={(e) => handleInputChange('tradeMarkupPercentage', parseFloat(e.target.value) || 0)}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Retail Markup (%)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.retailMarkupPercentage || ''}
+                        onChange={(e) => handleInputChange('retailMarkupPercentage', parseFloat(e.target.value) || 0)}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Live Preview of Calculated Prices */}
+                  <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <h5 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Calculated Pricing Preview</h5>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div className="text-center">
+                        <p className="text-gray-600 dark:text-gray-400">Internal Usage</p>
+                        <p className="font-bold text-blue-600 dark:text-blue-400">
+                          ${(currentPrice * (1 + formData.internalUsageMarkupPercentage / 100)).toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-gray-600 dark:text-gray-400">Wholesale</p>
+                        <p className="font-bold text-green-600 dark:text-green-400">
+                          ${(currentPrice * (1 + formData.wholesaleMarkupPercentage / 100)).toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-gray-600 dark:text-gray-400">Trade</p>
+                        <p className="font-bold text-purple-600 dark:text-purple-400">
+                          ${(currentPrice * (1 + formData.tradeMarkupPercentage / 100)).toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-gray-600 dark:text-gray-400">Retail</p>
+                        <p className="font-bold text-orange-600 dark:text-orange-400">
+                          ${(currentPrice * (1 + formData.retailMarkupPercentage / 100)).toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
