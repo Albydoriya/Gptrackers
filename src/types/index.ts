@@ -44,6 +44,16 @@ export interface Part {
   wholesalePrice?: number;
   tradePrice?: number;
   retailPrice?: number;
+  // New markup percentages
+  internalUsageMarkupPercentage?: number;
+  wholesaleMarkupPercentage?: number;
+  tradeMarkupPercentage?: number;
+  retailMarkupPercentage?: number;
+  // Calculated prices
+  internalUsagePrice?: number;
+  wholesalePrice?: number;
+  tradePrice?: number;
+  retailPrice?: number;
 }
 
 export interface Supplier {
