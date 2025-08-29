@@ -285,26 +285,40 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } else if (profileError?.code === 'PGRST116' || profileResult.type === 'timeout') {
         // Profile doesn't exist (PGRST116 = no rows found) or fetch timed out, create it
         console.log(profileResult.type === 'timeout' ? 'Profile fetch timed out, creating new profile...' : 'Profile not found, creating new profile...');
-        const { error: insertError } = await supabase
-          .from('user_profiles')
-          .insert({
-            id: supabaseUser.id,
-            full_name: fullName,
-            email: supabaseUser.email,
-            role: userRole.name,
-            preferences: {},
-            last_login: new Date().toISOString()
-          });
         
-        console.log('Profile creation completed. Error:', insertError);
+        // Wrap profile creation in timeout to prevent application freeze
+        const insertResult = await Promise.race([
+          supabase
+            .from('user_profiles')
+            .insert({
+              id: supabaseUser.id,
+              full_name: fullName,
+              email: supabaseUser.email,
+              role: userRole.name,
+              preferences: {},
+              last_login: new Date().toISOString()
+            })
+            .then(result => ({ type: 'success', ...result })),
+          new Promise(resolve =>
+            setTimeout(() => resolve({ type: 'timeout', data: null, error: { message: 'Profile creation timeout' } }), 10000)
+          )
+        ]) as any;
+        
+        const { error: insertError } = insertResult.type === 'timeout' 
+          ? { error: insertResult.error }
+          : insertResult;
+        
+        console.log('Profile creation completed. Error:', insertError, 'Timeout:', insertResult.type === 'timeout');
 
-        if (insertError) {
+        if (insertError && insertResult.type !== 'timeout') {
           console.error('Error creating user profile:', insertError);
           // If it's a duplicate key error, the profile was created by another session
           // Just continue with the existing profile
           if (insertError.code !== '23505') {
             console.warn('Profile creation failed, continuing with default user data:', insertError);
           }
+        } else if (insertResult.type === 'timeout') {
+          console.warn('Profile creation timed out, continuing with default user data');
         }
       } else if (profileError) {
         console.warn('Profile fetch error (non-critical):', profileError);
