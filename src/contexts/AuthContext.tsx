@@ -41,6 +41,52 @@ interface AuthContextType {
   hasPermission: (resource: string, action: string) => boolean;
   hasRole: (roleName: string) => boolean;
   updateUserProfile: (updates: Partial<User>) => Promise<void>;
+  checkAndRefreshSession: () => Promise<boolean>;
+        )
+      ]) as any;
+      
+      const { data: { session }, error } = sessionResult;
+      
+      // Handle refresh token errors or missing session
+      if (error && (
+        error.message.includes('Refresh Token Not Found') || 
+        error.message.includes('refresh_token_not_found') ||
+        error.message.includes('Invalid Refresh Token') ||
+        error.code === 'refresh_token_not_found'
+      )) {
+        console.log('Invalid refresh token detected during session check, signing out...');
+        localStorage.removeItem('supabase.auth.token');
+        sessionStorage.removeItem('supabase.auth.token');
+        await supabase.auth.signOut();
+        setUser(null);
+        return false;
+      }
+      
+      // If no session or other auth error, sign out
+      if (!session || error) {
+        console.log('No valid session found or auth error, signing out...');
+        localStorage.removeItem('supabase.auth.token');
+        sessionStorage.removeItem('supabase.auth.token');
+        await supabase.auth.signOut();
+        setUser(null);
+        return false;
+      }
+      
+      // Session is valid
+      console.log('Session is valid');
+      return true;
+      
+    } catch (error) {
+      console.error('Error during session check:', error);
+      // On any error, assume session is invalid and sign out
+      localStorage.removeItem('supabase.auth.token');
+      sessionStorage.removeItem('supabase.auth.token');
+      await supabase.auth.signOut();
+      setUser(null);
+      return false;
+    }
+  };
+
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -470,7 +516,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     resetPassword,
     hasPermission,
     hasRole,
-    updateUserProfile
+    updateUserProfile,
+    checkAndRefreshSession
   };
 
   return (
