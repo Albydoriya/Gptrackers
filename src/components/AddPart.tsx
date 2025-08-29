@@ -36,11 +36,6 @@ interface PartFormData {
   wholesaleMarkupPercentage: number;
   tradeMarkupPercentage: number;
   retailMarkupPercentage: number;
-  // New markup percentages
-  internalUsageMarkupPercentage: number;
-  wholesaleMarkupPercentage: number;
-  tradeMarkupPercentage: number;
-  retailMarkupPercentage: number;
 }
 
 const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
@@ -55,11 +50,6 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
     specifications: {},
     initialPrice: 0,
     supplier: '',
-    // New markup percentages
-    internalUsageMarkupPercentage: 0,
-    wholesaleMarkupPercentage: 0,
-    tradeMarkupPercentage: 0,
-    retailMarkupPercentage: 0
     // New markup percentages
     internalUsageMarkupPercentage: 0,
     wholesaleMarkupPercentage: 0,
@@ -163,10 +153,6 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
         wholesale_markup_percentage: formData.wholesaleMarkupPercentage,
         trade_markup_percentage: formData.tradeMarkupPercentage,
         retail_markup_percentage: formData.retailMarkupPercentage
-        internal_usage_markup_percentage: formData.internalUsageMarkupPercentage,
-        wholesale_markup_percentage: formData.wholesaleMarkupPercentage,
-        trade_markup_percentage: formData.tradeMarkupPercentage,
-        retail_markup_percentage: formData.retailMarkupPercentage
       };
 
       const { data: insertedPart, error: partError } = await supabase
@@ -220,15 +206,6 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
         wholesalePrice: formData.initialPrice * (1 + formData.wholesaleMarkupPercentage / 100),
         tradePrice: formData.initialPrice * (1 + formData.tradeMarkupPercentage / 100),
         retailPrice: formData.initialPrice * (1 + formData.retailMarkupPercentage / 100)
-        internalUsageMarkupPercentage: formData.internalUsageMarkupPercentage,
-        wholesaleMarkupPercentage: formData.wholesaleMarkupPercentage,
-        tradeMarkupPercentage: formData.tradeMarkupPercentage,
-        retailMarkupPercentage: formData.retailMarkupPercentage,
-        // Calculated prices
-        internalUsagePrice: formData.initialPrice * (1 + formData.internalUsageMarkupPercentage / 100),
-        wholesalePrice: formData.initialPrice * (1 + formData.wholesaleMarkupPercentage / 100),
-        tradePrice: formData.initialPrice * (1 + formData.tradeMarkupPercentage / 100),
-        retailPrice: formData.initialPrice * (1 + formData.retailMarkupPercentage / 100)
       };
       
       // 4. Notify parent component
@@ -245,10 +222,6 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
         specifications: {},
         initialPrice: 0,
         supplier: '',
-        internalUsageMarkupPercentage: 0,
-        wholesaleMarkupPercentage: 0,
-        tradeMarkupPercentage: 0,
-        retailMarkupPercentage: 0
         internalUsageMarkupPercentage: 0,
         wholesaleMarkupPercentage: 0,
         tradeMarkupPercentage: 0,

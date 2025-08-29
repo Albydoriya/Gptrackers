@@ -94,36 +94,6 @@ function Parts() {
             : 0;
           return currentPrice * (1 + (partData.retail_markup_percentage || 0) / 100);
         })()
-        // New markup percentages
-        internalUsageMarkupPercentage: partData.internal_usage_markup_percentage || 0,
-        wholesaleMarkupPercentage: partData.wholesale_markup_percentage || 0,
-        tradeMarkupPercentage: partData.trade_markup_percentage || 0,
-        retailMarkupPercentage: partData.retail_markup_percentage || 0,
-        // Calculate pricing tiers
-        internalUsagePrice: (() => {
-          const currentPrice = (partData.price_history && partData.price_history.length > 0)
-            ? parseFloat(partData.price_history[partData.price_history.length - 1].price)
-            : 0;
-          return currentPrice * (1 + (partData.internal_usage_markup_percentage || 0) / 100);
-        })(),
-        wholesalePrice: (() => {
-          const currentPrice = (partData.price_history && partData.price_history.length > 0)
-            ? parseFloat(partData.price_history[partData.price_history.length - 1].price)
-            : 0;
-          return currentPrice * (1 + (partData.wholesale_markup_percentage || 0) / 100);
-        })(),
-        tradePrice: (() => {
-          const currentPrice = (partData.price_history && partData.price_history.length > 0)
-            ? parseFloat(partData.price_history[partData.price_history.length - 1].price)
-            : 0;
-          return currentPrice * (1 + (partData.trade_markup_percentage || 0) / 100);
-        })(),
-        retailPrice: (() => {
-          const currentPrice = (partData.price_history && partData.price_history.length > 0)
-            ? parseFloat(partData.price_history[partData.price_history.length - 1].price)
-            : 0;
-          return currentPrice * (1 + (partData.retail_markup_percentage || 0) / 100);
-        })()
       }));
 
       setParts(transformedParts);
@@ -540,35 +510,6 @@ function Parts() {
                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Quantity</th>
                       </tr>
 
-              <div>
-                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Pricing Tiers</h4>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Internal Usage:</span>
-                    <span className="font-medium text-gray-900 dark:text-gray-100">
-                      ${selectedPart.internalUsagePrice?.toFixed(2)} ({selectedPart.internalUsageMarkupPercentage?.toFixed(1)}%)
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Wholesale:</span>
-                    <span className="font-medium text-gray-900 dark:text-gray-100">
-                      ${selectedPart.wholesalePrice?.toFixed(2)} ({selectedPart.wholesaleMarkupPercentage?.toFixed(1)}%)
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Trade:</span>
-                    <span className="font-medium text-gray-900 dark:text-gray-100">
-                      ${selectedPart.tradePrice?.toFixed(2)} ({selectedPart.tradeMarkupPercentage?.toFixed(1)}%)
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Retail:</span>
-                    <span className="font-medium text-gray-900 dark:text-gray-100">
-                      ${selectedPart.retailPrice?.toFixed(2)} ({selectedPart.retailMarkupPercentage?.toFixed(1)}%)
-                    </span>
-                  </div>
-                </div>
-              </div>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
                       {selectedPart.priceHistory.map((history, index) => (
