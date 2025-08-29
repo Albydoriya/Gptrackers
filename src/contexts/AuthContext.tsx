@@ -465,15 +465,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       console.log('Checking session validity...');
       
-      // Use Promise.race to implement timeout
+      // Use Promise.race to implement timeout with graceful fallback
       const sessionResult = await Promise.race([
         supabase.auth.getSession(),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Session check timeout after 10 seconds')), 10000)
+        new Promise((resolve) =>
+          setTimeout(() => resolve({ data: { session: null }, error: { message: 'Session check timeout' } }), 10000)
         )
       ]) as any;
       
       const { data: { session }, error } = sessionResult;
+      
+      // Handle timeout gracefully
+      if (error && error.message === 'Session check timeout') {
+        console.log('Session check timed out, treating as invalid session');
+        localStorage.removeItem('supabase.auth.token');
+        sessionStorage.removeItem('supabase.auth.token');
+        setUser(null);
+        return false;
+      }
       
       // Handle refresh token errors or missing session
       if (error && (

@@ -26,10 +26,18 @@ export const useNotifications = () => {
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false }),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Notifications fetch timeout after 30 seconds')), 30000)
+        new Promise((resolve) =>
+          setTimeout(() => resolve({ data: null, error: { message: 'Notifications fetch timeout' } }), 15000)
         )
       ]) as [any, never];
+      
+      // Handle timeout gracefully
+      if (fetchError && fetchError.message === 'Notifications fetch timeout') {
+        console.log('Notifications fetch timed out, continuing without notifications');
+        setNotifications([]);
+        setIsLoading(false);
+        return;
+      }
 
       if (fetchError) throw fetchError;
 
