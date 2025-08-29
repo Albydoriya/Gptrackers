@@ -31,6 +31,11 @@ interface PartFormData {
   specifications: Record<string, string>;
   initialPrice: number;
   supplier: string;
+  // New markup percentages
+  internalUsageMarkupPercentage: number;
+  wholesaleMarkupPercentage: number;
+  tradeMarkupPercentage: number;
+  retailMarkupPercentage: number;
 }
 
 const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
@@ -44,7 +49,12 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
     minStock: 0,
     specifications: {},
     initialPrice: 0,
-    supplier: ''
+    supplier: '',
+    // New markup percentages
+    internalUsageMarkupPercentage: 0,
+    wholesaleMarkupPercentage: 0,
+    tradeMarkupPercentage: 0,
+    retailMarkupPercentage: 0
   });
 
   const [specKey, setSpecKey] = useState('');
@@ -138,7 +148,11 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
         specifications: formData.specifications,
         current_stock: formData.currentStock,
         min_stock: formData.minStock,
-        preferred_suppliers: []
+        preferred_suppliers: [],
+        internal_usage_markup_percentage: formData.internalUsageMarkupPercentage,
+        wholesale_markup_percentage: formData.wholesaleMarkupPercentage,
+        trade_markup_percentage: formData.tradeMarkupPercentage,
+        retail_markup_percentage: formData.retailMarkupPercentage
       };
 
       const { data: insertedPart, error: partError } = await supabase
@@ -182,7 +196,16 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
         }],
         currentStock: formData.currentStock,
         minStock: formData.minStock,
-        preferredSuppliers: []
+        preferredSuppliers: [],
+        internalUsageMarkupPercentage: formData.internalUsageMarkupPercentage,
+        wholesaleMarkupPercentage: formData.wholesaleMarkupPercentage,
+        tradeMarkupPercentage: formData.tradeMarkupPercentage,
+        retailMarkupPercentage: formData.retailMarkupPercentage,
+        // Calculated prices
+        internalUsagePrice: formData.initialPrice * (1 + formData.internalUsageMarkupPercentage / 100),
+        wholesalePrice: formData.initialPrice * (1 + formData.wholesaleMarkupPercentage / 100),
+        tradePrice: formData.initialPrice * (1 + formData.tradeMarkupPercentage / 100),
+        retailPrice: formData.initialPrice * (1 + formData.retailMarkupPercentage / 100)
       };
       
       // 4. Notify parent component
@@ -198,7 +221,11 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
         minStock: 0,
         specifications: {},
         initialPrice: 0,
-        supplier: ''
+        supplier: '',
+        internalUsageMarkupPercentage: 0,
+        wholesaleMarkupPercentage: 0,
+        tradeMarkupPercentage: 0,
+        retailMarkupPercentage: 0
       });
       
       // 6. Close modal
@@ -455,6 +482,105 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
                 <Settings className="h-5 w-5 mr-2 text-orange-600" />
                 Specifications
               </h3>
+
+              {/* Pricing Tiers Section */}
+              <div className="mb-6">
+                <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <DollarSign className="h-5 w-5 mr-2 text-blue-600" />
+                  Pricing Tiers Markups (%)
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Internal Usage Markup (%)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.internalUsageMarkupPercentage || ''}
+                      onChange={(e) => handleInputChange('internalUsageMarkupPercentage', parseFloat(e.target.value) || 0)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Wholesale Markup (%)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.wholesaleMarkupPercentage || ''}
+                      onChange={(e) => handleInputChange('wholesaleMarkupPercentage', parseFloat(e.target.value) || 0)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Trade Markup (%)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.tradeMarkupPercentage || ''}
+                      onChange={(e) => handleInputChange('tradeMarkupPercentage', parseFloat(e.target.value) || 0)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Retail Markup (%)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.retailMarkupPercentage || ''}
+                      onChange={(e) => handleInputChange('retailMarkupPercentage', parseFloat(e.target.value) || 0)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+                
+                {/* Live Preview of Calculated Prices */}
+                {formData.initialPrice > 0 && (
+                  <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                    <h5 className="text-sm font-medium text-gray-900 mb-3">Calculated Pricing Preview</h5>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div className="text-center">
+                        <p className="text-gray-600">Internal Usage</p>
+                        <p className="font-bold text-blue-600">
+                          ${(formData.initialPrice * (1 + formData.internalUsageMarkupPercentage / 100)).toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-gray-600">Wholesale</p>
+                        <p className="font-bold text-green-600">
+                          ${(formData.initialPrice * (1 + formData.wholesaleMarkupPercentage / 100)).toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-gray-600">Trade</p>
+                        <p className="font-bold text-purple-600">
+                          ${(formData.initialPrice * (1 + formData.tradeMarkupPercentage / 100)).toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-gray-600">Retail</p>
+                        <p className="font-bold text-orange-600">
+                          ${(formData.initialPrice * (1 + formData.retailMarkupPercentage / 100)).toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
               
               {/* Add Specification */}
               <div className="mb-4 p-4 bg-gray-50 rounded-lg">

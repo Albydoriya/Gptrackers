@@ -34,6 +34,16 @@ export interface Part {
   currentStock: number;
   minStock: number;
   preferredSuppliers: string[];
+  // New markup percentages
+  internalUsageMarkupPercentage?: number;
+  wholesaleMarkupPercentage?: number;
+  tradeMarkupPercentage?: number;
+  retailMarkupPercentage?: number;
+  // Calculated prices
+  internalUsagePrice?: number;
+  wholesalePrice?: number;
+  tradePrice?: number;
+  retailPrice?: number;
 }
 
 export interface Supplier {

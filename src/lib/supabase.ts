@@ -77,6 +77,11 @@ interface Database {
           is_archived: boolean;
           created_at: string;
           updated_at: string;
+          // New markup columns
+          internal_usage_markup_percentage: number;
+          wholesale_markup_percentage: number;
+          trade_markup_percentage: number;
+          retail_markup_percentage: number;
         };
         Insert: {
           id?: string;
@@ -91,6 +96,11 @@ interface Database {
           is_archived?: boolean;
           created_at?: string;
           updated_at?: string;
+          // New markup columns
+          internal_usage_markup_percentage?: number;
+          wholesale_markup_percentage?: number;
+          trade_markup_percentage?: number;
+          retail_markup_percentage?: number;
         };
         Update: {
           id?: string;
@@ -105,6 +115,11 @@ interface Database {
           is_archived?: boolean;
           created_at?: string;
           updated_at?: string;
+          // New markup columns
+          internal_usage_markup_percentage?: number;
+          wholesale_markup_percentage?: number;
+          trade_markup_percentage?: number;
+          retail_markup_percentage?: number;
         };
       };
       part_price_history: {
