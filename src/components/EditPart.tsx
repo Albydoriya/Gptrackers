@@ -192,10 +192,6 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
         wholesale_markup_percentage: formData.wholesaleMarkupPercentage,
         trade_markup_percentage: formData.tradeMarkupPercentage,
         retail_markup_percentage: formData.retailMarkupPercentage
-        internal_usage_markup_percentage: formData.internalUsageMarkupPercentage,
-        wholesale_markup_percentage: formData.wholesaleMarkupPercentage,
-        trade_markup_percentage: formData.tradeMarkupPercentage,
-        retail_markup_percentage: formData.retailMarkupPercentage
       };
 
       // 2. Update the main part details in Supabase
