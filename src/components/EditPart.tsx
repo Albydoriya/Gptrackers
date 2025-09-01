@@ -108,10 +108,6 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
         wholesaleMarkupPercentage: part.wholesaleMarkupPercentage || 0,
         tradeMarkupPercentage: part.tradeMarkupPercentage || 0,
         retailMarkupPercentage: part.retailMarkupPercentage || 0
-        internalUsageMarkupPercentage: part.internalUsageMarkupPercentage || 0,
-        wholesaleMarkupPercentage: part.wholesaleMarkupPercentage || 0,
-        tradeMarkupPercentage: part.tradeMarkupPercentage || 0,
-        retailMarkupPercentage: part.retailMarkupPercentage || 0
       });
     }
   }, [part]);
