@@ -263,7 +263,7 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
         retailPrice: (() => {
           const currentPrice = formData.newPrice || getCurrentPrice();
           return currentPrice * (1 + formData.retailMarkupPercentage / 100);
-        })()
+        })(),
         // Recalculate derived prices based on potentially new current price and updated markups
         internalUsagePrice: (() => {
           const currentPrice = formData.newPrice || getCurrentPrice();
