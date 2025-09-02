@@ -669,25 +669,6 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
                     <DollarSign className="h-4 w-4 mr-2 text-green-600 dark:text-green-400" />
                     Pricing Tiers Markups (%)
                   </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  
-
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Retail Markup (%)
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={formData.retailMarkupPercentage || ''}
-                        onChange={(e) => handleInputChange('retailMarkupPercentage', parseFloat(e.target.value) || 0)}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                        placeholder="0.00"
-                      />
-                    </div>
-                  </div>
                   
                   {/* Live Preview of Calculated Prices */}
                   {formData.initialPrice > 0 && (
