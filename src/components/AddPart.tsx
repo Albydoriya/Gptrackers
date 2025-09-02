@@ -504,11 +504,11 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
                   <input
                     type="number"
                     step="0.01"
-                    min="0"
+                    min="20"
                     value={formData.wholesaleMarkupPercentage || ''}
-                    onChange={(e) => handleInputChange('wholesaleMarkupPercentage', parseFloat(e.target.value) || 0)}
+                    onChange={(e) => handleInputChange('wholesaleMarkupPercentage', parseFloat(e.target.value) || 20)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="0.00"
+                    placeholder="20"
                   />
                 </div>
                 <div>
@@ -520,9 +520,9 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
                     step="0.01"
                     min="0"
                     value={formData.tradeMarkupPercentage || ''}
-                    onChange={(e) => handleInputChange('tradeMarkupPercentage', parseFloat(e.target.value) || 0)}
+                    onChange={(e) => handleInputChange('tradeMarkupPercentage', parseFloat(e.target.value) || 30)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="0.00"
+                    placeholder="30"
                   />
                 </div>
                 <div>
@@ -534,9 +534,9 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
                     step="0.01"
                     min="0"
                     value={formData.retailMarkupPercentage || ''}
-                    onChange={(e) => handleInputChange('retailMarkupPercentage', parseFloat(e.target.value) || 0)}
+                    onChange={(e) => handleInputChange('retailMarkupPercentage', parseFloat(e.target.value) || 50)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="0.00"
+                    placeholder="50"
                   />
                 </div>
               </div>
