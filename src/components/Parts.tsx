@@ -66,7 +66,7 @@ function Parts() {
         preferredSuppliers: partData.preferred_suppliers || [],
         // New markup percentages
         internalUsageMarkupPercentage: partData.internal_usage_markup_percentage || 10,
-        wholesaleMarkupPercentage: partData.wholesale_markup_percentage || 200,
+        wholesaleMarkupPercentage: partData.wholesale_markup_percentage || 20,
         tradeMarkupPercentage: partData.trade_markup_percentage || 30,
         retailMarkupPercentage: partData.retail_markup_percentage || 50,
         // Calculate pricing tiers
@@ -74,25 +74,25 @@ function Parts() {
           const currentPrice = (partData.price_history && partData.price_history.length > 0)
             ? parseFloat(partData.price_history[partData.price_history.length - 1].price)
             : 0;
-          return currentPrice * (1 + (partData.internal_usage_markup_percentage || 0) / 100);
+          return currentPrice * (1 + (partData.internal_usage_markup_percentage || 10) / 100);
         })(),
         wholesalePrice: (() => {
           const currentPrice = (partData.price_history && partData.price_history.length > 0)
             ? parseFloat(partData.price_history[partData.price_history.length - 1].price)
             : 0;
-          return currentPrice * (1 + (partData.wholesale_markup_percentage || 0) / 100);
+          return currentPrice * (1 + (partData.wholesale_markup_percentage || 20) / 100)*1.1;
         })(),
         tradePrice: (() => {
           const currentPrice = (partData.price_history && partData.price_history.length > 0)
             ? parseFloat(partData.price_history[partData.price_history.length - 1].price)
             : 0;
-          return currentPrice * (1 + (partData.trade_markup_percentage || 0) / 100);
+          return currentPrice * (1 + (partData.trade_markup_percentage || 30) / 100);
         })(),
         retailPrice: (() => {
           const currentPrice = (partData.price_history && partData.price_history.length > 0)
             ? parseFloat(partData.price_history[partData.price_history.length - 1].price)
             : 0;
-          return currentPrice * (1 + (partData.retail_markup_percentage || 0) / 100);
+          return currentPrice * (1 + (partData.retail_markup_percentage || 50) / 100);
         })()
       }));
 
