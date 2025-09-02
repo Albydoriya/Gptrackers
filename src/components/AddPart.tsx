@@ -588,65 +588,7 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
                   <DollarSign className="h-5 w-5 mr-2 text-blue-600" />
                   Pricing Tiers Markups (%)
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Internal Usage Markup (%)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={formData.internalUsageMarkupPercentage || ''}
-                      onChange={(e) => handleInputChange('internalUsageMarkupPercentage', parseFloat(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Wholesale Markup (%)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={formData.wholesaleMarkupPercentage || ''}
-                      onChange={(e) => handleInputChange('wholesaleMarkupPercentage', parseFloat(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Trade Markup (%)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={formData.tradeMarkupPercentage || ''}
-                      onChange={(e) => handleInputChange('tradeMarkupPercentage', parseFloat(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Retail Markup (%)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={formData.retailMarkupPercentage || ''}
-                      onChange={(e) => handleInputChange('retailMarkupPercentage', parseFloat(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="0.00"
-                    />
-                  </div>
-                </div>
-                
+
                 {/* Live Preview of Calculated Prices */}
                 {formData.initialPrice > 0 && (
                   <div className="mt-4 p-4 bg-blue-50 rounded-lg">
