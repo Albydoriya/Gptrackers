@@ -492,7 +492,7 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
                     step="0.01"
                     min="10"
                     default="10"
-                    value={formData.internalUsageMarkupPercentage || ''}
+                    value={formData.internalUsageMarkupPercentage || 10}
                     onChange={(e) => handleInputChange('internalUsageMarkupPercentage', parseFloat(e.target.value) || 10)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="10"
@@ -507,7 +507,7 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
                     step="0.01"
                     min="20"
                     default="20"
-                    value={formData.wholesaleMarkupPercentage || ''}
+                    value={formData.wholesaleMarkupPercentage || 20}
                     onChange={(e) => handleInputChange('wholesaleMarkupPercentage', parseFloat(e.target.value) || 20)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="20"
@@ -522,7 +522,7 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
                     step="0.01"
                     min="30"
                     default="30"
-                    value={formData.tradeMarkupPercentage || ''}
+                    value={formData.tradeMarkupPercentage || 30}
                     onChange={(e) => handleInputChange('tradeMarkupPercentage', parseFloat(e.target.value) || 30)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="30"
@@ -537,7 +537,7 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
                     step="0.01"
                     min="50"
                     default="50"
-                    value={formData.retailMarkupPercentage || ''}
+                    value={formData.retailMarkupPercentage || 50}
                     onChange={(e) => handleInputChange('retailMarkupPercentage', parseFloat(e.target.value) || 50)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="50"
