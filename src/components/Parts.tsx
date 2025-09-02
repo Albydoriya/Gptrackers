@@ -474,7 +474,7 @@ function Parts() {
                   <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-400">Internal Usage:</span>
                     <span className="font-medium text-gray-900 dark:text-gray-100">
-                      ${selectedPart.internalUsagePrice?.toFixed(2)} ({selectedPart.internalUsageMarkupPercentage?.toFixed(1)}%)
+                      ${selectedPart.internalUsagePrice?.toFixed(2)} ({selectedPart.internalUsageMarkupPercentage?.toFixed()}%)
                     </span>
                   </div>
                   <div className="flex justify-between">
