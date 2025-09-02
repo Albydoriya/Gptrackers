@@ -312,9 +312,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         if (insertError && insertResult.type !== 'timeout') {
           console.error('Error creating user profile:', insertError);
-          // If it's a duplicate key error, the profile was created by another session
-          // Just continue with the existing profile
-          if (insertError.code !== '23505') {
+          // If it's a duplicate key error (23505), the profile already exists
+          // This is not a critical error, just continue with existing profile
+          if (insertError.code === '23505') {
+            console.log('User profile already exists, continuing with existing profile');
+          } else {
             console.warn('Profile creation failed, continuing with default user data:', insertError);
           }
         } else if (insertResult.type === 'timeout') {
