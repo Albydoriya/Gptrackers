@@ -546,7 +546,7 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
               </div>
               
               {/* Live Preview of Calculated Prices */}
-              {formData.initialPrice >= 0 && (
+              {formData.initialPrice < 0 && (
                 <div className="mt-4 p-4 bg-blue-50 rounded-lg">
                   <h5 className="text-sm font-medium text-gray-900 mb-3">Calculated Pricing Preview</h5>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
