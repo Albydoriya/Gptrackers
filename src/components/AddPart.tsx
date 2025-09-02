@@ -551,9 +551,9 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
                   <h5 className="text-sm font-medium text-gray-900 mb-3">Calculated Pricing Preview</h5>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div className="text-center">
-                      <p className="text-gray-600">Internal Usage</p>
+                      <p className="text-gray-600">Internal Usage (With GST)</p>
                       <p className="font-bold text-blue-600">
-                        ${(formData.initialPrice * (1 + (formData.internalUsageMarkupPercentage || 10) / 100)).toFixed(2)}
+                        ${(formData.initialPrice * (1 + (formData.internalUsageMarkupPercentage || 10) / 100))*1.1.toFixed(2)}
                       </p>
                     </div>
                     <div className="text-center">
