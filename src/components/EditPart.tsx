@@ -668,6 +668,7 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
                     <DollarSign className="h-4 w-4 mr-2 text-green-600 dark:text-green-400" />
                     Pricing Tiers Markups (%)
                   </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   </div>
                   
                   {/* Live Preview of Calculated Prices */}
