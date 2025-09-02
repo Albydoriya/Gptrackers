@@ -553,7 +553,7 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
                     <div className="text-center">
                       <p className="text-gray-600">Internal Usage (With GST)</p>
                       <p className="font-bold text-blue-600">
-                        ${(formData.initialPrice * (1 + (formData.internalUsageMarkupPercentage || 10) / 100))*1.1.toFixed(2)}
+                        ${(formData.initialPrice * (1 + (formData.internalUsageMarkupPercentage || 10) / 100)*1.1).toFixed(2)}
                       </p>
                     </div>
                     <div className="text-center">
