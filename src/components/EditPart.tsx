@@ -758,6 +758,7 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
                     </div>
                   </div>
                 </div>
+                 </div>
                   
                   {/* Live Preview of Calculated Prices */}
                   {formData.initialPrice > 0 && (
