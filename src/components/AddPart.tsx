@@ -149,7 +149,7 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
         current_stock: formData.currentStock,
         min_stock: formData.minStock,
         preferred_suppliers: [],
-        internal_usage_markup_percentage: formData.internalUsageMarkupPercentage,
+        internal_usage_markup_percentage: formData.internalUsageMarkupPercentage || 10,
         wholesale_markup_percentage: formData.wholesaleMarkupPercentage,
         trade_markup_percentage: formData.tradeMarkupPercentage,
         retail_markup_percentage: formData.retailMarkupPercentage
