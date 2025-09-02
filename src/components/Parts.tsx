@@ -65,10 +65,10 @@ function Parts() {
         minStock: partData.min_stock,
         preferredSuppliers: partData.preferred_suppliers || [],
         // New markup percentages
-        internalUsageMarkupPercentage: partData.internal_usage_markup_percentage || 0,
-        wholesaleMarkupPercentage: partData.wholesale_markup_percentage || 0,
-        tradeMarkupPercentage: partData.trade_markup_percentage || 0,
-        retailMarkupPercentage: partData.retail_markup_percentage || 0,
+        internalUsageMarkupPercentage: partData.internal_usage_markup_percentage || 10,
+        wholesaleMarkupPercentage: partData.wholesale_markup_percentage || 200,
+        tradeMarkupPercentage: partData.trade_markup_percentage || 30,
+        retailMarkupPercentage: partData.retail_markup_percentage || 50,
         // Calculate pricing tiers
         internalUsagePrice: (() => {
           const currentPrice = (partData.price_history && partData.price_history.length > 0)
