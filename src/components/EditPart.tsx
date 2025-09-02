@@ -708,30 +708,30 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
                   
                   {/* Live Preview of Calculated Prices */}
                   <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                    <h5 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Calculated Pricing Preview</h5>
+                    <h5 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Calculated Pricing Preview(With GST)</h5>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div className="text-center">
                         <p className="text-gray-600 dark:text-gray-400">Internal Usage</p>
                         <p className="font-bold text-blue-600 dark:text-blue-400">
-                          ${(currentPrice * (1 + formData.internalUsageMarkupPercentage / 100)).toFixed(2)}
+                          ${(currentPrice * (1 + (formData.internalUsageMarkupPercentage || 10)/ 100)*1.1).toFixed(2)}
                         </p>
                       </div>
                       <div className="text-center">
                         <p className="text-gray-600 dark:text-gray-400">Wholesale</p>
                         <p className="font-bold text-green-600 dark:text-green-400">
-                          ${(currentPrice * (1 + formData.wholesaleMarkupPercentage / 100)).toFixed(2)}
+                          ${(currentPrice * (1 + (formData.wholesaleMarkupPercentage || 20)/ 100)*1.1).toFixed(2)}
                         </p>
                       </div>
                       <div className="text-center">
                         <p className="text-gray-600 dark:text-gray-400">Trade</p>
                         <p className="font-bold text-purple-600 dark:text-purple-400">
-                          ${(currentPrice * (1 + formData.tradeMarkupPercentage / 100)).toFixed(2)}
+                          ${(currentPrice * (1 + (formData.tradeMarkupPercentage || 30)/ 100)*1.1).toFixed(2)}
                         </p>
                       </div>
                       <div className="text-center">
                         <p className="text-gray-600 dark:text-gray-400">Retail</p>
                         <p className="font-bold text-orange-600 dark:text-orange-400">
-                          ${(currentPrice * (1 + formData.retailMarkupPercentage / 100)).toFixed(2)}
+                          ${(currentPrice * (1 + (formData.retailMarkupPercentage || 50) / 100)*1.1).toFixed(2)}
                         </p>
                       </div>
                     </div>
