@@ -533,6 +533,7 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
                     type="number"
                     step="0.01"
                     min="50"
+                    default="50"
                     value={formData.retailMarkupPercentage || ''}
                     onChange={(e) => handleInputChange('retailMarkupPercentage', parseFloat(e.target.value) || 50)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
