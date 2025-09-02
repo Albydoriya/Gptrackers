@@ -491,6 +491,7 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
                     type="number"
                     step="0.01"
                     min="10"
+                    default="10"
                     value={formData.internalUsageMarkupPercentage || ''}
                     onChange={(e) => handleInputChange('internalUsageMarkupPercentage', parseFloat(e.target.value) || 10)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -505,6 +506,7 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
                     type="number"
                     step="0.01"
                     min="20"
+                    default="20"
                     value={formData.wholesaleMarkupPercentage || ''}
                     onChange={(e) => handleInputChange('wholesaleMarkupPercentage', parseFloat(e.target.value) || 20)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -519,6 +521,7 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
                     type="number"
                     step="0.01"
                     min="30"
+                    default="30"
                     value={formData.tradeMarkupPercentage || ''}
                     onChange={(e) => handleInputChange('tradeMarkupPercentage', parseFloat(e.target.value) || 30)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
