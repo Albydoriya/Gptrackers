@@ -661,8 +661,7 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
                   <DollarSign className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
                   Update Pricing
                 </h3>
-                
-                
+                     
                 {/* Pricing Tiers Markup Section */}
                 <div className="mb-8">
                   {/* Live Preview of Calculated Prices */}
