@@ -74,7 +74,7 @@ function Parts() {
           const currentPrice = (partData.price_history && partData.price_history.length > 0)
             ? parseFloat(partData.price_history[partData.price_history.length - 1].price)
             : 0;
-          return currentPrice * (1 + (partData.internal_usage_markup_percentage || 10) / 100);
+          return currentPrice * (1 + (partData.internal_usage_markup_percentage || 10) / 100)*1.1;
         })(),
         wholesalePrice: (() => {
           const currentPrice = (partData.price_history && partData.price_history.length > 0)
@@ -86,13 +86,13 @@ function Parts() {
           const currentPrice = (partData.price_history && partData.price_history.length > 0)
             ? parseFloat(partData.price_history[partData.price_history.length - 1].price)
             : 0;
-          return currentPrice * (1 + (partData.trade_markup_percentage || 30) / 100);
+          return currentPrice * (1 + (partData.trade_markup_percentage || 30) / 100)*1.1;
         })(),
         retailPrice: (() => {
           const currentPrice = (partData.price_history && partData.price_history.length > 0)
             ? parseFloat(partData.price_history[partData.price_history.length - 1].price)
             : 0;
-          return currentPrice * (1 + (partData.retail_markup_percentage || 50) / 100);
+          return currentPrice * (1 + (partData.retail_markup_percentage || 50) / 100)*1.1;
         })()
       }));
 
