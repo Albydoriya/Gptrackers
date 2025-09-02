@@ -584,10 +584,7 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
 
               {/* Pricing Tiers Section */}
               <div className="mb-6">
-                <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <DollarSign className="h-5 w-5 mr-2 text-blue-600" />
-                  Pricing Tiers Markups (%)
-                </h4>
+
 
                 {/* Live Preview of Calculated Prices */}
                 {formData.initialPrice > 0 && (
