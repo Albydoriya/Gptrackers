@@ -708,7 +708,7 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
                   
                   {/* Live Preview of Calculated Prices */}
                   <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                    <h5 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Calculated Pricing Preview(With GST)</h5>
+                    <h5 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Calculated Pricing Preview (With GST)</h5>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div className="text-center">
                         <p className="text-gray-600 dark:text-gray-400">Internal Usage</p>
