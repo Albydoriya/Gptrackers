@@ -664,8 +664,6 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
                 
                 {/* Pricing Tiers Markup Section */}
                 <div className="mb-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  </div>
                   
                   {/* Live Preview of Calculated Prices */}
                   <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
