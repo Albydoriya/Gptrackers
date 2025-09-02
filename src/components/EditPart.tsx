@@ -758,11 +758,6 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
                     </div>
                   </div>
                 </div>
-
-                
-                {/* Pricing Tiers Markup Section */}
-                <div className="mb-8">
-                </div>
                   
                   {/* Live Preview of Calculated Prices */}
                   {formData.initialPrice > 0 && (
