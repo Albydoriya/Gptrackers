@@ -681,12 +681,7 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
                             ${(formData.initialPrice * (1 + formData.wholesaleMarkupPercentage / 100)).toFixed(2)}
                           </p>
                         </div>
-                        <div className="text-center">
-                          <p className="text-gray-600">Trade</p>
-                          <p className="font-bold text-purple-600">
-                            ${(formData.initialPrice * (1 + formData.tradeMarkupPercentage / 100)).toFixed(2)}
-                          </p>
-                        </div>
+
                         <div className="text-center">
                           <p className="text-gray-600">Retail</p>
                           <p className="font-bold text-orange-600">
