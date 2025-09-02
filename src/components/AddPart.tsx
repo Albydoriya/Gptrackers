@@ -485,7 +485,7 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Internal Usage Markup (%)
+                    Internal Usage Markup (10%)
                   </label>
                   <input
                     type="number"
@@ -499,7 +499,7 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Wholesale Markup (%)
+                    Wholesale Markup (20%)
                   </label>
                   <input
                     type="number"
@@ -513,7 +513,7 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Trade Markup (%)
+                    Trade Markup (30%)
                   </label>
                   <input
                     type="number"
@@ -527,7 +527,7 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Retail Markup (%)
+                    Retail Markup (50%)
                   </label>
                   <input
                     type="number"
