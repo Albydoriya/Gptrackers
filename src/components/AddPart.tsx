@@ -500,7 +500,7 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Wholesale Markup ('>'20%)
+                    Wholesale Markup (20%)
                   </label>
                   <input
                     type="number"
@@ -515,7 +515,7 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Trade Markup ('>'30%)
+                    Trade Markup (30%)
                   </label>
                   <input
                     type="number"
@@ -530,7 +530,7 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Retail Markup ('>'50%)
+                    Retail Markup (\>50%)
                   </label>
                   <input
                     type="number"
