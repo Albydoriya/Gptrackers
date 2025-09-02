@@ -469,7 +469,7 @@ function Parts() {
               </div>
 
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Pricing Tiers</h4>
+                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Pricing Tiers (With GST)</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-400">Internal Usage:</span>
