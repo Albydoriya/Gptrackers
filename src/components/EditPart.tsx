@@ -664,37 +664,6 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
                      
                 {/* Pricing Tiers Markup Section */}
                 <div className="mb-8">
-                  {/* Live Preview of Calculated Prices */}
-                  {formData.initialPrice > 0 && (
-                    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                      <h5 className="text-sm font-medium text-gray-900 mb-3">Calculated Pricing Preview</h5>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div className="text-center">
-                          <p className="text-gray-600">Internal Usage</p>
-                          <p className="font-bold text-blue-600">
-                            ${(formData.initialPrice * (1 + formData.internalUsageMarkupPercentage / 100)).toFixed(2)}
-                          </p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-gray-600">Wholesale</p>
-                          <p className="font-bold text-green-600">
-                            ${(formData.initialPrice * (1 + formData.wholesaleMarkupPercentage / 100)).toFixed(2)}
-                          </p>
-                        </div>
-
-                        <div className="text-center">
-                          <p className="text-gray-600">Retail</p>
-                          <p className="font-bold text-orange-600">
-                            ${(formData.initialPrice * (1 + formData.retailMarkupPercentage / 100)).toFixed(2)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Pricing Tiers Markup Section */}
-                <div className="mb-8">
                   <h4 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
                     <DollarSign className="h-4 w-4 mr-2 text-green-600 dark:text-green-400" />
                     Pricing Tiers Markups (%)
