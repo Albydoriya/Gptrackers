@@ -559,19 +559,19 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
                     <div className="text-center">
                       <p className="text-gray-600">Wholesale</p>
                       <p className="font-bold text-green-600">
-                        ${(formData.initialPrice * (1 + (formData.wholesaleMarkupPercentage || 20)/ 100)).toFixed(2)}
+                        ${(formData.initialPrice * (1 + (formData.wholesaleMarkupPercentage || 20)/ 100)*1.1).toFixed(2)}
                       </p>
                     </div>
                     <div className="text-center">
                       <p className="text-gray-600">Trade</p>
                       <p className="font-bold text-purple-600">
-                        ${(formData.initialPrice * (1 + (formData.tradeMarkupPercentage || 30) / 100)).toFixed(2)}
+                        ${(formData.initialPrice * (1 + (formData.tradeMarkupPercentage || 30) / 100)*1.1).toFixed(2)}
                       </p>
                     </div>
                     <div className="text-center">
                       <p className="text-gray-600">Retail</p>
                       <p className="font-bold text-orange-600">
-                        ${(formData.initialPrice * (1 + (formData.retailMarkupPercentage || 50)/ 100)).toFixed(2)}
+                        ${(formData.initialPrice * (1 + (formData.retailMarkupPercentage || 50)/ 100)*1.1).toFixed(2)}
                       </p>
                     </div>
                   </div>
