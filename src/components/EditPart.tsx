@@ -235,10 +235,6 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
         wholesaleMarkupPercentage: formData.wholesaleMarkupPercentage,
         tradeMarkupPercentage: formData.tradeMarkupPercentage,
         retailMarkupPercentage: formData.retailMarkupPercentage,
-        internalUsageMarkupPercentage: formData.internalUsageMarkupPercentage,
-        wholesaleMarkupPercentage: formData.wholesaleMarkupPercentage,
-        tradeMarkupPercentage: formData.tradeMarkupPercentage,
-        retailMarkupPercentage: formData.retailMarkupPercentage,
         priceHistory: formData.newPrice && formData.newSupplier && formData.priceUpdateReason 
           ? [...part.priceHistory, {
               date: new Date().toISOString().split('T')[0],
