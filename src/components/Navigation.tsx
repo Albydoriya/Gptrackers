@@ -77,7 +77,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
               </div>
               
               {/* Vertical Separator */}
-
+              <div className="hidden lg:block h-8 w-px bg-gray-300 dark:bg-gray-600"></div>
             </div>
             
             <div className="hidden md:flex space-x-1">
