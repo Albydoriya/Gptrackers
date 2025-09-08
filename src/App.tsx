@@ -13,6 +13,7 @@ import Suppliers from './components/Suppliers';
 import Analytics from './components/Analytics';
 import StatusTracker from './components/StatusTracker';
 import UserManagement from './components/UserManagement';
+import Quotes from './components/Quotes';
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading, user, updateUserProfile } = useAuth();
@@ -147,6 +148,12 @@ const AppContent: React.FC = () => {
         return (
           <ProtectedRoute requiredPermission={{ resource: 'users', action: 'manage' }}>
             <UserManagement />
+          </ProtectedRoute>
+        );
+      case 'quotes':
+        return (
+          <ProtectedRoute requiredPermission={{ resource: 'quotes', action: 'read' }}>
+            <Quotes />
           </ProtectedRoute>
         );
       default:
