@@ -96,3 +96,57 @@ interface StatusUpdate {
   notes?: string;
   updatedBy: string;
 }
+
+export interface Customer {
+  id: string;
+  name: string;
+  contactPerson: string;
+  email: string;
+  phone: string;
+  address: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Quote {
+  id: string;
+  quoteNumber: string;
+  customer: Customer;
+  status: QuoteStatus;
+  parts: QuotePart[];
+  totalBidItemsCost: number;
+  shippingCosts: {
+    sea: number;
+    air: number;
+    selected: 'sea' | 'air';
+  };
+  agentFees: number;
+  localShippingFees: number;
+  subtotalAmount: number;
+  gstAmount: number;
+  grandTotalAmount: number;
+  quoteDate: string;
+  expiryDate: string;
+  notes?: string;
+  createdBy: string;
+  convertedToOrderId?: string;
+}
+
+export interface QuotePart {
+  id: string;
+  part?: Part; // For existing parts from catalog
+  customPartName?: string; // For custom items
+  customPartDescription?: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  isCustomPart: boolean;
+}
+
+export type QuoteStatus = 
+  | 'draft'
+  | 'sent'
+  | 'accepted'
+  | 'rejected'
+  | 'converted_to_order'
+  | 'expired';

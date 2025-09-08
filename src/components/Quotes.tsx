@@ -16,9 +16,13 @@ import {
   ArrowRight,
   Loader2,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Building,
+  Receipt
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { Quote } from '../types';
+import CreateQuote from './CreateQuote';
 
 // Temporary placeholder component - will be fully implemented later
 const Quotes: React.FC = () => {
@@ -26,6 +30,8 @@ const Quotes: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [isLoading, setIsLoading] = useState(false);
+  const [isCreateQuoteOpen, setIsCreateQuoteOpen] = useState(false);
+  const [quotes, setQuotes] = useState<Quote[]>([]);
 
   const statusOptions = [
     { value: 'all', label: 'All Statuses' },
@@ -37,6 +43,22 @@ const Quotes: React.FC = () => {
     { value: 'expired', label: 'Expired' },
   ];
 
+  const handleQuoteCreated = (newQuote: Quote) => {
+    setQuotes(prev => [newQuote, ...prev]);
+    setIsCreateQuoteOpen(false);
+  };
+
+  const getStatusColor = (status: string) => {
+    const colors = {
+      draft: 'bg-gray-100 text-gray-800',
+      sent: 'bg-blue-100 text-blue-800',
+      accepted: 'bg-green-100 text-green-800',
+      rejected: 'bg-red-100 text-red-800',
+      converted_to_order: 'bg-purple-100 text-purple-800',
+      expired: 'bg-orange-100 text-orange-800',
+    };
+    return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+  };
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -54,7 +76,7 @@ const Quotes: React.FC = () => {
         </div>
         {hasPermission('quotes', 'create') && (
           <button 
-            onClick={() => {/* TODO: Open create quote modal */}}
+            onClick={() => setIsCreateQuoteOpen(true)}
             className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
             <Plus className="h-4 w-4" />
@@ -95,45 +117,162 @@ const Quotes: React.FC = () => {
         </div>
       </div>
 
-      {/* Placeholder Content */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
-        <div className="max-w-md mx-auto">
-          <div className="p-4 bg-blue-100 dark:bg-blue-900/30 rounded-full w-fit mx-auto mb-6">
-            <FileText className="h-12 w-12 text-blue-600 dark:text-blue-400" />
-          </div>
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            Quotes Management System
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Create professional quotes for customers with detailed cost calculations including shipping options, agent fees, and GST. Convert accepted quotes directly into orders for your purchasing team.
-          </p>
-          
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
-            <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Coming Soon Features:</h4>
-            <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1 text-left">
-              <li>• Customer management and quote creation</li>
-              <li>• Detailed cost calculations (shipping, fees, GST)</li>
-              <li>• Sea vs Air freight cost comparison</li>
-              <li>• Quote to order conversion workflow</li>
-              <li>• Professional quote PDF generation</li>
-            </ul>
-          </div>
-          
-          {hasPermission('quotes', 'create') ? (
-            <button 
-              onClick={() => {/* TODO: Open create quote modal */}}
-              className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors mx-auto"
-            >
-              <Plus className="h-5 w-5" />
-              <span>Create Your First Quote</span>
-            </button>
-          ) : (
-            <div className="text-gray-500 dark:text-gray-400">
-              Contact your administrator for quote creation permissions
+      {/* Quotes List */}
+      {quotes.length === 0 ? (
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
+          <div className="max-w-md mx-auto">
+            <div className="p-4 bg-blue-100 dark:bg-blue-900/30 rounded-full w-fit mx-auto mb-6">
+              <FileText className="h-12 w-12 text-blue-600 dark:text-blue-400" />
             </div>
-          )}
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              No Quotes Yet
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Create professional quotes for customers with detailed cost calculations including shipping options, agent fees, and GST.
+            </p>
+            
+            {hasPermission('quotes', 'create') ? (
+              <button 
+                onClick={() => setIsCreateQuoteOpen(true)}
+                className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors mx-auto"
+              >
+                <Plus className="h-5 w-5" />
+                <span>Create Your First Quote</span>
+              </button>
+            ) : (
+              <div className="text-gray-500 dark:text-gray-400">
+                Contact your administrator for quote creation permissions
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6">
+          {quotes.map((quote) => (
+            <div key={quote.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                      <Receipt className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <div className="flex items-center space-x-3">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{quote.quoteNumber}</h3>
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(quote.status)}`}>
+                          {quote.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        Created: {new Date(quote.quoteDate).toLocaleDateString()} • 
+                        Expires: {new Date(quote.expiryDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                      ${quote.grandTotalAmount.toLocaleString()}
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">Total Amount</div>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Customer Information */}
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <div className="p-2 bg-white dark:bg-gray-600 rounded-lg">
+                        <Building className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100">Customer</h4>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{quote.customer.name}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{quote.customer.contactPerson}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{quote.customer.email}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Items Summary */}
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <div className="p-2 bg-white dark:bg-gray-600 rounded-lg">
+                        <Receipt className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100">Quote Items</h4>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Total Items:</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">{quote.parts.length}</span>
+                      </div>
+                      <div className="space-y-1">
+                        {quote.parts.slice(0, 3).map((quotePart, index) => (
+                          <div key={index} className="flex justify-between items-center text-sm">
+                            <span className="text-gray-700 dark:text-gray-300 truncate max-w-32">
+                              {quotePart.isCustomPart ? quotePart.customPartName : quotePart.part?.name}
+                            </span>
+                            <span className="text-gray-500 dark:text-gray-400">×{quotePart.quantity}</span>
+                          </div>
+                        ))}
+                        {quote.parts.length > 3 && (
+                          <div className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                            +{quote.parts.length - 3} more items
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Cost Breakdown */}
+                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <div className="p-2 bg-white dark:bg-gray-600 rounded-lg">
+                        <DollarSign className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100">Cost Breakdown</h4>
+                      </div>
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Items:</span>
+                        <span className="text-gray-900 dark:text-gray-100">${quote.totalBidItemsCost.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Shipping:</span>
+                        <span className="text-gray-900 dark:text-gray-100">
+                          ${(quote.shippingCosts.selected === 'sea' ? quote.shippingCosts.sea : quote.shippingCosts.air).toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Fees:</span>
+                        <span className="text-gray-900 dark:text-gray-100">${(quote.agentFees + quote.localShippingFees).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between border-t border-gray-300 dark:border-gray-500 pt-1">
+                        <span className="text-gray-600 dark:text-gray-400">GST:</span>
+                        <span className="text-gray-900 dark:text-gray-100">${quote.gstAmount.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Create Quote Modal */}
+      <CreateQuote
+        isOpen={isCreateQuoteOpen}
+        onClose={() => setIsCreateQuoteOpen(false)}
+        onQuoteCreated={handleQuoteCreated}
+      />
     </div>
   );
 };
