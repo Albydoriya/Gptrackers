@@ -23,6 +23,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { Quote } from '../types';
 import CreateQuote from './CreateQuote';
+import EditQuote from './EditQuote';
 
 // Temporary placeholder component - will be fully implemented later
 const Quotes: React.FC = () => {
@@ -31,6 +32,8 @@ const Quotes: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [isLoading, setIsLoading] = useState(false);
   const [isCreateQuoteOpen, setIsCreateQuoteOpen] = useState(false);
+  const [isEditQuoteOpen, setIsEditQuoteOpen] = useState(false);
+  const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
   const [quotes, setQuotes] = useState<Quote[]>([]);
 
   const statusOptions = [
@@ -46,6 +49,19 @@ const Quotes: React.FC = () => {
   const handleQuoteCreated = (newQuote: Quote) => {
     setQuotes(prev => [newQuote, ...prev]);
     setIsCreateQuoteOpen(false);
+  };
+
+  const handleQuoteUpdated = (updatedQuote: Quote) => {
+    setQuotes(prev => prev.map(quote => 
+      quote.id === updatedQuote.id ? updatedQuote : quote
+    ));
+    setIsEditQuoteOpen(false);
+    setEditingQuote(null);
+  };
+
+  const handleEditQuote = (quote: Quote) => {
+    setEditingQuote(quote);
+    setIsEditQuoteOpen(true);
   };
 
   const getStatusColor = (status: string) => {
@@ -171,6 +187,24 @@ const Quotes: React.FC = () => {
                   </div>
                   
                   <div className="text-right">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <button 
+                        onClick={() => {/* TODO: View quote details */}}
+                        className="flex items-center space-x-1 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors text-sm"
+                      >
+                        <Eye className="h-3 w-3" />
+                        <span>View</span>
+                      </button>
+                      {hasPermission('quotes', 'update') && (
+                        <button 
+                          onClick={() => handleEditQuote(quote)}
+                          className="flex items-center space-x-1 px-3 py-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors text-sm"
+                        >
+                          <Edit className="h-3 w-3" />
+                          <span>Edit</span>
+                        </button>
+                      )}
+                    </div>
                     <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                       ${quote.grandTotalAmount.toLocaleString()}
                     </div>
@@ -272,6 +306,17 @@ const Quotes: React.FC = () => {
         isOpen={isCreateQuoteOpen}
         onClose={() => setIsCreateQuoteOpen(false)}
         onQuoteCreated={handleQuoteCreated}
+      />
+
+      {/* Edit Quote Modal */}
+      <EditQuote
+        isOpen={isEditQuoteOpen}
+        onClose={() => {
+          setIsEditQuoteOpen(false);
+          setEditingQuote(null);
+        }}
+        onQuoteUpdated={handleQuoteUpdated}
+        quote={editingQuote}
       />
     </div>
   );
