@@ -39,8 +39,8 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
-    { id: 'orders', label: 'Orders', icon: ShoppingCart, permission: { resource: 'orders', action: 'read' } },
     { id: 'quotes', label: 'Quotes', icon: FileText, permission: { resource: 'quotes', action: 'read' } },
+    { id: 'orders', label: 'Orders', icon: ShoppingCart, permission: { resource: 'orders', action: 'read' } },
     { id: 'parts', label: 'Parts Catalog', icon: Package, permission: { resource: 'parts', action: 'read' } },
     { id: 'suppliers', label: 'Suppliers', icon: UserCheck, permission: { resource: 'suppliers', action: 'read' } },
     { id: 'analytics', label: 'Analytics', icon: TrendingUp, permission: { resource: 'analytics', action: 'read' } },
