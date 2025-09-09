@@ -23,6 +23,8 @@ import {
   Clock,
   XCircle
 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import { Quote, QuotePart, Customer, Part, QuoteStatus } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -51,6 +53,7 @@ interface QuoteFormData {
 
 const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, quote }) => {
   const { user } = useAuth();
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -59,6 +62,10 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
   const [showAddCustomItem, setShowAddCustomItem] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [availableParts, setAvailableParts] = useState<Part[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [isLoadingParts, setIsLoadingParts] = useState(true);
+  const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
   
   const [newCustomer, setNewCustomer] = useState({
     name: '',
@@ -91,9 +98,131 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
   });
 
   // Mock data - in production, these would come from Supabase
-  const [availableParts] = useState<Part[]>([
-    {
-      id: '1',
+  // Initialize form data when quote changes
+  useEffect(() => {
+    if (quote) {
+      setFormData({
+        quoteNumber: quote.quoteNumber,
+        customer: quote.customer,
+        parts: [...quote.parts],
+        shippingCosts: { ...quote.shippingCosts },
+        agentFees: quote.agentFees,
+        localShippingFees: quote.localShippingFees,
+        expiryDate: quote.expiryDate,
+        notes: quote.notes || '',
+        status: quote.status
+      });
+      setSubmitError(null);
+    }
+  }, [quote]);
+
+  // Fetch parts from Supabase
+  useEffect(() => {
+    const fetchParts = async () => {
+      setIsLoadingParts(true);
+      try {
+        const { data, error } = await supabase
+          .from('parts')
+          .select('*, price_history:part_price_history(*)')
+          .eq('is_archived', false);
+
+        if (error) throw error;
+
+        const transformedParts: Part[] = (data || []).map(part => ({
+          id: part.id,
+          partNumber: part.part_number,
+          name: part.name,
+          description: part.description,
+          category: part.category,
+          specifications: part.specifications || {},
+          currentStock: part.current_stock || 0,
+          minStock: part.min_stock || 0,
+          preferredSuppliers: part.preferred_suppliers || [],
+          priceHistory: (part.price_history || []).map((ph: any) => ({
+            date: ph.effective_date,
+            price: parseFloat(ph.price),
+            supplier: ph.supplier_name,
+            quantity: ph.quantity || 1
+          })),
+          // Markup percentages and calculated prices
+          internalUsageMarkupPercentage: part.internal_usage_markup_percentage || 10,
+          wholesaleMarkupPercentage: part.wholesale_markup_percentage || 20,
+          tradeMarkupPercentage: part.trade_markup_percentage || 30,
+          retailMarkupPercentage: part.retail_markup_percentage || 50,
+          internalUsagePrice: (() => {
+            const currentPrice = (part.price_history && part.price_history.length > 0)
+              ? parseFloat(part.price_history[part.price_history.length - 1].price)
+              : 0;
+            return currentPrice * (1 + (part.internal_usage_markup_percentage || 10) / 100) * 1.1;
+          })(),
+          wholesalePrice: (() => {
+            const currentPrice = (part.price_history && part.price_history.length > 0)
+              ? parseFloat(part.price_history[part.price_history.length - 1].price)
+              : 0;
+            return currentPrice * (1 + (part.wholesale_markup_percentage || 20) / 100) * 1.1;
+          })(),
+          tradePrice: (() => {
+            const currentPrice = (part.price_history && part.price_history.length > 0)
+              ? parseFloat(part.price_history[part.price_history.length - 1].price)
+              : 0;
+            return currentPrice * (1 + (part.trade_markup_percentage || 30) / 100) * 1.1;
+          })(),
+          retailPrice: (() => {
+            const currentPrice = (part.price_history && part.price_history.length > 0)
+              ? parseFloat(part.price_history[part.price_history.length - 1].price)
+              : 0;
+            return currentPrice * (1 + (part.retail_markup_percentage || 50) / 100) * 1.1;
+          })()
+        }));
+
+        setAvailableParts(transformedParts);
+      } catch (error) {
+        console.error('Error fetching parts:', error);
+      } finally {
+        setIsLoadingParts(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchParts();
+    }
+  }, [isOpen]);
+
+  // Fetch customers from Supabase
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      setIsLoadingCustomers(true);
+      try {
+        const { data, error } = await supabase
+          .from('customers')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const transformedCustomers: Customer[] = (data || []).map(customer => ({
+          id: customer.id,
+          name: customer.name,
+          contactPerson: customer.contact_person,
+          email: customer.email,
+          phone: customer.phone,
+          address: customer.address,
+          createdAt: customer.created_at,
+          updatedAt: customer.updated_at
+        }));
+
+        setCustomers(transformedCustomers);
+      } catch (error) {
+        console.error('Error fetching customers:', error);
+      } finally {
+        setIsLoadingCustomers(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchCustomers();
+    }
+  }, [isOpen]);
       partNumber: 'CPU-001',
       name: 'High-Performance Processor',
       description: 'Advanced 8-core processor for industrial applications',
@@ -211,21 +340,39 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
     setShowAddCustomItem(false);
   };
 
-  const addNewCustomerToQuote = () => {
+  const addNewCustomerToQuote = async () => {
     if (!newCustomer.name || !newCustomer.email) {
       return;
     }
 
-    const customCustomer: Customer = {
-      id: `custom-${Date.now()}`,
-      name: newCustomer.name,
-      contactPerson: newCustomer.contactPerson,
-      email: newCustomer.email,
-      phone: newCustomer.phone,
-      address: newCustomer.address,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+    try {
+      // Insert new customer into Supabase
+      const customerObject = {
+        name: newCustomer.name.trim(),
+        contact_person: newCustomer.contactPerson.trim(),
+        email: newCustomer.email.trim(),
+        phone: newCustomer.phone.trim(),
+        address: newCustomer.address.trim()
+      };
+
+      const { data: insertedCustomer, error } = await supabase
+        .from('customers')
+        .insert([customerObject])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const customer: Customer = {
+        id: insertedCustomer.id,
+        name: insertedCustomer.name,
+        contactPerson: insertedCustomer.contact_person,
+        email: insertedCustomer.email,
+        phone: insertedCustomer.phone,
+        address: insertedCustomer.address,
+        createdAt: insertedCustomer.created_at,
+        updatedAt: insertedCustomer.updated_at
+      };
     
     setFormData(prev => ({ ...prev, customer: customCustomer }));
     setNewCustomer({ name: '', contactPerson: '', email: '', phone: '', address: '' });
@@ -315,15 +462,21 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
       case 2:
         return formData.parts.length > 0;
       case 3:
-        return formData.expiryDate !== '';
-      default:
-        return true;
+      // Add to local customers list and select it
+      setCustomers(prev => [customer, ...prev]);
+      setFormData(prev => ({ ...prev, customer }));
+      setShowAddNewCustomer(false);
+      setNewCustomer({
+        name: '',
+        contactPerson: '',
+        email: '',
+        phone: '',
+        address: ''
+      });
+    } catch (error) {
+      console.error('Error adding customer:', error);
+      setSubmitError('Failed to add customer. Please try again.');
     }
-  };
-
-  const handleSubmit = (status: QuoteStatus) => {
-    updateQuoteInDatabase(status);
-  };
 
   const updateQuoteInDatabase = async (status: QuoteStatus) => {
     if (!quote || !formData.customer || formData.parts.length === 0 || !user) {
@@ -339,11 +492,78 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
       // For now, we'll simulate the update and call the callback
       
       const updatedQuote: Quote = {
-        ...quote,
-        quoteNumber: formData.quoteNumber,
-        customer: formData.customer,
-        parts: formData.parts,
+    updateQuoteInSupabase(status);
+  };
+
+  const updateQuoteInSupabase = async (status: QuoteStatus) => {
+    if (!quote || !formData.customer || formData.parts.length === 0 || !user) {
+      setSubmitError('Please ensure all required fields are filled');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      // 1. Update the main quote
+      const quoteUpdateObject = {
+        customer_id: formData.customer.id,
         status,
+        total_bid_items_cost: getTotalBidItemsCost(),
+        shipping_cost_sea: formData.shippingCosts.sea,
+        shipping_cost_air: formData.shippingCosts.air,
+        selected_shipping_method: formData.shippingCosts.selected,
+        agent_fees: formData.agentFees,
+        local_shipping_fees: formData.localShippingFees,
+        subtotal_amount: getSubtotalAmount(),
+        gst_amount: getGSTAmount(),
+        grand_total_amount: getGrandTotalAmount(),
+        expiry_date: formData.expiryDate,
+        notes: formData.notes.trim() || null,
+        updated_at: new Date().toISOString()
+      };
+
+      const { error: quoteError } = await supabase
+        .from('quotes')
+        .update(quoteUpdateObject)
+        .eq('id', quote.id);
+
+      if (quoteError) throw quoteError;
+
+      // 2. Delete existing quote parts
+      const { error: deleteError } = await supabase
+        .from('quote_parts')
+        .delete()
+        .eq('quote_id', quote.id);
+
+      if (deleteError) throw deleteError;
+
+      // 3. Insert updated quote parts
+      if (formData.parts.length > 0) {
+        const quotePartsArray = formData.parts.map(quotePart => ({
+          quote_id: quote.id,
+          part_id: quotePart.isCustomPart ? null : quotePart.part?.id,
+          custom_part_name: quotePart.isCustomPart ? quotePart.customPartName : null,
+          custom_part_description: quotePart.isCustomPart ? quotePart.customPartDescription : null,
+          quantity: quotePart.quantity,
+          unit_price: quotePart.unitPrice,
+          is_custom_part: quotePart.isCustomPart,
+          pricing_tier: quotePart.isCustomPart ? null : 'wholesale'
+        }));
+
+        const { error: partsError } = await supabase
+          .from('quote_parts')
+          .insert(quotePartsArray);
+
+        if (partsError) throw partsError;
+      }
+
+      // 4. Create updated Quote object for callback
+      const updatedQuote: Quote = {
+        ...quote,
+        customer: formData.customer,
+        status,
+        parts: formData.parts,
         totalBidItemsCost: getTotalBidItemsCost(),
         shippingCosts: formData.shippingCosts,
         agentFees: formData.agentFees,
@@ -354,10 +574,8 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
         expiryDate: formData.expiryDate,
         notes: formData.notes
       };
-
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
+      
+      // 5. Success - notify parent and close modal
       onQuoteUpdated(updatedQuote);
       onClose();
       setCurrentStep(1);
@@ -370,6 +588,101 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
     }
   };
 
+  const handleConvertToOrder = async () => {
+    if (!quote || !user) return;
+
+    const confirmed = window.confirm(
+      `Convert quote ${quote.quoteNumber} to an order?\n\nThis will create a new order for your purchasing team and mark the quote as converted.`
+    );
+    
+    if (!confirmed) return;
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      // 1. Create order from quote
+      const orderObject = {
+        order_number: quote.quoteNumber.replace('QTE-', 'ORD-'),
+        supplier_id: quote.parts[0]?.part?.preferredSuppliers?.[0] || null, // Use first preferred supplier or null
+        status: 'draft',
+        priority: 'medium',
+        total_amount: quote.grandTotalAmount,
+        order_date: new Date().toISOString().split('T')[0],
+        expected_delivery: null,
+        notes: `Converted from quote ${quote.quoteNumber}. ${quote.notes || ''}`.trim(),
+        created_by: user.id,
+        shipping_data: {
+          convertedFromQuote: true,
+          originalQuoteId: quote.id,
+          shippingCosts: quote.shippingCosts,
+          agentFees: quote.agentFees,
+          localShippingFees: quote.localShippingFees
+        },
+        attachments: []
+      };
+
+      // Note: This will only work if you have at least one supplier in your suppliers table
+      // You might need to handle the case where no supplier is available
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert([orderObject])
+        .select('id')
+        .single();
+
+      if (orderError) throw orderError;
+      if (!orderData) throw new Error('Failed to create order');
+
+      // 2. Create order parts from quote parts (only for catalog parts)
+      const catalogParts = quote.parts.filter(qp => !qp.isCustomPart && qp.part);
+      if (catalogParts.length > 0) {
+        const orderPartsArray = catalogParts.map(quotePart => ({
+          order_id: orderData.id,
+          part_id: quotePart.part!.id,
+          quantity: quotePart.quantity,
+          unit_price: quotePart.unitPrice
+        }));
+
+        const { error: partsError } = await supabase
+          .from('order_parts')
+          .insert(orderPartsArray);
+
+        if (partsError) throw partsError;
+      }
+
+      // 3. Update quote status to converted
+      const { error: quoteUpdateError } = await supabase
+        .from('quotes')
+        .update({ 
+          status: 'converted_to_order',
+          converted_to_order_id: orderData.id,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', quote.id);
+
+      if (quoteUpdateError) throw quoteUpdateError;
+
+      // 4. Success - update local state and close
+      const updatedQuote: Quote = {
+        ...quote,
+        status: 'converted_to_order',
+        convertedToOrderId: orderData.id
+      };
+      
+      onQuoteUpdated(updatedQuote);
+      onClose();
+      setCurrentStep(1);
+
+      // Show success message
+      alert(`Quote successfully converted to order! Order ID: ${orderData.id}`);
+
+    } catch (error: any) {
+      console.error('Error converting quote to order:', error);
+      setSubmitError(error.message || 'Failed to convert quote to order. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   if (!isOpen || !quote) return null;
 
   const steps = [
