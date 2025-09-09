@@ -345,6 +345,145 @@ interface Database {
           created_at?: string;
         };
       };
+      customers: {
+        Row: {
+          id: string;
+          name: string;
+          contact_person: string;
+          email: string;
+          phone: string;
+          address: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          contact_person: string;
+          email: string;
+          phone: string;
+          address: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          contact_person?: string;
+          email?: string;
+          phone?: string;
+          address?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      quotes: {
+        Row: {
+          id: string;
+          quote_number: string;
+          customer_id: string;
+          status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'converted_to_order' | 'expired';
+          total_bid_items_cost: number;
+          shipping_cost_sea: number;
+          shipping_cost_air: number;
+          selected_shipping_method: 'sea' | 'air';
+          agent_fees: number;
+          local_shipping_fees: number;
+          subtotal_amount: number;
+          gst_amount: number;
+          grand_total_amount: number;
+          quote_date: string;
+          expiry_date: string;
+          notes: string | null;
+          created_by: string | null;
+          converted_to_order_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          quote_number?: string;
+          customer_id: string;
+          status?: 'draft' | 'sent' | 'accepted' | 'rejected' | 'converted_to_order' | 'expired';
+          total_bid_items_cost?: number;
+          shipping_cost_sea?: number;
+          shipping_cost_air?: number;
+          selected_shipping_method?: 'sea' | 'air';
+          agent_fees?: number;
+          local_shipping_fees?: number;
+          subtotal_amount?: number;
+          gst_amount?: number;
+          grand_total_amount?: number;
+          quote_date?: string;
+          expiry_date: string;
+          notes?: string | null;
+          created_by?: string | null;
+          converted_to_order_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          quote_number?: string;
+          customer_id?: string;
+          status?: 'draft' | 'sent' | 'accepted' | 'rejected' | 'converted_to_order' | 'expired';
+          total_bid_items_cost?: number;
+          shipping_cost_sea?: number;
+          shipping_cost_air?: number;
+          selected_shipping_method?: 'sea' | 'air';
+          agent_fees?: number;
+          local_shipping_fees?: number;
+          subtotal_amount?: number;
+          gst_amount?: number;
+          grand_total_amount?: number;
+          quote_date?: string;
+          expiry_date?: string;
+          notes?: string | null;
+          created_by?: string | null;
+          converted_to_order_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      quote_parts: {
+        Row: {
+          id: string;
+          quote_id: string;
+          part_id: string | null;
+          custom_part_name: string | null;
+          custom_part_description: string | null;
+          quantity: number;
+          unit_price: number;
+          total_price: number;
+          is_custom_part: boolean;
+          pricing_tier: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          quote_id: string;
+          part_id?: string | null;
+          custom_part_name?: string | null;
+          custom_part_description?: string | null;
+          quantity: number;
+          unit_price: number;
+          is_custom_part?: boolean;
+          pricing_tier?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          quote_id?: string;
+          part_id?: string | null;
+          custom_part_name?: string | null;
+          custom_part_description?: string | null;
+          quantity?: number;
+          unit_price?: number;
+          is_custom_part?: boolean;
+          pricing_tier?: string | null;
+          created_at?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
@@ -357,6 +496,7 @@ interface Database {
       priority_level: 'low' | 'medium' | 'high';
       notification_type: 'order_status' | 'low_stock' | 'price_change' | 'delivery' | 'approval' | 'system';
       user_role: 'admin' | 'manager' | 'buyer' | 'viewer';
+      quote_status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'converted_to_order' | 'expired';
     };
   };
 }
