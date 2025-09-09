@@ -54,11 +54,11 @@ const Quotes: React.FC = () => {
     setError(null);
     
     try {
-      const { data, error: fetchError } = await supabase
+      // First, fetch quotes with quote_parts
+      const { data: quotesData, error: quotesError } = await supabase
         .from('quotes')
         .select(`
           *,
-          customer:customers(*),
           quote_parts(
             *,
             part:parts(*)
@@ -66,21 +66,55 @@ const Quotes: React.FC = () => {
         `)
         .order('created_at', { ascending: false });
 
-      if (fetchError) throw fetchError;
+      if (quotesError) throw quotesError;
+
+      if (!quotesData || quotesData.length === 0) {
+        setQuotes([]);
+        return;
+      }
+
+      // Get unique customer IDs
+      const customerIds = [...new Set(quotesData.map(quote => quote.customer_id).filter(Boolean))];
+      
+      // Fetch customers separately
+      const { data: customersData, error: customersError } = await supabase
+        .from('customers')
+        .select('*')
+        .in('id', customerIds);
+
+      if (customersError) throw customersError;
+
+      // Create a map of customers for quick lookup
+      const customersMap = new Map();
+      (customersData || []).forEach(customer => {
+        customersMap.set(customer.id, customer);
+      });
 
       // Transform Supabase data to match Quote interface
-      const transformedQuotes: Quote[] = (data || []).map(quoteData => ({
+      const transformedQuotes: Quote[] = quotesData.map(quoteData => {
+        const customerData = customersMap.get(quoteData.customer_id);
+        
+        return {
         id: quoteData.id,
         quoteNumber: quoteData.quote_number,
-        customer: {
-          id: quoteData.customer.id,
-          name: quoteData.customer.name,
-          contactPerson: quoteData.customer.contact_person,
-          email: quoteData.customer.email,
-          phone: quoteData.customer.phone,
-          address: quoteData.customer.address,
-          createdAt: quoteData.customer.created_at,
-          updatedAt: quoteData.customer.updated_at
+        customer: customerData ? {
+          id: customerData.id,
+          name: customerData.name,
+          contactPerson: customerData.contact_person,
+          email: customerData.email,
+          phone: customerData.phone,
+          address: customerData.address,
+          createdAt: customerData.created_at,
+          updatedAt: customerData.updated_at
+        } : {
+          id: '',
+          name: 'Unknown Customer',
+          contactPerson: 'Unknown',
+          email: 'unknown@example.com',
+          phone: 'N/A',
+          address: 'N/A',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         },
         status: quoteData.status,
         parts: quoteData.quote_parts.map((quotePart: any) => ({
@@ -120,7 +154,8 @@ const Quotes: React.FC = () => {
         notes: quoteData.notes,
         createdBy: quoteData.created_by || 'Unknown',
         convertedToOrderId: quoteData.converted_to_order_id
-      }));
+        };
+      });
 
       setQuotes(transformedQuotes);
     } catch (err: any) {
