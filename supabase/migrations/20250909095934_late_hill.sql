@@ -110,7 +110,7 @@ CREATE TABLE IF NOT EXISTS quotes (
   quote_date date DEFAULT CURRENT_DATE,
   expiry_date date NOT NULL,
   notes text,
-  created_by uuid REFERENCES users(id),
+  created_by uuid REFERENCES auth.users(id),
   converted_to_order_id uuid REFERENCES orders(id),
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now(),
