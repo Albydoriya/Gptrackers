@@ -26,7 +26,6 @@ import {
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Quote, QuotePart, Customer, Part, QuoteStatus } from '../types';
-import { useAuth } from '../contexts/AuthContext';
 
 interface EditQuoteProps {
   isOpen: boolean;
@@ -52,7 +51,6 @@ interface QuoteFormData {
 }
 
 const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, quote }) => {
-  const { user } = useAuth();
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
@@ -97,7 +95,6 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
     localShippingFees: 0
   });
 
-  // Mock data - in production, these would come from Supabase
   // Initialize form data when quote changes
   useEffect(() => {
     if (quote) {
@@ -223,58 +220,8 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
       fetchCustomers();
     }
   }, [isOpen]);
-      partNumber: 'CPU-001',
-      name: 'High-Performance Processor',
-      description: 'Advanced 8-core processor for industrial applications',
-      category: 'Electronics',
-      specifications: { 'Clock Speed': '3.2 GHz', 'Cores': '8' },
-      priceHistory: [{ date: '2024-01-15', price: 275.00, supplier: 'TechParts Inc.', quantity: 10 }],
-      currentStock: 45,
-      minStock: 20,
-      preferredSuppliers: [],
-      internalUsageMarkupPercentage: 10,
-      wholesaleMarkupPercentage: 20,
-      tradeMarkupPercentage: 30,
-      retailMarkupPercentage: 50,
-      internalUsagePrice: 302.50,
-      wholesalePrice: 330.00,
-      tradePrice: 357.50,
-      retailPrice: 412.50
-    }
-  ]);
-
-  const [customers] = useState<Customer[]>([
-    {
-      id: '1',
-      name: 'ABC Manufacturing',
-      contactPerson: 'John Smith',
-      email: 'john@abcmfg.com',
-      phone: '+61 2 1234 5678',
-      address: '123 Industrial Ave, Sydney NSW 2000',
-      createdAt: '2024-01-01',
-      updatedAt: '2024-01-01'
-    }
-  ]);
 
   const categories = ['all', ...new Set(availableParts.map(p => p.category))];
-
-  // Initialize form data when quote changes
-  useEffect(() => {
-    if (quote) {
-      setFormData({
-        quoteNumber: quote.quoteNumber,
-        customer: quote.customer,
-        parts: [...quote.parts],
-        expiryDate: quote.expiryDate,
-        notes: quote.notes || '',
-        status: quote.status,
-        shippingCosts: { ...quote.shippingCosts },
-        agentFees: quote.agentFees,
-        localShippingFees: quote.localShippingFees
-      });
-      setSubmitError(null);
-    }
-  }, [quote]);
 
   const filteredParts = availableParts.filter(part => {
     const matchesSearch = part.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -373,10 +320,22 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
         createdAt: insertedCustomer.created_at,
         updatedAt: insertedCustomer.updated_at
       };
-    
-    setFormData(prev => ({ ...prev, customer: customCustomer }));
-    setNewCustomer({ name: '', contactPerson: '', email: '', phone: '', address: '' });
-    setShowAddNewCustomer(false);
+
+      // Add to local customers list and select it
+      setCustomers(prev => [customer, ...prev]);
+      setFormData(prev => ({ ...prev, customer }));
+      setShowAddNewCustomer(false);
+      setNewCustomer({
+        name: '',
+        contactPerson: '',
+        email: '',
+        phone: '',
+        address: ''
+      });
+    } catch (error) {
+      console.error('Error adding customer:', error);
+      setSubmitError('Failed to add customer. Please try again.');
+    }
   };
 
   const updatePartQuantity = (partId: string, quantity: number) => {
@@ -462,36 +421,13 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
       case 2:
         return formData.parts.length > 0;
       case 3:
-      // Add to local customers list and select it
-      setCustomers(prev => [customer, ...prev]);
-      setFormData(prev => ({ ...prev, customer }));
-      setShowAddNewCustomer(false);
-      setNewCustomer({
-        name: '',
-        contactPerson: '',
-        email: '',
-        phone: '',
-        address: ''
-      });
-    } catch (error) {
-      console.error('Error adding customer:', error);
-      setSubmitError('Failed to add customer. Please try again.');
+        return formData.expiryDate !== '';
+      default:
+        return true;
     }
+  };
 
-  const updateQuoteInDatabase = async (status: QuoteStatus) => {
-    if (!quote || !formData.customer || formData.parts.length === 0 || !user) {
-      setSubmitError('Please ensure all required fields are filled');
-      return;
-    }
-
-    setIsSubmitting(true);
-    setSubmitError(null);
-
-    try {
-      // In production, this would update the quote in Supabase
-      // For now, we'll simulate the update and call the callback
-      
-      const updatedQuote: Quote = {
+  const handleSubmit = async (status: QuoteStatus) => {
     updateQuoteInSupabase(status);
   };
 
@@ -683,6 +619,7 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
       setIsSubmitting(false);
     }
   };
+
   if (!isOpen || !quote) return null;
 
   const steps = [
