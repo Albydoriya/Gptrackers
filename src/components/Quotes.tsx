@@ -54,14 +54,14 @@ const Quotes: React.FC = () => {
     setError(null);
     
     try {
-      // First, fetch quotes with quote_parts
+      // Fetch quotes with quote_parts using the proper foreign key relationship
       const { data: quotesData, error: quotesError } = await supabase
         .from('quotes')
         .select(`
           *,
-          quote_parts(
+          quote_parts!quote_parts_quote_id_fkey(
             *,
-            part:parts(*)
+            parts(*)
           )
         `)
         .order('created_at', { ascending: false });
