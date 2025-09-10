@@ -574,7 +574,7 @@ const Quotes: React.FC = () => {
         <div className="grid grid-cols-1 gap-6">
           {displayQuotes.map((quote) => {
             const isExpired = isQuoteExpired(quote);
-            const isConverting = isConverting === quote.id;
+            const isCurrentQuoteConverting = isConverting === quote.id;
             
             return (
             <div key={quote.id} className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border hover:shadow-md transition-shadow ${
@@ -621,7 +621,7 @@ const Quotes: React.FC = () => {
                       {hasPermission('quotes', 'update') && (
                         <button 
                           onClick={() => handleEditQuote(quote)}
-                          disabled={isConverting}
+                          disabled={isCurrentQuoteConverting}
                           className="flex items-center space-x-1 px-3 py-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors text-sm"
                         >
                           <Edit className="h-3 w-3" />
@@ -631,14 +631,14 @@ const Quotes: React.FC = () => {
                       {hasPermission('quotes', 'convert') && quote.status === 'accepted' && (
                         <button 
                           onClick={() => handleConvertToOrder(quote)}
-                          disabled={isConverting}
+                          disabled={isCurrentQuoteConverting}
                           className={`flex items-center space-x-1 px-3 py-1 rounded-lg text-sm transition-colors ${
-                            isConverting 
+                            isCurrentQuoteConverting 
                               ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                               : 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/50'
                           }`}
                         >
-                          {isConverting ? (
+                          {isCurrentQuoteConverting ? (
                             <>
                               <Loader2 className="h-3 w-3 animate-spin" />
                               <span>Converting...</span>
