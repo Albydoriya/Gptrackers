@@ -477,7 +477,6 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
       if (formData.parts.length > 0) {
         const quotePartsArray = formData.parts.map(quotePart => ({
           quote_id: quote.id,
-          quote_id: quote.id,
           part_id: quotePart.isCustomPart ? null : quotePart.part?.id,
           custom_part_name: quotePart.isCustomPart ? quotePart.customPartName : null,
           custom_part_description: quotePart.isCustomPart ? quotePart.customPartDescription : null,
