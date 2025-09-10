@@ -455,7 +455,6 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
         gst_amount: getGSTAmount(),
         grand_total_amount: getGrandTotalAmount(),
         expiry_date: formData.expiryDate,
-        notes: formData.notes.trim() || null,
         updated_at: new Date().toISOString()
       };
 
