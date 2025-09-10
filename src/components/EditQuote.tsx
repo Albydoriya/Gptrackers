@@ -464,7 +464,7 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
         .eq('id', quote.id);
 
       if (quoteError) throw quoteError;
-
+      console.log("step 1 done")
       // 2. Delete existing quote parts
       const { error: deleteError } = await supabase
         .from('quote_parts')
@@ -472,7 +472,7 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
         .eq('quote_id', quote.id);
 
       if (deleteError) throw deleteError;
-
+      console.log("step 2 done")
       // 3. Insert updated quote parts
       if (formData.parts.length > 0) {
         const quotePartsArray = formData.parts.map(quotePart => ({
