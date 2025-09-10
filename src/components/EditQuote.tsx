@@ -492,7 +492,7 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
 
         if (partsError) throw partsError;
       }
-
+      console.log("step 3 done")
       // 4. Create updated Quote object for callback
       const updatedQuote: Quote = {
         ...quote,
