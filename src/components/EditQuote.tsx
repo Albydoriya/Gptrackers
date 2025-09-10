@@ -478,7 +478,10 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
       if (formData.parts.length > 0) {
         const quotePartsArray = formData.parts.map(quotePart => ({
           quote_id: quote.id,
+          quote_id: quote.id,
           part_id: quotePart.isCustomPart ? null : quotePart.part?.id,
+          custom_part_name: quotePart.isCustomPart ? quotePart.customPartName : null,
+          custom_part_description: quotePart.isCustomPart ? quotePart.customPartDescription : null,
           custom_part_name: quotePart.isCustomPart ? quotePart.customPartName : null,
           custom_part_description: quotePart.isCustomPart ? quotePart.customPartDescription : null,
           quantity: quotePart.quantity,
@@ -576,7 +579,8 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
           order_id: orderData.id,
           part_id: quotePart.part!.id,
           quantity: quotePart.quantity,
-          unit_price: quotePart.unitPrice
+          unit_price: quotePart.unitPrice,
+          is_custom_part: quotePart.isCustomPart
         }));
 
         const { error: partsError } = await supabase

@@ -328,7 +328,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           console.error('Error creating user profile:', insertError);
           // If it's a duplicate key error (23505), the profile already exists
           // This is not a critical error, just continue with existing profile
-          if (insertError.code === '23505' || insertError.code === 23505) {
+          if (insertError.code === '23505' || insertError.code === 23505 || insertError.code === '23505') {
             console.log('User profile already exists, continuing with existing profile');
           } else {
             console.warn('Profile creation failed, continuing with default user data:', insertError);
@@ -338,7 +338,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
       } else if (profileError) {
         // Handle duplicate key error during profile fetch as well
-        if (profileError.code === '23505' || profileError.code === 23505) {
+        if (profileError.code === '23505' || profileError.code === 23505 || profileError.code === '23505') {
           console.log('User profile already exists during fetch, this is expected');
         } else {
           console.warn('Profile fetch error (non-critical):', profileError);
