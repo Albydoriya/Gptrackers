@@ -644,7 +644,7 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
       }
 
       // 3. Update quote status to converted
-      onQuoteUpdated();
+      const { error: quoteUpdateError } = await supabase
         .from('quotes')
         .update({ 
           status: 'converted_to_order',
