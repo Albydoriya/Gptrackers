@@ -1,5 +1,3 @@
-```sql
-
 
 -- Create enums for quotes system
 DO $$ BEGIN
@@ -14,17 +12,17 @@ EXCEPTION
   WHEN duplicate_object THEN null;
 END $$;
 
--- Create customers table
-CREATE TABLE IF NOT EXISTS customers (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL,
-  contact_person text NOT NULL,
-  email text NOT NULL,
-  phone text NOT NULL,
-  address text NOT NULL,
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
+-- -- Create customers table
+-- CREATE TABLE IF NOT EXISTS customers (
+--   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+--   name text NOT NULL,
+--   contact_person text NOT NULL,
+--   email text NOT NULL,
+--   phone text NOT NULL,
+--   address text NOT NULL,
+--   created_at timestamptz DEFAULT now(),
+--   updated_at timestamptz DEFAULT now()
+-- );
 
 -- Create quotes table
 CREATE TABLE IF NOT EXISTS quotes (
@@ -392,4 +390,3 @@ INSERT INTO customers (name, contact_person, email, phone, address) VALUES
   ('Industrial Components Co.', 'Michael Roberts', 'michael.roberts@indcomp.com.au', '+61 8 6543 2109', '92 Component Avenue, Perth WA 6000, Australia'),
   ('Automation Systems Group', 'Lisa Wang', 'lisa.wang@autogroup.com.au', '+61 2 5432 1098', '156 Automation Boulevard, Sydney NSW 2001, Australia')
 ON CONFLICT (id) DO NOTHING;
-```
