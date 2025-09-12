@@ -16,6 +16,7 @@ import {
   AlertCircle,
   Edit3,
   Building,
+  Mail,
   Truck,
   Calculator,
   Loader2

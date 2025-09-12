@@ -330,6 +330,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           // This is not a critical error, just continue with existing profile
           if (insertError.code === '23505' || insertError.code === 23505 || insertError.code === '23505') {
             console.log('User profile already exists, continuing with existing profile');
+            // Re-fetch the existing profile since it was created by another process
+            try {
+              const { data: existingProfile, error: refetchError } = await supabase
+                .from('user_profiles')
+                .select('*')
+                .eq('id', supabaseUser.id)
+                .single();
+              
+              if (!refetchError && existingProfile) {
+                console.log('Successfully retrieved existing profile after duplicate key error');
+                const roleFromProfile = mockRoles.find(role => role.name === existingProfile.role);
+                if (roleFromProfile) {
+                  userRole = roleFromProfile;
+                }
+                if (existingProfile.full_name) {
+                  fullName = existingProfile.full_name;
+                }
+              }
+            } catch (refetchError) {
+              console.warn('Failed to re-fetch existing profile after duplicate key error:', refetchError);
+            }
           } else {
             console.warn('Profile creation failed, continuing with default user data:', insertError);
           }
