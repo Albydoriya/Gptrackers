@@ -23,7 +23,8 @@ import {
   Send,
   Clock,
   XCircle,
-  Archive
+  Archive,
+  RefreshCw as StatusUpdate
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Quote, Customer, QuotePart, Part } from '../types';
@@ -31,6 +32,7 @@ import { supabase } from '../lib/supabase';
 import CreateQuote from './CreateQuote';
 import EditQuote from './EditQuote';
 import QuoteDetailsModal from './QuoteDetailsModal';
+import QuoteStatusUpdateModal from './QuoteStatusUpdateModal';
 
 const Quotes: React.FC = () => {
   const { hasPermission } = useAuth();
@@ -43,8 +45,10 @@ const Quotes: React.FC = () => {
   const [isCreateQuoteOpen, setIsCreateQuoteOpen] = useState(false);
   const [isEditQuoteOpen, setIsEditQuoteOpen] = useState(false);
   const [isQuoteDetailsOpen, setIsQuoteDetailsOpen] = useState(false);
+  const [isQuoteStatusUpdateOpen, setIsQuoteStatusUpdateOpen] = useState(false);
   const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
   const [viewingQuote, setViewingQuote] = useState<Quote | null>(null);
+  const [statusUpdateQuote, setStatusUpdateQuote] = useState<Quote | null>(null);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [isConverting, setIsConverting] = useState<string | null>(null);
 
@@ -237,6 +241,13 @@ const Quotes: React.FC = () => {
     setEditingQuote(null);
   };
 
+  const handleQuoteStatusUpdate = (quoteId: string, newStatus: any, notes?: string) => {
+    // Refresh quotes list after status update
+    fetchQuotes();
+    setIsQuoteStatusUpdateOpen(false);
+    setStatusUpdateQuote(null);
+  };
+
   const handleEditQuote = (quote: Quote) => {
     setEditingQuote(quote);
     setIsEditQuoteOpen(true);
@@ -245,6 +256,11 @@ const Quotes: React.FC = () => {
   const handleViewQuote = (quote: Quote) => {
     setViewingQuote(quote);
     setIsQuoteDetailsOpen(true);
+  };
+
+  const handleStatusUpdateClick = (quote: Quote) => {
+    setStatusUpdateQuote(quote);
+    setIsQuoteStatusUpdateOpen(true);
   };
 
   const handleConvertToOrder = async (quote: Quote) => {
@@ -628,6 +644,16 @@ const Quotes: React.FC = () => {
                           <span>Edit</span>
                         </button>
                       )}
+                      {hasPermission('quotes', 'update') && (
+                        <button 
+                          onClick={() => handleStatusUpdateClick(quote)}
+                          disabled={isCurrentQuoteConverting}
+                          className="flex items-center space-x-1 px-3 py-1 bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-900/50 transition-colors text-sm"
+                        >
+                          <StatusUpdate className="h-3 w-3" />
+                          <span>Status</span>
+                        </button>
+                      )}
                       {hasPermission('quotes', 'convert') && quote.status === 'accepted' && (
                         <button 
                           onClick={() => handleConvertToOrder(quote)}
@@ -803,6 +829,17 @@ const Quotes: React.FC = () => {
         onEdit={handleEditQuote}
         onConvertToOrder={handleConvertToOrder}
         isConverting={isConverting === viewingQuote?.id}
+      />
+
+      {/* Quote Status Update Modal */}
+      <QuoteStatusUpdateModal
+        isOpen={isQuoteStatusUpdateOpen}
+        onClose={() => {
+          setIsQuoteStatusUpdateOpen(false);
+          setStatusUpdateQuote(null);
+        }}
+        quote={statusUpdateQuote}
+        onStatusUpdate={handleQuoteStatusUpdate}
       />
     </div>
   );
