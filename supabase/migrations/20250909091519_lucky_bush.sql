@@ -72,19 +72,19 @@ CREATE TYPE quote_status AS ENUM (
 );
 
 -- Create customers table
-CREATE TABLE IF NOT EXISTS customers (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL,
-  contact_person text NOT NULL,
-  email text NOT NULL UNIQUE,
-  phone text NOT NULL,
-  address text NOT NULL,
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now(),
+-- CREATE TABLE IF NOT EXISTS customers (
+--   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+--   name text NOT NULL,
+--   contact_person text NOT NULL,
+--   email text NOT NULL UNIQUE,
+--   phone text NOT NULL,
+--   address text NOT NULL,
+--   created_at timestamptz DEFAULT now(),
+--   updated_at timestamptz DEFAULT now(),
   
-  CONSTRAINT customers_name_check CHECK (length(trim(name)) > 0),
-  CONSTRAINT customers_email_check CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
-);
+--   CONSTRAINT customers_name_check CHECK (length(trim(name)) > 0),
+--   CONSTRAINT customers_email_check CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
+-- );
 
 -- Create quotes table
 CREATE TABLE IF NOT EXISTS quotes (
