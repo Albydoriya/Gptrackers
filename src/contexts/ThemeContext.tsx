@@ -21,7 +21,17 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   initialTheme, 
   onThemeChange 
 }) => {
-  const [theme, setThemeState] = useState<Theme>('light');
+  const [theme, setThemeState] = useState<Theme>(() => {
+    // Initialize theme only once to prevent re-renders
+    if (initialTheme && ['light', 'dark', 'auto'].includes(initialTheme)) {
+      return initialTheme;
+    }
+    const savedTheme = localStorage.getItem('theme') as Theme;
+    if (savedTheme && ['light', 'dark', 'auto'].includes(savedTheme)) {
+      return savedTheme;
+    }
+    return 'light';
+  });
   const [actualTheme, setActualTheme] = useState<'light' | 'dark'>('light');
 
   // Check system preference
@@ -31,19 +41,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     }
     return 'light';
   };
-
-  // Load saved theme from localStorage
-  useEffect(() => {
-    // Priority: initialTheme > localStorage > default
-    if (initialTheme && ['light', 'dark', 'auto'].includes(initialTheme)) {
-      setThemeState(initialTheme);
-    } else {
-      const savedTheme = localStorage.getItem('theme') as Theme;
-      if (savedTheme && ['light', 'dark', 'auto'].includes(savedTheme)) {
-        setThemeState(savedTheme);
-      }
-    }
-  }, [initialTheme]);
 
   // Update actual theme based on theme setting
   useEffect(() => {
