@@ -137,15 +137,6 @@ const mockRoles: UserRole[] = [
   }
 ];
 
-// Helper function to determine user role based on email domain or other criteria
-const getUserRole = (email: string): UserRole => {
-  // You can customize this logic based on your needs
-  if (email.includes('admin')) return mockRoles[0]; // admin
-  if (email.includes('manager')) return mockRoles[1]; // manager
-  if (email.includes('buyer')) return mockRoles[2]; // buyer
-  return mockRoles[3]; // viewer (default)
-};
-
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -254,7 +245,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       console.log('Starting createUserFromSession for user:', supabaseUser.id);
       
-      // Try to get existing user profile
+      // Try to get existing user profile with timeout
       console.log('Attempting to fetch user profile from database...');
       const profileResult = await Promise.race([
         supabase
@@ -264,7 +255,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           .single()
           .then(result => ({ type: 'success', ...result })),
         new Promise(resolve =>
-          setTimeout(() => resolve({ type: 'timeout', data: null, error: { message: 'Profile fetch timeout' } }), 10000)
+          setTimeout(() => resolve({ type: 'timeout', data: null, error: { message: 'Profile fetch timeout' } }), 8000)
         )
       ]) as any;
       
@@ -274,16 +265,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       console.log('Profile fetch completed. Error:', profileError, 'Data exists:', !!profile, 'Timeout:', profileResult.type === 'timeout');
 
-      let userRole = getUserRole(supabaseUser.email || '');
+      let userRole: UserRole;
       let fullName = supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User';
 
       // If profile exists, use the data from the profile
       if (profile && !profileError) {
         console.log('Using existing profile data');
         const roleFromProfile = mockRoles.find(role => role.name === profile.role);
-        if (roleFromProfile) {
-          userRole = roleFromProfile;
+        if (!roleFromProfile) {
+          console.error('Invalid role found in profile:', profile.role);
+          throw new Error('Invalid user role in database profile');
         }
+        userRole = roleFromProfile;
+        
         if (profile.full_name) {
           fullName = profile.full_name;
         }
@@ -292,24 +286,38 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.log('Updating last login timestamp (non-blocking)');
         supabase
           .from('user_profiles')
-          .update({ last_login: new Date().toISOString() })
+          .update({ 
+            last_login: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
           .eq('id', supabaseUser.id)
           .then(() => console.log('Last login updated successfully'))
           .catch(err => console.warn('Failed to update last login (non-critical):', err));
       } else if (profileError?.code === 'PGRST116' || profileResult.type === 'timeout') {
-        // Profile doesn't exist (PGRST116 = no rows found) or fetch timed out, create it
-        console.log(profileResult.type === 'timeout' ? 'Profile fetch timed out, creating new profile...' : 'Profile not found, creating new profile...');
+        // Profile doesn't exist (PGRST116 = no rows found) or fetch timed out
+        if (profileResult.type === 'timeout') {
+          console.error('Profile fetch timed out, cannot establish user session safely');
+          throw new Error('Unable to verify user profile - session timeout');
+        }
+        
+        console.log('Profile not found, creating new profile with default viewer role...');
+        
+        // For new users, start with viewer role - admin can upgrade later
+        userRole = mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
         
         // Use upsert to handle potential race conditions
         const profileDataToUpsert = {
           id: supabaseUser.id,
           full_name: fullName,
-          role: userRole.name,
+          email: supabaseUser.email,
+          role: userRole.name as 'admin' | 'manager' | 'buyer' | 'viewer',
           preferences: {},
-          last_login: new Date().toISOString()
+          last_login: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         };
 
-        // Wrap profile upsert in timeout to prevent application freeze
+        // Wrap profile creation in timeout to prevent application freeze
         const insertResult = await Promise.race([
           supabase
             .from('user_profiles')
@@ -318,33 +326,40 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             .single()
             .then(result => ({ type: 'success', ...result })),
           new Promise(resolve =>
-            setTimeout(() => resolve({ type: 'timeout', data: null, error: { message: 'Profile upsert timeout' } }), 10000)
+            setTimeout(() => resolve({ type: 'timeout', data: null, error: { message: 'Profile creation timeout' } }), 8000)
           )
         ]) as any;
         
         const { data: upsertedProfile, error: insertError } = insertResult.type === 'timeout' 
-          ? { error: insertResult.error }
+          ? { data: null, error: insertResult.error }
           : insertResult;
         
-        console.log('Profile upsert completed. Error:', insertError, 'Timeout:', insertResult.type === 'timeout');
+        console.log('Profile creation completed. Error:', insertError, 'Timeout:', insertResult.type === 'timeout');
 
-        if (insertError && insertResult.type !== 'timeout') {
-          console.warn('Profile upsert failed, continuing with default user data:', insertError);
-        } else if (insertResult.type === 'timeout') {
-          console.warn('Profile upsert timed out, continuing with default user data');
-        } else if (upsertedProfile) {
-          // Use the upserted profile data
-          console.log('Successfully upserted profile');
+        if (insertError || insertResult.type === 'timeout') {
+          console.error('Profile creation failed or timed out:', insertError || 'timeout');
+          throw new Error('Unable to create user profile - please try signing in again');
+        }
+        
+        if (upsertedProfile) {
+          console.log('Successfully created new user profile');
           const roleFromProfile = mockRoles.find(role => role.name === upsertedProfile.role);
-          if (roleFromProfile) {
-            userRole = roleFromProfile;
+          if (!roleFromProfile) {
+            console.error('Invalid role in created profile:', upsertedProfile.role);
+            throw new Error('Profile creation resulted in invalid role');
           }
+          userRole = roleFromProfile;
+          
           if (upsertedProfile.full_name) {
             fullName = upsertedProfile.full_name;
           }
+        } else {
+          console.error('Profile creation succeeded but no data returned');
+          throw new Error('Profile creation failed - no data returned');
         }
       } else if (profileError) {
-        console.warn('Profile fetch error (non-critical):', profileError);
+        console.error('Critical profile fetch error:', profileError);
+        throw new Error(`Unable to fetch user profile: ${profileError.message}`);
       }
 
       console.log('Creating user data object...');
@@ -357,7 +372,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         permissions: userRole.permissions,
         department: profile?.department || undefined,
         lastLogin: new Date().toISOString(),
-        preferences: profile?.preferences || { theme: 'light' }
+        preferences: profile?.preferences || { theme: 'light' },
       };
 
       console.log('Setting user data in state');
@@ -365,15 +380,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.log('User session created successfully');
     } catch (error) {
       console.error('Error creating user from session:', error);
-      console.log('Setting user to null due to error');
-      setUser(null);
-      // Clear any potentially corrupted auth data
+      console.log('Critical error - signing out user and clearing session');
+      
+      // Clear any potentially corrupted auth data and force sign out
       try {
-        console.log('Clearing potentially corrupted auth session');
+        localStorage.removeItem('supabase.auth.token');
+        sessionStorage.removeItem('supabase.auth.token');
         await supabase.auth.signOut();
       } catch (signOutError) {
         console.warn('Error during cleanup signOut:', signOutError);
       }
+      
+      setUser(null);
+      throw error; // Re-throw to ensure calling code knows the session creation failed
     }
   };
 
@@ -501,11 +520,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       console.log('Checking session validity...');
       
-      // Use Promise.race to implement timeout with graceful fallback
+      // Check session with timeout
       const sessionResult = await Promise.race([
         supabase.auth.getSession(),
         new Promise((resolve) =>
-          setTimeout(() => resolve({ data: { session: null }, error: { message: 'Session check timeout' } }), 10000)
+          setTimeout(() => resolve({ data: { session: null }, error: { message: 'Session check timeout' } }), 8000)
         )
       ]) as any;
       
@@ -516,6 +535,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.log('Session check timed out, treating as invalid session');
         localStorage.removeItem('supabase.auth.token');
         sessionStorage.removeItem('supabase.auth.token');
+        await supabase.auth.signOut();
         setUser(null);
         return false;
       }
@@ -537,7 +557,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       // If no session or other auth error, sign out
       if (!session || error) {
-        console.log('No valid session found or auth error, signing out...');
+        console.log('No valid session found or auth error:', error?.message || 'No session');
         localStorage.removeItem('supabase.auth.token');
         sessionStorage.removeItem('supabase.auth.token');
         await supabase.auth.signOut();
@@ -545,8 +565,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return false;
       }
       
-      // Session is valid
-      console.log('Session is valid');
+      // Session exists, verify user profile is still accessible
+      if (session.user && !user) {
+        console.log('Session valid but no user data, attempting to recreate user from session...');
+        try {
+          await createUserFromSession(session.user);
+          console.log('User data successfully recreated from valid session');
+          return true;
+        } catch (userCreationError) {
+          console.error('Failed to recreate user from valid session:', userCreationError);
+          // If we can't recreate the user, the session is effectively invalid
+          localStorage.removeItem('supabase.auth.token');
+          sessionStorage.removeItem('supabase.auth.token');
+          await supabase.auth.signOut();
+          setUser(null);
+          return false;
+        }
+      }
+      
+      console.log('Session and user data are valid');
       return true;
       
     } catch (error) {

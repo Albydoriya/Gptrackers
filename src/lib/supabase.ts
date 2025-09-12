@@ -165,6 +165,7 @@ interface Database {
           role: 'admin' | 'manager' | 'buyer' | 'viewer';
           department: string | null;
           phone: string | null;
+          email: string | null;
           preferences: Record<string, any>;
           last_login: string | null;
           created_at: string;
@@ -177,6 +178,7 @@ interface Database {
           role?: 'admin' | 'manager' | 'buyer' | 'viewer';
           department?: string | null;
           phone?: string | null;
+          email?: string | null;
           preferences?: Record<string, any>;
           last_login?: string | null;
           created_at?: string;
@@ -189,6 +191,7 @@ interface Database {
           role?: 'admin' | 'manager' | 'buyer' | 'viewer';
           department?: string | null;
           phone?: string | null;
+          email?: string | null;
           preferences?: Record<string, any>;
           last_login?: string | null;
           created_at?: string;
