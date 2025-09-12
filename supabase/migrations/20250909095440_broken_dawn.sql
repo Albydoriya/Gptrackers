@@ -88,17 +88,17 @@ EXCEPTION
   WHEN duplicate_object THEN null;
 END $$;
 
--- Create customers table
-CREATE TABLE IF NOT EXISTS customers (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL,
-  contact_person text NOT NULL,
-  email text NOT NULL,
-  phone text NOT NULL,
-  address text NOT NULL,
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
+-- -- Create customers table
+-- CREATE TABLE IF NOT EXISTS customers (
+--   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+--   name text NOT NULL,
+--   contact_person text NOT NULL,
+--   email text NOT NULL,
+--   phone text NOT NULL,
+--   address text NOT NULL,
+--   created_at timestamptz DEFAULT now(),
+--   updated_at timestamptz DEFAULT now()
+-- );
 
 -- Create quotes table
 CREATE TABLE IF NOT EXISTS quotes (
