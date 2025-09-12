@@ -25,7 +25,7 @@ import {
 import { Quote, Customer, QuotePart, Part, QuoteStatus } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Quote, QuotePart, Customer, Part, QuoteStatus } from '../types';
+import { Quote, Customer, QuotePart, Part, QuoteStatus } from '../types';
 
 interface EditQuoteProps {
   isOpen: boolean;
