@@ -208,8 +208,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           console.error('Error getting initial session:', sessionError);
         }
         setUser(null);
-      } finally {
         setIsLoading(false);
+      } finally {
+        if (isLoading) {
+          setIsLoading(false);
+        }
       }
     };
 
@@ -235,6 +238,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         localStorage.removeItem('supabase.auth.token');
         sessionStorage.removeItem('supabase.auth.token');
         setUser(null);
+        setIsLoading(false);
       }
     });
 
