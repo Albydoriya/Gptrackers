@@ -327,8 +327,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (insertError && insertResult.type !== 'timeout') {
           console.error('Error creating user profile:', insertError);
           // If it's a duplicate key error (23505), the profile already exists
-          // This is not a critical error, just continue with existing profile
-          if (insertError.code === '23505' || insertError.code === 23505 || insertError.code === '23505') {
+          // This is not a critical error, just retrieve the existing profile
+          if (insertError.code === '23505' || insertError.code === 23505 || insertError.message?.includes('duplicate key')) {
             console.log('User profile already exists, continuing with existing profile');
             // Re-fetch the existing profile since it was created by another process
             try {
@@ -347,9 +347,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 if (existingProfile.full_name) {
                   fullName = existingProfile.full_name;
                 }
+                
+                // Update last login for the existing profile (non-blocking)
+                supabase
+                  .from('user_profiles')
+                  .update({ last_login: new Date().toISOString() })
+                  .eq('id', supabaseUser.id)
+                  .then(() => console.log('Last login updated for existing profile'))
+                  .catch(err => console.warn('Failed to update last login for existing profile (non-critical):', err));
               }
             } catch (refetchError) {
               console.warn('Failed to re-fetch existing profile after duplicate key error:', refetchError);
+              // Even if re-fetch fails, continue with default user data rather than failing completely
             }
           } else {
             console.warn('Profile creation failed, continuing with default user data:', insertError);

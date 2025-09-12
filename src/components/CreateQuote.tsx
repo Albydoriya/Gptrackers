@@ -17,6 +17,7 @@ import {
   Edit3,
   Building,
   Mail,
+  Phone,
   Truck,
   Calculator,
   Loader2
