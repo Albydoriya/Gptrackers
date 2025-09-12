@@ -1,4 +1,4 @@
-```sql
+
 -- This function calculates the total amounts for a quote, including bid items, shipping, fees, subtotal, GST, and grand total.
 -- It is triggered by changes in both the 'quotes' and 'quote_parts' tables.
 
@@ -108,4 +108,3 @@ FOR EACH ROW EXECUTE FUNCTION public.calculate_quote_totals();
 CREATE TRIGGER recalculate_quote_totals_on_quote_update
 AFTER UPDATE OF selected_shipping_method, shipping_cost_sea, shipping_cost_air, agent_fees, local_shipping_fees ON public.quotes
 FOR EACH ROW EXECUTE FUNCTION public.calculate_quote_totals();
-```
