@@ -16,13 +16,13 @@ import {
   AlertCircle,
   Edit3,
   Building,
-import { Quote, Customer, QuotePart, Part, QuoteStatus } from '../types';
   Truck,
   Calculator,
   CheckCircle,
   Clock,
   XCircle
 } from 'lucide-react';
+import { Quote, Customer, QuotePart, Part, QuoteStatus } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Quote, QuotePart, Customer, Part, QuoteStatus } from '../types';
