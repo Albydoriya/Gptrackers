@@ -15,29 +15,34 @@ import {
   ChevronRight,
   AlertCircle,
   Edit3,
-  Building
+  Building,
+  Truck,
+  Calculator,
+  Loader2
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Part, Customer, QuotePart } from '../types';
+import { Part, Customer, QuotePart, Quote } from '../types';
 
 interface CreateQuoteProps {
   isOpen: boolean;
   onClose: () => void;
-  onQuoteCreated: (quote: any) => void;
+  onQuoteCreated: (quote: Quote) => void;
 }
 
 interface QuoteFormData {
   quoteNumber: string;
   customer: Customer | null;
   parts: QuotePart[];
-  expiryDate: string;
-  notes: string;
-  shippingCostSea: number;
-  shippingCostAir: number;
-  selectedShippingMethod: 'sea' | 'air';
+  shippingCosts: {
+    sea: number;
+    air: number;
+    selected: 'sea' | 'air';
+  };
   agentFees: number;
   localShippingFees: number;
+  expiryDate: string;
+  notes: string;
 }
 
 const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreated }) => {
@@ -47,6 +52,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showAddNewPart, setShowAddNewPart] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAddingPart, setIsAddingPart] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [newPart, setNewPart] = useState({
     partNumber: '',
@@ -54,31 +60,32 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
     description: '',
     category: 'Electronics',
     price: 0,
-    quantity: 1,
     specifications: {} as Record<string, string>
   });
   const [formData, setFormData] = useState<QuoteFormData>({
-    quoteNumber: `QTE-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
+    quoteNumber: `QUO-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
     customer: null,
     parts: [],
-    expiryDate: '',
-    notes: '',
-    shippingCostSea: 0,
-    shippingCostAir: 0,
-    selectedShippingMethod: 'sea',
+    shippingCosts: {
+      sea: 0,
+      air: 0,
+      selected: 'sea'
+    },
     agentFees: 0,
-    localShippingFees: 0
+    localShippingFees: 0,
+    expiryDate: '',
+    notes: ''
   });
   const [availableParts, setAvailableParts] = useState<Part[]>([]);
-  const [availableCustomers, setAvailableCustomers] = useState<Customer[]>([]);
-  const [newCustomerData, setNewCustomerData] = useState({
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [showAddNewCustomer, setShowAddNewCustomer] = useState(false);
+  const [newCustomer, setNewCustomer] = useState({
     name: '',
     contactPerson: '',
     email: '',
     phone: '',
     address: ''
   });
-  const [showAddNewCustomer, setShowAddNewCustomer] = useState(false);
 
   const categories = ['all', ...new Set(availableParts.map(p => p.category))];
   
@@ -108,7 +115,11 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
             price: parseFloat(ph.price),
             supplier: ph.supplier_name,
             quantity: ph.quantity || 1
-          }))
+          })),
+          internalUsageMarkupPercentage: part.internal_usage_markup_percentage || 10,
+          wholesaleMarkupPercentage: part.wholesale_markup_percentage || 20,
+          tradeMarkupPercentage: part.trade_markup_percentage || 30,
+          retailMarkupPercentage: part.retail_markup_percentage || 50
         }));
 
         setAvailableParts(transformedParts);
@@ -117,52 +128,39 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
       }
     };
 
-    if (isOpen) {
-      fetchParts();
-    }
-  }, [isOpen]);
+    fetchParts();
+  }, []);
 
   // Fetch customers from Supabase
-  const fetchCustomers = async () => {
-    try {
-      console.log('Fetching customers from Supabase...');
-      const { data, error } = await supabase
-        .from('customers')
-        .select('*')
-        .order('name', { ascending: true });
-
-      if (error) {
-        console.error('Supabase error fetching customers:', error);
-        throw error;
-      }
-
-      console.log('Raw customer data from Supabase:', data);
-
-      // Map snake_case to camelCase for frontend compatibility
-      const transformedCustomers: Customer[] = (data || []).map(customer => ({
-        id: customer.id,
-        name: customer.name,
-        contactPerson: customer.contact_person,
-        email: customer.email,
-        phone: customer.phone,
-        address: customer.address,
-        createdAt: customer.created_at,
-        updatedAt: customer.updated_at
-      }));
-
-      console.log('Transformed customers:', transformedCustomers);
-      setAvailableCustomers(transformedCustomers);
-    } catch (error) {
-      console.error('Error fetching customers:', error);
-      setSubmitError('Failed to load customers. Please try again.');
-    }
-  };
-
   useEffect(() => {
-    if (isOpen) {
-      fetchCustomers();
-    }
-  }, [isOpen]);
+    const fetchCustomers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('customers')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const transformedCustomers: Customer[] = (data || []).map(customer => ({
+          id: customer.id,
+          name: customer.name,
+          contactPerson: customer.contact_person,
+          email: customer.email,
+          phone: customer.phone,
+          address: customer.address,
+          createdAt: customer.created_at,
+          updatedAt: customer.updated_at
+        }));
+
+        setCustomers(transformedCustomers);
+      } catch (error) {
+        console.error('Error fetching customers:', error);
+      }
+    };
+
+    fetchCustomers();
+  }, []);
 
   const filteredParts = availableParts.filter(part => {
     const matchesSearch = part.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -171,21 +169,38 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
     return matchesSearch && matchesCategory;
   });
 
-  const addPartToQuote = (part: Part) => {
+  const addPartToQuote = (part: Part, pricingTier: 'internal' | 'wholesale' | 'trade' | 'retail' = 'wholesale') => {
     const existingPart = formData.parts.find(p => p.part?.id === part.id);
     if (existingPart) {
-      updateQuotePartQuantity(part.id, existingPart.quantity + 1);
+      updatePartQuantity(part.id, existingPart.quantity + 1);
     } else {
+      // Calculate price based on pricing tier
+      let unitPrice = 0;
       const latestPrice = part.priceHistory.length > 0 
         ? part.priceHistory[part.priceHistory.length - 1].price 
         : 0;
+
+      switch (pricingTier) {
+        case 'internal':
+          unitPrice = latestPrice * (1 + (part.internalUsageMarkupPercentage || 10) / 100);
+          break;
+        case 'wholesale':
+          unitPrice = latestPrice * (1 + (part.wholesaleMarkupPercentage || 20) / 100);
+          break;
+        case 'trade':
+          unitPrice = latestPrice * (1 + (part.tradeMarkupPercentage || 30) / 100);
+          break;
+        case 'retail':
+          unitPrice = latestPrice * (1 + (part.retailMarkupPercentage || 50) / 100);
+          break;
+      }
       
       const newQuotePart: QuotePart = {
         id: crypto.randomUUID(),
         part,
         quantity: 1,
-        unitPrice: latestPrice,
-        totalPrice: latestPrice,
+        unitPrice,
+        totalPrice: unitPrice,
         isCustomPart: false
       };
       
@@ -196,49 +211,223 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
     }
   };
 
-  const addCustomPartToQuote = () => {
-    if (!newPart.name || newPart.price <= 0 || newPart.quantity <= 0) {
-      alert('Please fill in custom part name, quantity, and price.');
+  const addNewPartToOrder = async () => {
+    if (!newPart.partNumber || !newPart.name || !newPart.description || newPart.price <= 0) {
+      setSubmitError('Please fill in all required fields for the new part (Part Number, Name, Description, and Price)');
       return;
     }
 
-    const customQuotePart: QuotePart = {
-      id: crypto.randomUUID(),
-      customPartName: newPart.name,
-      customPartDescription: newPart.description,
-      quantity: newPart.quantity,
-      unitPrice: newPart.price,
-      totalPrice: newPart.quantity * newPart.price,
-      isCustomPart: true
-    };
+    setIsAddingPart(true);
+    setSubmitError(null);
 
-    setFormData(prev => ({
-      ...prev,
-      parts: [...prev.parts, customQuotePart]
-    }));
+    try {
+      // 1. Check if a part with this part number already exists
+      const { data: existingPart, error: checkError } = await supabase
+        .from('parts')
+        .select('*, price_history:part_price_history(*)')
+        .eq('part_number', newPart.partNumber.trim())
+        .eq('is_archived', false)
+        .single();
 
-    setNewPart({
-      partNumber: '', 
-      name: '', 
-      description: '', 
-      category: 'Electronics', 
-      price: 0, 
-      quantity: 1,
-      specifications: {}
-    });
-    setShowAddNewPart(false);
+      let partToUse: Part;
+
+      if (existingPart && !checkError) {
+        // Part already exists, use the existing part
+        console.log('Part already exists in catalog, using existing part');
+        partToUse = {
+          id: existingPart.id,
+          partNumber: existingPart.part_number,
+          name: existingPart.name,
+          description: existingPart.description,
+          category: existingPart.category,
+          specifications: existingPart.specifications || {},
+          currentStock: existingPart.current_stock || 0,
+          minStock: existingPart.min_stock || 0,
+          preferredSuppliers: existingPart.preferred_suppliers || [],
+          priceHistory: (existingPart.price_history || []).map((ph: any) => ({
+            date: ph.effective_date,
+            price: parseFloat(ph.price),
+            supplier: ph.supplier_name,
+            quantity: ph.quantity || 1
+          })),
+          internalUsageMarkupPercentage: existingPart.internal_usage_markup_percentage || 10,
+          wholesaleMarkupPercentage: existingPart.wholesale_markup_percentage || 20,
+          tradeMarkupPercentage: existingPart.trade_markup_percentage || 30,
+          retailMarkupPercentage: existingPart.retail_markup_percentage || 50
+        };
+      } else {
+        // Part doesn't exist, create a new one
+        console.log('Creating new part in catalog');
+        
+        // 2. Insert the new part into the parts table
+        const partObject = {
+          part_number: newPart.partNumber.trim(),
+          name: newPart.name.trim(),
+          description: newPart.description.trim(),
+          category: newPart.category,
+          specifications: newPart.specifications,
+          current_stock: 0, // Default stock for new parts
+          min_stock: 0, // Default minimum stock
+          preferred_suppliers: [], // Empty array for new parts
+          is_archived: false,
+          // Default markup percentages
+          internal_usage_markup_percentage: 10,
+          wholesale_markup_percentage: 20,
+          trade_markup_percentage: 30,
+          retail_markup_percentage: 50
+        };
+
+        const { data: insertedPart, error: partError } = await supabase
+          .from('parts')
+          .insert([partObject])
+          .select('id')
+          .single();
+
+        if (partError) throw partError;
+
+        // 3. Insert initial price history
+        const priceHistoryEntry = {
+          part_id: insertedPart.id,
+          price: newPart.price,
+          supplier_name: formData.customer?.name || 'Quote Customer',
+          quantity: 1,
+          effective_date: new Date().toISOString().split('T')[0],
+          reason: 'Initial entry from quote creation',
+          created_by: user?.id || null
+        };
+
+        const { error: priceError } = await supabase
+          .from('part_price_history')
+          .insert([priceHistoryEntry]);
+
+        if (priceError) throw priceError;
+
+        // 4. Create the Part object for the quote
+        partToUse = {
+          id: insertedPart.id,
+          partNumber: newPart.partNumber.trim(),
+          name: newPart.name.trim(),
+          description: newPart.description.trim(),
+          category: newPart.category,
+          specifications: newPart.specifications,
+          priceHistory: [{
+            date: new Date().toISOString().split('T')[0],
+            price: newPart.price,
+            supplier: formData.customer?.name || 'Quote Customer',
+            quantity: 1
+          }],
+          currentStock: 0,
+          minStock: 0,
+          preferredSuppliers: [],
+          internalUsageMarkupPercentage: 10,
+          wholesaleMarkupPercentage: 20,
+          tradeMarkupPercentage: 30,
+          retailMarkupPercentage: 50
+        };
+
+        // 5. Update the available parts list to include the new part
+        setAvailableParts(prev => [...prev, partToUse]);
+      }
+
+      // 6. Add the part to the quote (using wholesale pricing by default)
+      const unitPrice = newPart.price * (1 + (partToUse.wholesaleMarkupPercentage || 20) / 100);
+      
+      const newQuotePart: QuotePart = {
+        id: crypto.randomUUID(),
+        part: partToUse,
+        quantity: 1,
+        unitPrice,
+        totalPrice: unitPrice,
+        isCustomPart: false // Now it's a catalog part
+      };
+      
+      setFormData(prev => ({
+        ...prev,
+        parts: [...prev.parts, newQuotePart]
+      }));
+
+      // 7. Reset the new part form
+      setNewPart({
+        partNumber: '',
+        name: '',
+        description: '',
+        category: 'Electronics',
+        price: 0,
+        specifications: {}
+      });
+      
+      setShowAddNewPart(false);
+      
+    } catch (error: any) {
+      console.error('Error adding part to catalog:', error);
+      setSubmitError(error.message || 'Failed to add part to catalog. Please try again.');
+    } finally {
+      setIsAddingPart(false);
+    }
   };
 
-  const updateQuotePartQuantity = (partId: string, quantity: number) => {
+  const addNewCustomerToDatabase = async () => {
+    if (!newCustomer.name || !newCustomer.contactPerson || !newCustomer.email || !newCustomer.phone || !newCustomer.address) {
+      setSubmitError('Please fill in all required fields for the new customer');
+      return;
+    }
+
+    try {
+      const customerObject = {
+        name: newCustomer.name.trim(),
+        contact_person: newCustomer.contactPerson.trim(),
+        email: newCustomer.email.trim(),
+        phone: newCustomer.phone.trim(),
+        address: newCustomer.address.trim()
+      };
+
+      const { data: insertedCustomer, error: customerError } = await supabase
+        .from('customers')
+        .insert([customerObject])
+        .select()
+        .single();
+
+      if (customerError) throw customerError;
+
+      const newCustomerObj: Customer = {
+        id: insertedCustomer.id,
+        name: insertedCustomer.name,
+        contactPerson: insertedCustomer.contact_person,
+        email: insertedCustomer.email,
+        phone: insertedCustomer.phone,
+        address: insertedCustomer.address,
+        createdAt: insertedCustomer.created_at,
+        updatedAt: insertedCustomer.updated_at
+      };
+
+      setCustomers(prev => [newCustomerObj, ...prev]);
+      setFormData(prev => ({ ...prev, customer: newCustomerObj }));
+      
+      setNewCustomer({
+        name: '',
+        contactPerson: '',
+        email: '',
+        phone: '',
+        address: ''
+      });
+      
+      setShowAddNewCustomer(false);
+    } catch (error: any) {
+      console.error('Error adding customer:', error);
+      setSubmitError(error.message || 'Failed to add customer. Please try again.');
+    }
+  };
+
+  const updatePartQuantity = (partId: string, quantity: number) => {
     if (quantity <= 0) {
-      removeQuotePart(partId);
+      removePartFromQuote(partId);
       return;
     }
     
     setFormData(prev => ({
       ...prev,
       parts: prev.parts.map(quotePart => 
-        (quotePart.part?.id === partId || quotePart.id === partId)
+        quotePart.part?.id === partId 
           ? { 
               ...quotePart, 
               quantity, 
@@ -249,11 +438,11 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
     }));
   };
 
-  const updateQuotePartPrice = (partId: string, unitPrice: number) => {
+  const updatePartPrice = (partId: string, unitPrice: number) => {
     setFormData(prev => ({
       ...prev,
       parts: prev.parts.map(quotePart => 
-        (quotePart.part?.id === partId || quotePart.id === partId)
+        quotePart.part?.id === partId 
           ? { 
               ...quotePart, 
               unitPrice, 
@@ -264,28 +453,29 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
     }));
   };
 
-  const removeQuotePart = (partId: string) => {
+  const removePartFromQuote = (partId: string) => {
     setFormData(prev => ({
       ...prev,
-      parts: prev.parts.filter(quotePart => quotePart.part?.id !== partId && quotePart.id !== partId)
+      parts: prev.parts.filter(quotePart => quotePart.part?.id !== partId)
     }));
   };
 
-  const getTotalBidItemsCost = () => {
-    return formData.parts.reduce((sum, quotePart) => sum + quotePart.totalPrice, 0);
-  };
+  const calculateTotals = () => {
+    const totalBidItemsCost = formData.parts.reduce((sum, part) => sum + part.totalPrice, 0);
+    const selectedShippingCost = formData.shippingCosts.selected === 'sea' 
+      ? formData.shippingCosts.sea 
+      : formData.shippingCosts.air;
+    const subtotalAmount = totalBidItemsCost + selectedShippingCost + formData.agentFees + formData.localShippingFees;
+    const gstAmount = subtotalAmount * 0.1; // 10% GST
+    const grandTotalAmount = subtotalAmount + gstAmount;
 
-  const getSubtotalAmount = () => {
-    const shippingCost = formData.selectedShippingMethod === 'sea' ? formData.shippingCostSea : formData.shippingCostAir;
-    return getTotalBidItemsCost() + shippingCost + formData.agentFees + formData.localShippingFees;
-  };
-
-  const getGstAmount = () => {
-    return getSubtotalAmount() * 0.10; // 10% GST
-  };
-
-  const getGrandTotalAmount = () => {
-    return getSubtotalAmount() + getGstAmount();
+    return {
+      totalBidItemsCost,
+      selectedShippingCost,
+      subtotalAmount,
+      gstAmount,
+      grandTotalAmount
+    };
   };
 
   const handleNext = () => {
@@ -302,15 +492,19 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
 
   const canProceedToNext = () => {
     switch (currentStep) {
-      case 1: // Select Parts
+      case 1:
         return formData.parts.length > 0;
-      case 2: // Choose Customer
+      case 2:
         return formData.customer !== null;
-      case 3: // Quote Details
+      case 3:
         return formData.expiryDate !== '';
       default:
         return true;
     }
+  };
+
+  const handleSubmit = (status: 'draft' | 'sent') => {
+    createQuoteInSupabase(status);
   };
 
   const createQuoteInSupabase = async (status: 'draft' | 'sent') => {
@@ -323,32 +517,32 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
     setSubmitError(null);
 
     try {
-      // 1. Create the main quote entry
+      const totals = calculateTotals();
+
+      // Construct the quote object for Supabase
       const quoteObject = {
-        quote_number: formData.quoteNumber,
         customer_id: formData.customer.id,
-        status: status,
-        total_bid_items_cost: getTotalBidItemsCost(),
-        shipping_cost_sea: formData.shippingCostSea,
-        shipping_cost_air: formData.shippingCostAir,
-        selected_shipping_method: formData.selectedShippingMethod,
+        status,
+        total_bid_items_cost: totals.totalBidItemsCost,
+        shipping_cost_sea: formData.shippingCosts.sea,
+        shipping_cost_air: formData.shippingCosts.air,
+        selected_shipping_method: formData.shippingCosts.selected,
         agent_fees: formData.agentFees,
         local_shipping_fees: formData.localShippingFees,
-        subtotal_amount: getSubtotalAmount(),
-        gst_amount: getGstAmount(),
-        grand_total_amount: getGrandTotalAmount(),
+        subtotal_amount: totals.subtotalAmount,
+        gst_amount: totals.gstAmount,
+        grand_total_amount: totals.grandTotalAmount,
         quote_date: new Date().toISOString().split('T')[0],
         expiry_date: formData.expiryDate,
         notes: formData.notes.trim() || null,
-        created_by: user.id,
+        created_by: user.id
       };
 
-      console.log('Creating quote with data:', quoteObject);
-
+      // Insert the main quote
       const { data: quoteData, error: quoteError } = await supabase
         .from('quotes')
         .insert([quoteObject])
-        .select('id')
+        .select('id, quote_number')
         .single();
 
       if (quoteError) throw quoteError;
@@ -357,139 +551,68 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
         throw new Error('Failed to create quote - no data returned');
       }
 
-      console.log('Quote created successfully:', quoteData);
-
-      // 2. Create quote parts
-      const quotePartsToInsert = formData.parts.map(part => ({
+      // Prepare quote parts for insertion
+      const quotePartsArray = formData.parts.map(quotePart => ({
         quote_id: quoteData.id,
-        part_id: part.isCustomPart ? null : part.part?.id,
-        custom_part_name: part.isCustomPart ? part.customPartName : null,
-        custom_part_description: part.isCustomPart ? part.customPartDescription : null,
-        quantity: part.quantity,
-        unit_price: part.unitPrice,
-        is_custom_part: part.isCustomPart
+        part_id: quotePart.part?.id || null,
+        custom_part_name: quotePart.isCustomPart ? quotePart.customPartName : null,
+        custom_part_description: quotePart.isCustomPart ? quotePart.customPartDescription : null,
+        quantity: quotePart.quantity,
+        unit_price: quotePart.unitPrice,
+        is_custom_part: quotePart.isCustomPart,
+        pricing_tier: 'wholesale' // Default pricing tier
       }));
 
-      console.log('Creating quote parts with data:', quotePartsToInsert);
-
-      const { error: quotePartsError } = await supabase
+      // Insert quote parts
+      const { error: partsError } = await supabase
         .from('quote_parts')
-        .insert(quotePartsToInsert);
+        .insert(quotePartsArray);
 
-      if (quotePartsError) throw quotePartsError;
-
-      console.log('Quote parts created successfully');
+      if (partsError) throw partsError;
 
       // Success - notify parent component and close modal
-      onQuoteCreated({
+      const newQuote: Quote = {
         id: quoteData.id,
-        quoteNumber: formData.quoteNumber,
+        quoteNumber: quoteData.quote_number,
         customer: formData.customer,
+        status,
         parts: formData.parts,
-        status: status,
-        totalBidItemsCost: getTotalBidItemsCost(),
-        shippingCosts: {
-          sea: formData.shippingCostSea,
-          air: formData.shippingCostAir,
-          selected: formData.selectedShippingMethod
-        },
+        totalBidItemsCost: totals.totalBidItemsCost,
+        shippingCosts: formData.shippingCosts,
         agentFees: formData.agentFees,
         localShippingFees: formData.localShippingFees,
-        subtotalAmount: getSubtotalAmount(),
-        gstAmount: getGstAmount(),
-        grandTotalAmount: getGrandTotalAmount(),
+        subtotalAmount: totals.subtotalAmount,
+        gstAmount: totals.gstAmount,
+        grandTotalAmount: totals.grandTotalAmount,
         quoteDate: new Date().toISOString().split('T')[0],
         expiryDate: formData.expiryDate,
         notes: formData.notes,
-        createdBy: user.name,
-      });
+        createdBy: user.name
+      };
       
+      onQuoteCreated(newQuote);
       onClose();
       
       // Reset form
       setCurrentStep(1);
       setFormData({
-        quoteNumber: `QTE-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
+        quoteNumber: `QUO-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
         customer: null,
         parts: [],
-        expiryDate: '',
-        notes: '',
-        shippingCostSea: 0,
-        shippingCostAir: 0,
-        selectedShippingMethod: 'sea',
+        shippingCosts: {
+          sea: 0,
+          air: 0,
+          selected: 'sea'
+        },
         agentFees: 0,
-        localShippingFees: 0
+        localShippingFees: 0,
+        expiryDate: '',
+        notes: ''
       });
 
     } catch (error: any) {
       console.error('Error creating quote:', error);
       setSubmitError(error.message || 'Failed to create quote. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const addCustomer = async () => {
-    if (!newCustomerData.name || !newCustomerData.email) {
-      setSubmitError('Customer name and email are required.');
-      return;
-    }
-
-    setIsSubmitting(true);
-    setSubmitError(null);
-
-    try {
-      console.log('Adding new customer:', newCustomerData);
-
-      const customerInsertData = {
-        name: newCustomerData.name.trim(),
-        contact_person: newCustomerData.contactPerson.trim(),
-        email: newCustomerData.email.trim(),
-        phone: newCustomerData.phone.trim(),
-        address: newCustomerData.address.trim()
-      };
-
-      const { data, error } = await supabase
-        .from('customers')
-        .insert([customerInsertData])
-        .select('*')
-        .single();
-
-      if (error) {
-        console.error('Supabase error adding customer:', error);
-        throw error;
-      }
-
-      console.log('Raw new customer data from Supabase:', data);
-
-      // Map snake_case to camelCase for frontend compatibility
-      const newlyAddedCustomer: Customer = {
-        id: data.id,
-        name: data.name,
-        contactPerson: data.contact_person,
-        email: data.email,
-        phone: data.phone,
-        address: data.address,
-        createdAt: data.created_at,
-        updatedAt: data.updated_at
-      };
-
-      console.log('Transformed new customer:', newlyAddedCustomer);
-
-      // Update the available customers list
-      setAvailableCustomers(prev => [...prev, newlyAddedCustomer]);
-      
-      // Set the newly added customer as selected
-      setFormData(prev => ({ ...prev, customer: newlyAddedCustomer }));
-      
-      // Reset the new customer form
-      setNewCustomerData({ name: '', contactPerson: '', email: '', phone: '', address: '' });
-      setShowAddNewCustomer(false);
-
-      console.log('Customer added successfully and selected');
-    } catch (error: any) {
-      console.error('Error adding new customer:', error);
-      setSubmitError(error.message || 'Failed to add new customer.');
     } finally {
       setIsSubmitting(false);
     }
@@ -503,6 +626,8 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
     { number: 3, title: 'Quote Details', icon: FileText },
     { number: 4, title: 'Review & Submit', icon: Send }
   ];
+
+  const totals = calculateTotals();
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -553,16 +678,6 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {/* Error Message */}
-          {submitError && (
-            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-              <div className="flex items-center space-x-2">
-                <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                <span className="text-sm text-red-800 dark:text-red-300">{submitError}</span>
-              </div>
-            </div>
-          )}
-
           {/* Step 1: Select Parts */}
           {currentStep === 1 && (
             <div className="space-y-6">
@@ -572,7 +687,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                 {/* Search and Filter */}
                 <div className="flex flex-col md:flex-row gap-4 mb-6">
                   <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                     <input
                       type="text"
                       placeholder="Search parts..."
@@ -604,7 +719,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                         className="flex items-center space-x-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm"
                       >
                         <Plus className="h-3 w-3" />
-                        <span>Add Custom Part</span>
+                        <span>Add New Part</span>
                       </button>
                     </div>
                     
@@ -613,9 +728,26 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                       <div className="mb-4 p-4 border border-blue-200 dark:border-blue-800 rounded-lg bg-blue-50 dark:bg-blue-900/20">
                         <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-3 flex items-center">
                           <Edit3 className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
-                          Add Custom Part
+                          Add New Part to Catalog
                         </h5>
                         <div className="grid grid-cols-1 gap-3">
+                          <div className="grid grid-cols-2 gap-2">
+                            <input
+                              type="text"
+                              placeholder="Part Number *"
+                              value={newPart.partNumber}
+                              onChange={(e) => setNewPart(prev => ({ ...prev, partNumber: e.target.value }))}
+                              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                            />
+                            <input
+                              type="number"
+                              placeholder="Base Price *"
+                              step="0.01"
+                              value={newPart.price || ''}
+                              onChange={(e) => setNewPart(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                            />
+                          </div>
                           <input
                             type="text"
                             placeholder="Part Name *"
@@ -624,49 +756,55 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                           />
                           <textarea
-                            placeholder="Description (optional)"
+                            placeholder="Description *"
                             value={newPart.description}
                             onChange={(e) => setNewPart(prev => ({ ...prev, description: e.target.value }))}
                             rows={2}
                             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                           />
                           <div className="grid grid-cols-2 gap-2">
-                            <input
-                              type="number"
-                              placeholder="Quantity *"
-                              min="1"
-                              value={newPart.quantity || ''}
-                              onChange={(e) => setNewPart(prev => ({ ...prev, quantity: parseInt(e.target.value) || 0 }))}
-                              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                            />
-                            <input
-                              type="number"
-                              placeholder="Unit Price *"
-                              step="0.01"
-                              value={newPart.price || ''}
-                              onChange={(e) => setNewPart(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
-                              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                            />
-                          </div>
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={addCustomPartToQuote}
-                              disabled={!newPart.name || newPart.price <= 0 || newPart.quantity <= 0}
-                              className={`flex-1 px-3 py-2 rounded-md text-sm ${
-                                newPart.name && newPart.price > 0 && newPart.quantity > 0
-                                  ? 'bg-blue-600 dark:bg-blue-700 text-white hover:bg-blue-700 dark:hover:bg-blue-600'
-                                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                              }`}
+                            <select
+                              value={newPart.category}
+                              onChange={(e) => setNewPart(prev => ({ ...prev, category: e.target.value }))}
+                              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                             >
-                              Add Custom Part
-                            </button>
-                            <button
-                              onClick={() => setShowAddNewPart(false)}
-                              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                            >
-                              Cancel
-                            </button>
+                              {categories.filter(c => c !== 'all').map(category => (
+                                <option key={category} value={category}>{category}</option>
+                              ))}
+                            </select>
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={addNewPartToOrder}
+                                disabled={!newPart.partNumber || !newPart.name || !newPart.description || newPart.price <= 0 || isAddingPart}
+                                className={`flex-1 px-3 py-2 rounded-md text-sm transition-colors ${
+                                  newPart.partNumber && newPart.name && newPart.description && newPart.price > 0 && !isAddingPart
+                                    ? 'bg-blue-600 dark:bg-blue-700 text-white hover:bg-blue-700 dark:hover:bg-blue-600'
+                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                }`}
+                              >
+                                {isAddingPart ? (
+                                  <div className="flex items-center justify-center space-x-1">
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                    <span>Adding...</span>
+                                  </div>
+                                ) : (
+                                  'Add to Catalog'
+                                )}
+                              </button>
+                              <button
+                                onClick={() => setShowAddNewPart(false)}
+                                disabled={isAddingPart}
+                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                              >
+                                Cancel
+                              </button>
+                            </div>
                           </div>
+                        </div>
+                        <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                          <p className="text-sm text-green-800 dark:text-green-300">
+                            <strong>Note:</strong> This part will be added to the Parts Catalog and will be available for future quotes and orders.
+                          </p>
                         </div>
                       </div>
                     )}
@@ -684,15 +822,36 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                                 <h5 className="font-medium text-gray-900 dark:text-gray-100">{part.name}</h5>
                                 <p className="text-sm text-gray-600 dark:text-gray-400">{part.partNumber}</p>
                                 <p className="text-sm text-gray-500 dark:text-gray-400">{part.category}</p>
-                                <p className="text-sm font-medium text-green-600 dark:text-green-400">${latestPrice.toFixed(2)}</p>
+                                <div className="flex items-center space-x-4 mt-2 text-xs">
+                                  <span className="text-blue-600 dark:text-blue-400">Internal: ${(latestPrice * 1.1).toFixed(2)}</span>
+                                  <span className="text-green-600 dark:text-green-400">Wholesale: ${(latestPrice * 1.2).toFixed(2)}</span>
+                                  <span className="text-purple-600 dark:text-purple-400">Trade: ${(latestPrice * 1.3).toFixed(2)}</span>
+                                  <span className="text-orange-600 dark:text-orange-400">Retail: ${(latestPrice * 1.5).toFixed(2)}</span>
+                                </div>
                               </div>
-                              <button
-                                onClick={() => addPartToQuote(part)}
-                                className="flex items-center space-x-1 bg-blue-600 dark:bg-blue-700 text-white px-3 py-1 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
-                              >
-                                <Plus className="h-3 w-3" />
-                                <span>Add</span>
-                              </button>
+                              <div className="flex flex-col space-y-1">
+                                <button
+                                  onClick={() => addPartToQuote(part, 'wholesale')}
+                                  className="flex items-center space-x-1 bg-green-600 dark:bg-green-700 text-white px-3 py-1 rounded-md hover:bg-green-700 dark:hover:bg-green-600 transition-colors text-sm"
+                                >
+                                  <Plus className="h-3 w-3" />
+                                  <span>Wholesale</span>
+                                </button>
+                                <div className="flex space-x-1">
+                                  <button
+                                    onClick={() => addPartToQuote(part, 'trade')}
+                                    className="flex items-center space-x-1 bg-purple-600 dark:bg-purple-700 text-white px-2 py-0.5 rounded text-xs hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors"
+                                  >
+                                    <span>Trade</span>
+                                  </button>
+                                  <button
+                                    onClick={() => addPartToQuote(part, 'retail')}
+                                    className="flex items-center space-x-1 bg-orange-600 dark:bg-orange-700 text-white px-2 py-0.5 rounded text-xs hover:bg-orange-700 dark:hover:bg-orange-600 transition-colors"
+                                  >
+                                    <span>Retail</span>
+                                  </button>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         );
@@ -705,7 +864,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                             onClick={() => setShowAddNewPart(true)}
                             className="mt-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm"
                           >
-                            Add a custom part instead
+                            Add a new part to catalog
                           </button>
                         </div>
                       )}
@@ -741,7 +900,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                                 )}
                               </div>
                               <button
-                                onClick={() => removeQuotePart(quotePart.id)}
+                                onClick={() => removePartFromQuote(quotePart.part?.id || quotePart.id)}
                                 className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 p-1"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -754,7 +913,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                                   type="number"
                                   min="1"
                                   value={quotePart.quantity}
-                                  onChange={(e) => updateQuotePartQuantity(quotePart.id, parseInt(e.target.value) || 0)}
+                                  onChange={(e) => updatePartQuantity(quotePart.part?.id || quotePart.id, parseInt(e.target.value) || 0)}
                                   className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100"
                                 />
                               </div>
@@ -764,7 +923,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                                   type="number"
                                   step="0.01"
                                   value={quotePart.unitPrice}
-                                  onChange={(e) => updateQuotePartPrice(quotePart.id, parseFloat(e.target.value) || 0)}
+                                  onChange={(e) => updatePartPrice(quotePart.part?.id || quotePart.id, parseFloat(e.target.value) || 0)}
                                   className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100"
                                 />
                               </div>
@@ -782,9 +941,9 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                     {formData.parts.length > 0 && (
                       <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                         <div className="flex justify-between items-center">
-                          <span className="font-medium text-gray-900 dark:text-gray-100">Total Bid Items Cost:</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">Items Total:</span>
                           <span className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                            ${getTotalBidItemsCost().toFixed(2)}
+                            ${totals.totalBidItemsCost.toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -802,9 +961,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Choose Customer</h3>
                 
                 <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100">
-                    Existing Customers ({availableCustomers.length})
-                  </h4>
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100">Select Customer</h4>
                   <button
                     onClick={() => setShowAddNewCustomer(!showAddNewCustomer)}
                     className="flex items-center space-x-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm"
@@ -816,58 +973,58 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
 
                 {/* Add New Customer Form */}
                 {showAddNewCustomer && (
-                  <div className="mb-6 p-4 border border-blue-200 dark:border-blue-800 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                  <div className="mb-6 p-4 border border-green-200 dark:border-green-800 rounded-lg bg-green-50 dark:bg-green-900/20">
                     <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-3 flex items-center">
-                      <Building className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
+                      <Building className="h-4 w-4 mr-2 text-green-600 dark:text-green-400" />
                       Add New Customer
                     </h5>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <input
                         type="text"
                         placeholder="Company Name *"
-                        value={newCustomerData.name}
-                        onChange={(e) => setNewCustomerData(prev => ({ ...prev, name: e.target.value }))}
-                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                        value={newCustomer.name}
+                        onChange={(e) => setNewCustomer(prev => ({ ...prev, name: e.target.value }))}
+                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                       />
                       <input
                         type="text"
-                        placeholder="Contact Person"
-                        value={newCustomerData.contactPerson}
-                        onChange={(e) => setNewCustomerData(prev => ({ ...prev, contactPerson: e.target.value }))}
-                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                        placeholder="Contact Person *"
+                        value={newCustomer.contactPerson}
+                        onChange={(e) => setNewCustomer(prev => ({ ...prev, contactPerson: e.target.value }))}
+                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                       />
                       <input
                         type="email"
-                        placeholder="Email *"
-                        value={newCustomerData.email}
-                        onChange={(e) => setNewCustomerData(prev => ({ ...prev, email: e.target.value }))}
-                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                        placeholder="Email Address *"
+                        value={newCustomer.email}
+                        onChange={(e) => setNewCustomer(prev => ({ ...prev, email: e.target.value }))}
+                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                       />
                       <input
                         type="tel"
-                        placeholder="Phone"
-                        value={newCustomerData.phone}
-                        onChange={(e) => setNewCustomerData(prev => ({ ...prev, phone: e.target.value }))}
-                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                        placeholder="Phone Number *"
+                        value={newCustomer.phone}
+                        onChange={(e) => setNewCustomer(prev => ({ ...prev, phone: e.target.value }))}
+                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                       />
                       <input
                         type="text"
-                        placeholder="Address"
-                        value={newCustomerData.address}
-                        onChange={(e) => setNewCustomerData(prev => ({ ...prev, address: e.target.value }))}
-                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 md:col-span-2"
+                        placeholder="Address *"
+                        value={newCustomer.address}
+                        onChange={(e) => setNewCustomer(prev => ({ ...prev, address: e.target.value }))}
+                        className="md:col-span-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                       />
-                      <div className="flex space-x-2 md:col-span-2">
+                      <div className="md:col-span-2 flex space-x-2">
                         <button
-                          onClick={addCustomer}
-                          disabled={!newCustomerData.name || !newCustomerData.email || isSubmitting}
+                          onClick={addNewCustomerToDatabase}
+                          disabled={!newCustomer.name || !newCustomer.contactPerson || !newCustomer.email || !newCustomer.phone || !newCustomer.address}
                           className={`flex-1 px-3 py-2 rounded-md text-sm ${
-                            newCustomerData.name && newCustomerData.email && !isSubmitting
-                              ? 'bg-blue-600 dark:bg-blue-700 text-white hover:bg-blue-700 dark:hover:bg-blue-600'
+                            newCustomer.name && newCustomer.contactPerson && newCustomer.email && newCustomer.phone && newCustomer.address
+                              ? 'bg-green-600 dark:bg-green-700 text-white hover:bg-green-700 dark:hover:bg-green-600'
                               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                           }`}
                         >
-                          {isSubmitting ? 'Adding...' : 'Add Customer'}
+                          Add Customer
                         </button>
                         <button
                           onClick={() => setShowAddNewCustomer(false)}
@@ -880,76 +1037,39 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                   </div>
                 )}
 
-                {/* Customer Selection */}
-                {availableCustomers.length === 0 ? (
-                  <div className="text-center py-8 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-                    <Building className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-                    <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No customers found</h4>
-                    <p className="text-gray-600 dark:text-gray-400 mb-4">
-                      No customers have been added yet. Add your first customer to continue.
-                    </p>
-                    <button
-                      onClick={() => setShowAddNewCustomer(true)}
-                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {customers.map((customer) => (
+                    <div
+                      key={customer.id}
+                      onClick={() => setFormData(prev => ({ ...prev, customer }))}
+                      className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                        formData.customer?.id === customer.id
+                          ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-700'
+                      }`}
                     >
-                      Add your first customer
-                    </button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {availableCustomers.map((customer) => (
-                      <div
-                        key={customer.id}
-                        onClick={() => setFormData(prev => ({ ...prev, customer }))}
-                        className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-                          formData.customer?.id === customer.id
-                            ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-700'
-                        }`}
-                      >
-                        <div className="flex items-center space-x-3 mb-3">
-                          <div className="p-2 bg-gray-100 dark:bg-gray-600 rounded-lg">
-                            <Building className="h-4 w-4 text-gray-600 dark:text-gray-300" />
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-gray-900 dark:text-gray-100">{customer.name}</h4>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">{customer.contactPerson}</p>
-                          </div>
+                      <div className="flex items-center space-x-3 mb-3">
+                        <div className="p-2 bg-gray-100 dark:bg-gray-600 rounded-lg">
+                          <Building className="h-4 w-4 text-gray-600 dark:text-gray-300" />
                         </div>
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 dark:text-gray-400">Email:</span>
-                            <span className="font-medium text-gray-900 dark:text-gray-100 truncate ml-2">{customer.email}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 dark:text-gray-400">Phone:</span>
-                            <span className="font-medium text-gray-900 dark:text-gray-100">{customer.phone}</span>
-                          </div>
+                        <div>
+                          <h4 className="font-medium text-gray-900 dark:text-gray-100">{customer.name}</h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{customer.contactPerson}</p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Selected Customer Display */}
-                {formData.customer && (
-                  <div className="mt-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                    <h4 className="font-medium text-green-800 dark:text-green-300 mb-2 flex items-center">
-                      <Building className="h-4 w-4 mr-2" />
-                      Selected Customer
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-gray-100">{formData.customer.name}</p>
-                        <p className="text-gray-600 dark:text-gray-400">{formData.customer.contactPerson}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-600 dark:text-gray-400">{formData.customer.email}</p>
-                        <p className="text-gray-600 dark:text-gray-400">{formData.customer.phone}</p>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex items-center space-x-2">
+                          <Mail className="h-3 w-3 text-gray-400 dark:text-gray-500" />
+                          <span className="text-gray-600 dark:text-gray-400 truncate">{customer.email}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Phone className="h-3 w-3 text-gray-400 dark:text-gray-500" />
+                          <span className="text-gray-600 dark:text-gray-400">{customer.phone}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -958,112 +1078,185 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
           {currentStep === 3 && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Quote Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Quote Details & Costs</h3>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Basic Quote Information */}
+                  <div className="space-y-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Quote Number
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.quoteNumber}
-                        onChange={(e) => setFormData(prev => ({ ...prev, quoteNumber: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Expiry Date *
-                      </label>
-                      <input
-                        type="date"
-                        value={formData.expiryDate}
-                        onChange={(e) => setFormData(prev => ({ ...prev, expiryDate: e.target.value }))}
-                        min={new Date().toISOString().split('T')[0]}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      />
-                    </div>
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                        <FileText className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
+                        Quote Information
+                      </h4>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Quote Number
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.quoteNumber}
+                            onChange={(e) => setFormData(prev => ({ ...prev, quoteNumber: e.target.value }))}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Quote Expiry Date *
+                          </label>
+                          <input
+                            type="date"
+                            value={formData.expiryDate}
+                            onChange={(e) => setFormData(prev => ({ ...prev, expiryDate: e.target.value }))}
+                            min={new Date().toISOString().split('T')[0]}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          />
+                        </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Shipping Cost (Sea)
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formData.shippingCostSea}
-                        onChange={(e) => setFormData(prev => ({ ...prev, shippingCostSea: parseFloat(e.target.value) || 0 }))}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Shipping Cost (Air)
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formData.shippingCostAir}
-                        onChange={(e) => setFormData(prev => ({ ...prev, shippingCostAir: parseFloat(e.target.value) || 0 }))}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Selected Shipping Method
-                      </label>
-                      <select
-                        value={formData.selectedShippingMethod}
-                        onChange={(e) => setFormData(prev => ({ ...prev, selectedShippingMethod: e.target.value as 'sea' | 'air' }))}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      >
-                        <option value="sea">Sea Freight</option>
-                        <option value="air">Air Freight</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Agent Fees
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formData.agentFees}
-                        onChange={(e) => setFormData(prev => ({ ...prev, agentFees: parseFloat(e.target.value) || 0 }))}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Local Shipping Fees
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formData.localShippingFees}
-                        onChange={(e) => setFormData(prev => ({ ...prev, localShippingFees: parseFloat(e.target.value) || 0 }))}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      />
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Notes & Terms
+                          </label>
+                          <textarea
+                            value={formData.notes}
+                            onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                            rows={4}
+                            placeholder="Add any special terms, conditions, or notes for the customer..."
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Notes & Special Instructions
-                    </label>
-                    <textarea
-                      value={formData.notes}
-                      onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                      rows={12}
-                      placeholder="Add any special instructions, delivery requirements, or notes for the customer..."
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                    />
+                  {/* Shipping & Costs */}
+                  <div className="space-y-6">
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                        <Truck className="h-4 w-4 mr-2 text-orange-600 dark:text-orange-400" />
+                        Shipping Options
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Sea Freight Cost
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={formData.shippingCosts.sea || ''}
+                            onChange={(e) => setFormData(prev => ({ 
+                              ...prev, 
+                              shippingCosts: { 
+                                ...prev.shippingCosts, 
+                                sea: parseFloat(e.target.value) || 0 
+                              } 
+                            }))}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            placeholder="0.00"
+                          />
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">20-30 days delivery</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Air Freight Cost
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={formData.shippingCosts.air || ''}
+                            onChange={(e) => setFormData(prev => ({ 
+                              ...prev, 
+                              shippingCosts: { 
+                                ...prev.shippingCosts, 
+                                air: parseFloat(e.target.value) || 0 
+                              } 
+                            }))}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            placeholder="0.00"
+                          />
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">5-7 days delivery</p>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Default Shipping Method
+                        </label>
+                        <div className="flex space-x-4">
+                          <label className="flex items-center">
+                            <input
+                              type="radio"
+                              name="shippingMethod"
+                              value="sea"
+                              checked={formData.shippingCosts.selected === 'sea'}
+                              onChange={(e) => setFormData(prev => ({ 
+                                ...prev, 
+                                shippingCosts: { 
+                                  ...prev.shippingCosts, 
+                                  selected: e.target.value as 'sea' | 'air' 
+                                } 
+                              }))}
+                              className="mr-2"
+                            />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Sea Freight (Economical)</span>
+                          </label>
+                          <label className="flex items-center">
+                            <input
+                              type="radio"
+                              name="shippingMethod"
+                              value="air"
+                              checked={formData.shippingCosts.selected === 'air'}
+                              onChange={(e) => setFormData(prev => ({ 
+                                ...prev, 
+                                shippingCosts: { 
+                                  ...prev.shippingCosts, 
+                                  selected: e.target.value as 'sea' | 'air' 
+                                } 
+                              }))}
+                              className="mr-2"
+                            />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Air Freight (Express)</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                        <Calculator className="h-4 w-4 mr-2 text-purple-600 dark:text-purple-400" />
+                        Additional Fees
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Agent Fees
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={formData.agentFees || ''}
+                            onChange={(e) => setFormData(prev => ({ ...prev, agentFees: parseFloat(e.target.value) || 0 }))}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            placeholder="0.00"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Local Shipping Fees
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={formData.localShippingFees || ''}
+                            onChange={(e) => setFormData(prev => ({ ...prev, localShippingFees: parseFloat(e.target.value) || 0 }))}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            placeholder="0.00"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1091,14 +1284,6 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                           <span className="font-medium text-gray-900 dark:text-gray-100">{formData.customer?.name}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Contact:</span>
-                          <span className="font-medium text-gray-900 dark:text-gray-100">{formData.customer?.contactPerson}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Email:</span>
-                          <span className="font-medium text-gray-900 dark:text-gray-100">{formData.customer?.email}</span>
-                        </div>
-                        <div className="flex justify-between">
                           <span className="text-gray-600 dark:text-gray-400">Expiry Date:</span>
                           <span className="font-medium text-gray-900 dark:text-gray-100">
                             {new Date(formData.expiryDate).toLocaleDateString()}
@@ -1107,12 +1292,8 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                         <div className="flex justify-between">
                           <span className="text-gray-600 dark:text-gray-400">Shipping Method:</span>
                           <span className="font-medium text-gray-900 dark:text-gray-100 capitalize">
-                            {formData.selectedShippingMethod} Freight
+                            {formData.shippingCosts.selected} Freight
                           </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Created By:</span>
-                          <span className="font-medium text-gray-900 dark:text-gray-100">{user?.name || 'Unknown'}</span>
                         </div>
                       </div>
                     </div>
@@ -1128,58 +1309,71 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                   {/* Cost Breakdown */}
                   <div>
                     <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Cost Breakdown</h4>
-                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-700">
-                      {/* Quote Items */}
-                      <div className="p-4 border-b border-gray-100 dark:border-gray-600">
-                        <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Quote Items ({formData.parts.length})</h5>
-                        <div className="space-y-2">
-                          {formData.parts.map((quotePart, index) => (
-                            <div key={quotePart.id} className="flex justify-between items-center text-sm">
-                              <span className="text-gray-700 dark:text-gray-300 truncate max-w-48">
-                                {quotePart.isCustomPart ? quotePart.customPartName : quotePart.part?.name}
-                              </span>
-                              <span className="text-gray-900 dark:text-gray-100 font-medium">
-                                {quotePart.quantity} × ${quotePart.unitPrice.toFixed(2)} = ${quotePart.totalPrice.toFixed(2)}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Cost Summary */}
-                      <div className="p-4 space-y-2 text-sm">
-                        <div className="flex justify-between">
+                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
                           <span className="text-gray-600 dark:text-gray-400">Bid Items Total:</span>
-                          <span className="font-medium text-gray-900 dark:text-gray-100">${getTotalBidItemsCost().toFixed(2)}</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">${totals.totalBidItemsCost.toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Shipping ({formData.selectedShippingMethod}):</span>
-                          <span className="font-medium text-gray-900 dark:text-gray-100">
-                            ${(formData.selectedShippingMethod === 'sea' ? formData.shippingCostSea : formData.shippingCostAir).toFixed(2)}
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600 dark:text-gray-400">
+                            Shipping ({formData.shippingCosts.selected}):
                           </span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">${totals.selectedShippingCost.toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between">
+                        <div className="flex justify-between items-center">
                           <span className="text-gray-600 dark:text-gray-400">Agent Fees:</span>
                           <span className="font-medium text-gray-900 dark:text-gray-100">${formData.agentFees.toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between">
+                        <div className="flex justify-between items-center">
                           <span className="text-gray-600 dark:text-gray-400">Local Shipping:</span>
                           <span className="font-medium text-gray-900 dark:text-gray-100">${formData.localShippingFees.toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between border-t border-gray-200 dark:border-gray-600 pt-2">
-                          <span className="text-gray-600 dark:text-gray-400">Subtotal:</span>
-                          <span className="font-medium text-gray-900 dark:text-gray-100">${getSubtotalAmount().toFixed(2)}</span>
+                        <div className="border-t border-gray-300 dark:border-gray-500 pt-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600 dark:text-gray-400">Subtotal:</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">${totals.subtotalAmount.toFixed(2)}</span>
+                          </div>
                         </div>
-                        <div className="flex justify-between">
+                        <div className="flex justify-between items-center">
                           <span className="text-gray-600 dark:text-gray-400">GST (10%):</span>
-                          <span className="font-medium text-gray-900 dark:text-gray-100">${getGstAmount().toFixed(2)}</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">${totals.gstAmount.toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between border-t border-gray-300 dark:border-gray-500 pt-2">
-                          <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">Grand Total:</span>
-                          <span className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                            ${getGrandTotalAmount().toFixed(2)}
-                          </span>
+                        <div className="border-t border-gray-300 dark:border-gray-500 pt-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">Grand Total:</span>
+                            <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">${totals.grandTotalAmount.toFixed(2)}</span>
+                          </div>
                         </div>
+                      </div>
+                    </div>
+
+                    {/* Quote Items Summary */}
+                    <div className="mt-6">
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Quote Items ({formData.parts.length})</h4>
+                      <div className="border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-700 max-h-64 overflow-y-auto">
+                        {formData.parts.map((quotePart, index) => (
+                          <div key={quotePart.id} className={`p-3 ${index < formData.parts.length - 1 ? 'border-b border-gray-100 dark:border-gray-600' : ''}`}>
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h5 className="font-medium text-gray-900 dark:text-gray-100">
+                                  {quotePart.isCustomPart ? quotePart.customPartName : quotePart.part?.name}
+                                </h5>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                  {quotePart.isCustomPart ? quotePart.customPartDescription : quotePart.part?.partNumber}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-medium text-gray-900 dark:text-gray-100">
+                                  {quotePart.quantity} × ${quotePart.unitPrice.toFixed(2)}
+                                </p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                  Total: ${quotePart.totalPrice.toFixed(2)}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -1188,6 +1382,16 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
             </div>
           )}
         </div>
+
+        {/* Error Message */}
+        {submitError && (
+          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg mx-6 mb-4">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+              <span className="text-sm text-red-800 dark:text-red-300">{submitError}</span>
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
@@ -1222,17 +1426,17 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
               ) : (
                 <div className="flex space-x-3">
                   <button
-                    onClick={() => createQuoteInSupabase('draft')}
+                    onClick={() => handleSubmit('draft')}
                     disabled={isSubmitting}
                     className={`flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md transition-colors ${
                       isSubmitting 
-                        ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed' 
+                        ? 'text-gray-400 cursor-not-allowed' 
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                   >
                     {isSubmitting ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400 dark:border-gray-500"></div>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
                         <span>Saving...</span>
                       </>
                     ) : (
@@ -1243,7 +1447,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                     )}
                   </button>
                   <button
-                    onClick={() => createQuoteInSupabase('sent')}
+                    onClick={() => handleSubmit('sent')}
                     disabled={isSubmitting}
                     className={`flex items-center space-x-2 px-6 py-2 rounded-md transition-colors ${
                       isSubmitting
@@ -1254,12 +1458,12 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                     {isSubmitting ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Submitting...</span>
+                        <span>Creating...</span>
                       </>
                     ) : (
                       <>
                         <Send className="h-4 w-4" />
-                        <span>Send Quote</span>
+                        <span>Create & Send Quote</span>
                       </>
                     )}
                   </button>
@@ -1274,7 +1478,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
               <span className="text-sm">
                 {currentStep === 1 && 'Please select at least one part to continue'}
                 {currentStep === 2 && 'Please select a customer to continue'}
-                {currentStep === 3 && 'Please set an expiry date to continue'}
+                {currentStep === 3 && 'Please set a quote expiry date to continue'}
               </span>
             </div>
           )}
