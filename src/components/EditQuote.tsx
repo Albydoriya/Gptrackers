@@ -16,7 +16,7 @@ import {
   AlertCircle,
   Edit3,
   Building,
-  Receipt,
+import { Quote, Customer, QuotePart, Part, QuoteStatus } from '../types';
   Truck,
   Calculator,
   CheckCircle,
@@ -30,7 +30,7 @@ import { Quote, QuotePart, Customer, Part, QuoteStatus } from '../types';
 interface EditQuoteProps {
   isOpen: boolean;
   onClose: () => void;
-  onQuoteUpdated: (quote: Quote) => void;
+  onQuoteUpdated: () => void;
   quote: Quote | null;
 }
 
@@ -60,11 +60,64 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
   const [showAddCustomItem, setShowAddCustomItem] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [availableParts, setAvailableParts] = useState<Part[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoadingParts, setIsLoadingParts] = useState(true);
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
   
+  // Validation function
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.quoteNumber.trim()) {
+      newErrors.quoteNumber = 'Quote number is required';
+    }
+    if (!formData.customer) {
+      newErrors.customer = 'Customer is required';
+    }
+    if (formData.parts.length === 0) {
+      newErrors.parts = 'At least one part is required';
+    }
+    if (!formData.expiryDate) {
+      newErrors.expiryDate = 'Expiry date is required';
+    }
+
+    // Validate each quote part
+    formData.parts.forEach((quotePart, index) => {
+      if (quotePart.isCustomPart) {
+        if (!quotePart.customPartName?.trim()) {
+          newErrors[`part_${index}_customName`] = 'Custom part name is required';
+        }
+        if (!quotePart.customPartDescription?.trim()) {
+          newErrors[`part_${index}_customDescription`] = 'Custom part description is required';
+        }
+        // For custom parts, part should be null
+        if (quotePart.part) {
+          newErrors[`part_${index}_customPart`] = 'Custom parts should not have a catalog part reference';
+        }
+      } else {
+        if (!quotePart.part || !quotePart.part.id) {
+          newErrors[`part_${index}_catalogPart`] = 'Catalog part is required for non-custom parts';
+        }
+        // For catalog parts, custom fields should be null
+        if (quotePart.customPartName || quotePart.customPartDescription) {
+          newErrors[`part_${index}_catalogPart`] = 'Catalog parts should not have custom part data';
+        }
+      }
+      
+      if (quotePart.quantity <= 0) {
+        newErrors[`part_${index}_quantity`] = 'Quantity must be greater than 0';
+      }
+      if (quotePart.unitPrice <= 0) {
+        newErrors[`part_${index}_unitPrice`] = 'Unit price must be greater than 0';
+      }
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const [newCustomer, setNewCustomer] = useState({
     name: '',
     contactPerson: '',
@@ -427,10 +480,15 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
     }
   };
 
-  const handleSubmit = async (status: QuoteStatus) => {
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    updateQuoteInSupabase();
     updateQuoteInSupabase(status);
   };
-
+  const updateQuoteInSupabase = async () => {
   const updateQuoteInSupabase = async (status: QuoteStatus) => {
     if (!quote || !formData.customer || formData.parts.length === 0 || !user) {
       setSubmitError('Please ensure all required fields are filled');
@@ -477,9 +535,9 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
       if (formData.parts.length > 0) {
         const quotePartsArray = formData.parts.map(quotePart => ({
           quote_id: quote.id,
-          part_id: quotePart.isCustomPart ? null : quotePart.part?.id,
-          custom_part_name: quotePart.isCustomPart ? quotePart.customPartName : null,
-          custom_part_description: quotePart.isCustomPart ? quotePart.customPartDescription : null,
+          part_id: quotePart.isCustomPart ? null : (quotePart.part?.id || null),
+          custom_part_name: quotePart.isCustomPart ? (quotePart.customPartName || null) : null,
+          custom_part_description: quotePart.isCustomPart ? (quotePart.customPartDescription || null) : null,
           quantity: quotePart.quantity,
           unit_price: quotePart.unitPrice,
           is_custom_part: quotePart.isCustomPart,
@@ -587,7 +645,7 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
       }
 
       // 3. Update quote status to converted
-      const { error: quoteUpdateError } = await supabase
+      onQuoteUpdated();
         .from('quotes')
         .update({ 
           status: 'converted_to_order',
