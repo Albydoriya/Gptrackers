@@ -187,9 +187,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             sessionStorage.removeItem('supabase.auth.token');
             await supabase.auth.signOut();
             setUser(null);
+            setIsLoading(false);
           }
         } else {
           setUser(null);
+          setIsLoading(false);
         }
       } catch (sessionError) {
         // Check if this is a refresh token error (expected scenario)
@@ -209,10 +211,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
         setUser(null);
         setIsLoading(false);
-      } finally {
-        if (isLoading) {
-          setIsLoading(false);
-        }
       }
     };
 
@@ -231,6 +229,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           localStorage.removeItem('supabase.auth.token');
           sessionStorage.removeItem('supabase.auth.token');
           setUser(null);
+          setIsLoading(false);
         }
       } catch (authChangeError) {
         console.error('Error handling auth state change:', authChangeError);
