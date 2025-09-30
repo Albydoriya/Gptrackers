@@ -162,6 +162,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           await supabase.auth.signOut();
           setUser(null);
           setIsLoading(false);
+          // Force page reload to clear all browser state
+          window.location.reload();
           return;
         }
         
@@ -174,6 +176,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           await supabase.auth.signOut();
           setUser(null);
           setIsLoading(false);
+          // Force page reload to clear all browser state
+          window.location.reload();
           return;
         }
         
@@ -188,6 +192,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             await supabase.auth.signOut();
             setUser(null);
             setIsLoading(false);
+            // Force page reload to clear all browser state
+            window.location.reload();
           }
         } else {
           setUser(null);
@@ -211,6 +217,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
         setUser(null);
         setIsLoading(false);
+        // Force page reload to clear all browser state
+        window.location.reload();
       }
     };
 
@@ -230,6 +238,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           sessionStorage.removeItem('supabase.auth.token');
           setUser(null);
           setIsLoading(false);
+          // Force page reload to clear all browser state
+          window.location.reload();
         }
       } catch (authChangeError) {
         console.error('Error handling auth state change:', authChangeError);
@@ -238,6 +248,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         sessionStorage.removeItem('supabase.auth.token');
         setUser(null);
         setIsLoading(false);
+        // Force page reload to clear all browser state
+        window.location.reload();
       }
     });
 
@@ -393,8 +405,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         localStorage.removeItem('supabase.auth.token');
         sessionStorage.removeItem('supabase.auth.token');
         await supabase.auth.signOut();
+        // Force page reload to clear all browser state
+        window.location.reload();
       } catch (signOutError) {
         console.warn('Error during cleanup signOut:', signOutError);
+        // Force page reload even if signOut fails
+        window.location.reload();
       }
       
       setUser(null);
@@ -545,6 +561,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         sessionStorage.removeItem('supabase.auth.token');
         await supabase.auth.signOut();
         setUser(null);
+        // Force page reload to clear all browser state
+        window.location.reload();
         return false;
       }
       
@@ -560,6 +578,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         sessionStorage.removeItem('supabase.auth.token');
         await supabase.auth.signOut();
         setUser(null);
+        // Force page reload to clear all browser state
+        window.location.reload();
         return false;
       }
       
@@ -570,6 +590,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         sessionStorage.removeItem('supabase.auth.token');
         await supabase.auth.signOut();
         setUser(null);
+        // Force page reload to clear all browser state
+        window.location.reload();
         return false;
       }
       
@@ -587,6 +609,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           sessionStorage.removeItem('supabase.auth.token');
           await supabase.auth.signOut();
           setUser(null);
+          // Force page reload to clear all browser state
+          window.location.reload();
           return false;
         }
       }
@@ -601,6 +625,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       sessionStorage.removeItem('supabase.auth.token');
       await supabase.auth.signOut();
       setUser(null);
+      // Force page reload to clear all browser state
+      window.location.reload();
       return false;
     } finally {
       // Always reset loading state when session check completes
