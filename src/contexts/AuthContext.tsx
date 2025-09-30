@@ -258,7 +258,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           .single()
           .then(result => ({ type: 'success', ...result })),
         new Promise(resolve =>
-          setTimeout(() => resolve({ type: 'timeout', data: null, error: { message: 'Profile fetch timeout' } }), 8000)
+          setTimeout(() => resolve({ type: 'timeout', data: null, error: { message: 'Profile fetch timeout' } }), 15000)
         )
       ]) as any;
       
@@ -329,7 +329,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             .single()
             .then(result => ({ type: 'success', ...result })),
           new Promise(resolve =>
-            setTimeout(() => resolve({ type: 'timeout', data: null, error: { message: 'Profile creation timeout' } }), 8000)
+            setTimeout(() => resolve({ type: 'timeout', data: null, error: { message: 'Profile creation timeout' } }), 15000)
           )
         ]) as any;
         
@@ -532,7 +532,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const sessionResult = await Promise.race([
         supabase.auth.getSession(),
         new Promise((resolve) =>
-          setTimeout(() => resolve({ data: { session: null }, error: { message: 'Session check timeout' } }), 8000)
+          setTimeout(() => resolve({ data: { session: null }, error: { message: 'Session check timeout' } }), 15000)
         )
       ]) as any;
       
