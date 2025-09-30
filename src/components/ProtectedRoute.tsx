@@ -1,5 +1,4 @@
 import React from 'react';
-import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { AlertTriangle, Lock, Loader2 } from 'lucide-react';
 
@@ -19,32 +18,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requiredRole,
   fallback
 }) => {
-  const { user, hasPermission, hasRole, checkAndRefreshSession } = useAuth();
-  const [isSessionChecking, setIsSessionChecking] = useState(true);
+  const { user, hasPermission, hasRole, isLoading } = useAuth();
 
-  // Check session validity when component mounts
-  useEffect(() => {
-    const validateSession = async () => {
-      try {
-        await checkAndRefreshSession();
-      } catch (error) {
-        console.error('Session validation failed:', error);
-        // Error is already handled in checkAndRefreshSession
-      } finally {
-        setIsSessionChecking(false);
-      }
-    };
-
-    validateSession();
-  }, [checkAndRefreshSession]);
-
-  // Show loading while checking session
-  if (isSessionChecking) {
+  // Show loading while AuthProvider is checking session
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Validating Session</h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Loading</h3>
           <p className="text-gray-600 dark:text-gray-400">Checking your authentication status...</p>
         </div>
       </div>
@@ -52,7 +34,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (!user) {
-    // User session is invalid, the AuthContext will handle redirecting to login
+    // User is not authenticated, AuthContext will handle showing login
     return null;
   }
 
