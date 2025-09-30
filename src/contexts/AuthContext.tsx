@@ -179,7 +179,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         if (session?.user && !error) {
           try {
-            await createUserFromSession(session.user, false); // Session refresh
+            await createUserFromSession(session.user);
           } catch (userCreationError) {
             console.error('Error creating user from session:', userCreationError);
             // If user creation fails, sign out to prevent stuck state
@@ -220,30 +220,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       try {
         if (event === 'SIGNED_IN' && session?.user) {
-          await createUserFromSession(session.user, true); // New login
+          await createUserFromSession(session.user);
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
-          setIsLoading(false);
-        } else if (event === 'TOKEN_REFRESHED') {
-          if (session?.user) {
-            try {
-              await createUserFromSession(session.user, false); // Session refresh
-            } catch (refreshError) {
-              console.error('Error during token refresh user creation:', refreshError);
-              localStorage.removeItem('supabase.auth.token');
-              sessionStorage.removeItem('supabase.auth.token');
-              await supabase.auth.signOut();
-              setUser(null);
-              setIsLoading(false);
-            }
-          } else {
-            // Handle case where token refresh failed
-            console.log('Token refresh failed, signing out user');
-            localStorage.removeItem('supabase.auth.token');
-            sessionStorage.removeItem('supabase.auth.token');
-            setUser(null);
-            setIsLoading(false);
-          }
         } else if (event === 'TOKEN_REFRESHED' && !session) {
           // Handle case where token refresh failed
           console.log('Token refresh failed, signing out user');
@@ -265,7 +244,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => subscription.unsubscribe();
   }, []);
 
-  const createUserFromSession = React.useCallback(async (supabaseUser: SupabaseUser, isNewLogin: boolean = false) => {
+  const createUserFromSession = async (supabaseUser: SupabaseUser) => {
     try {
       console.log('Starting createUserFromSession for user:', supabaseUser.id);
       
@@ -320,52 +299,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } else if (profileError?.code === 'PGRST116' || profileResult.type === 'timeout') {
         // Profile doesn't exist (PGRST116 = no rows found) or fetch timed out
         if (profileResult.type === 'timeout') {
-          console.warn('Profile fetch timed out during session creation');
-          
-          if (isNewLogin) {
-            // For new logins, allow user to proceed with fallback profile
-            console.log('New login detected - proceeding with fallback viewer profile due to timeout');
-            
-            const fallbackRole = mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
-            const fallbackUser: User = {
-              id: supabaseUser.id,
-              email: supabaseUser.email || '',
-              name: supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User',
-              avatar: supabaseUser.user_metadata?.avatar_url,
-              role: fallbackRole,
-              permissions: fallbackRole.permissions,
-              department: undefined,
-              lastLogin: new Date().toISOString(),
-              preferences: { theme: 'light' },
-            };
-            
-            console.log('Setting fallback user data in state');
-            setUser(fallbackUser);
-            setIsLoading(false);
-            
-            // Try to create profile in background (non-blocking)
-            console.log('Attempting to create profile in background...');
-            supabase
-              .from('user_profiles')
-              .upsert({
-                id: supabaseUser.id,
-                full_name: fallbackUser.name,
-                email: supabaseUser.email,
-                role: 'viewer' as 'admin' | 'manager' | 'buyer' | 'viewer',
-                preferences: fallbackUser.preferences,
-                last_login: new Date().toISOString(),
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              }, { onConflict: 'id' })
-              .then(() => console.log('Background profile creation successful'))
-              .catch(err => console.warn('Background profile creation failed (non-critical):', err));
-            
-            return; // Exit successfully with fallback user
-          } else {
-            // For session re-establishment, require valid profile data
-            console.error('Profile fetch timed out, cannot establish user session safely');
-            throw new Error('Unable to verify user profile - session timeout');
-          }
+          console.error('Profile fetch timed out, cannot establish user session safely');
+          throw new Error('Unable to verify user profile - session timeout');
         }
         
         console.log('Profile not found, creating new profile with default viewer role...');
@@ -465,9 +400,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(null);
       throw error; // Re-throw to ensure calling code knows the session creation failed
     }
-  }, [setUser, setIsLoading]);
+  };
 
-  const signUp = React.useCallback(async (email: string, password: string, fullName: string) => {
+  const signUp = async (email: string, password: string, fullName: string) => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -490,9 +425,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       setIsLoading(false);
     }
-  }, [setIsLoading]);
+  };
 
-  const signIn = React.useCallback(async (email: string, password: string) => {
+  const signIn = async (email: string, password: string) => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -509,9 +444,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       setIsLoading(false);
     }
-  }, [setIsLoading]);
+  };
 
-  const signOut = React.useCallback(async () => {
+  const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
@@ -520,9 +455,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error('Sign out error:', error);
       throw new Error(error.message || 'Failed to sign out');
     }
-  }, [setUser]);
+  };
 
-  const resetPassword = React.useCallback(async (email: string) => {
+  const resetPassword = async (email: string) => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`
@@ -532,21 +467,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error('Password reset error:', error);
       throw new Error(error.message || 'Failed to send reset email');
     }
-  }, []);
+  };
 
-  const hasPermission = React.useCallback((resource: string, action: string): boolean => {
+  const hasPermission = (resource: string, action: string): boolean => {
     if (!user) return false;
     return user.permissions.some(permission => 
       permission.resource === resource && permission.action === action
     );
-  }, [user]);
+  };
 
-  const hasRole = React.useCallback((roleName: string): boolean => {
+  const hasRole = (roleName: string): boolean => {
     if (!user) return false;
     return user.role.name === roleName;
-  }, [user]);
+  };
 
-  const updateUserProfile = React.useCallback(async (updates: Partial<User>): Promise<void> => {
+  const updateUserProfile = async (updates: Partial<User>): Promise<void> => {
     if (!user) {
       throw new Error('No user logged in');
     }
@@ -585,9 +520,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error('Error updating user profile:', error);
       throw new Error(error.message || 'Failed to update user profile');
     }
-  }, [user, setUser]);
+  };
 
-  const checkAndRefreshSession = React.useCallback(async (): Promise<boolean> => {
+  const checkAndRefreshSession = async (): Promise<boolean> => {
     setIsLoading(true);
     
     try {
@@ -652,59 +587,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           sessionStorage.removeItem('supabase.auth.token');
           await supabase.auth.signOut();
           setUser(null);
-          console.warn('Profile fetch timed out during session recovery, proceeding with fallback profile');
-          
-          // Create fallback user with basic viewer role to prevent logout
-          const fallbackRole = mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
-          const fallbackUser: User = {
-            id: supabaseUser.id,
-            email: supabaseUser.email || '',
-            name: supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User',
-            avatar: supabaseUser.user_metadata?.avatar_url,
-            role: fallbackRole,
-            permissions: fallbackRole.permissions,
-            department: undefined,
-            lastLogin: new Date().toISOString(),
-            preferences: { theme: 'light' },
-          };
-          
-          console.log('Setting fallback user data for session recovery');
-          setUser(fallbackUser);
-          setIsLoading(false);
-          
-          // Attempt to recover full profile in background (non-blocking)
-          console.log('Attempting background profile recovery...');
-          setTimeout(async () => {
-            try {
-              const { data: recoveredProfile, error: recoveryError } = await supabase
-                .from('user_profiles')
-                .select('*')
-                .eq('id', supabaseUser.id)
-                .single();
-              
-              if (recoveredProfile && !recoveryError) {
-                console.log('Background profile recovery successful, updating user data');
-                const recoveredRole = mockRoles.find(role => role.name === recoveredProfile.role);
-                if (recoveredRole) {
-                  const updatedUser: User = {
-                    ...fallbackUser,
-                    name: recoveredProfile.full_name || fallbackUser.name,
-                    role: recoveredRole,
-                    permissions: recoveredRole.permissions,
-                    department: recoveredProfile.department || undefined,
-                    preferences: recoveredProfile.preferences || fallbackUser.preferences,
-                  };
-                  setUser(updatedUser);
-                }
-              } else {
-                console.warn('Background profile recovery failed, user continues with fallback profile');
-              }
-            } catch (recoveryError) {
-              console.warn('Background profile recovery error (non-critical):', recoveryError);
-            }
-          }, 2000); // Retry after 2 seconds
-          
-          return; // Exit successfully with fallback user
+          return false;
         }
       }
       
@@ -723,7 +606,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Always reset loading state when session check completes
       setIsLoading(false);
     }
-  }, [createUserFromSession, setUser, setIsLoading, user]);
+  };
 
   const value: AuthContextType = {
     user,
