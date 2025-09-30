@@ -287,7 +287,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const profileResult = await Promise.race([
         supabase
           .from('user_profiles')
-          .select('*')
+          .select('id, full_name, avatar_url, role, department, email, preferences, last_login, created_at, updated_at')
           .eq('id', supabaseUser.id)
           .single()
           .then(result => ({ type: 'success', ...result })),
@@ -359,7 +359,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           supabase
             .from('user_profiles')
             .upsert(profileDataToUpsert, { onConflict: 'id' })
-            .select('*')
+            .select('id, full_name, avatar_url, role, department, email, preferences, last_login, created_at, updated_at')
             .single()
             .then(result => ({ type: 'success', ...result })),
           new Promise(resolve =>
