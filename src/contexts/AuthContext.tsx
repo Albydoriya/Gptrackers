@@ -179,7 +179,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         if (session?.user && !error) {
           try {
-            await createUserFromSession(session.user);
+            await createUserFromSession(session.user, false); // Session refresh
           } catch (userCreationError) {
             console.error('Error creating user from session:', userCreationError);
             // If user creation fails, sign out to prevent stuck state
@@ -220,9 +220,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       try {
         if (event === 'SIGNED_IN' && session?.user) {
-          await createUserFromSession(session.user);
+          await createUserFromSession(session.user, true); // New login
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
+          setIsLoading(false);
+        } else if (event === 'TOKEN_REFRESHED') {
+          if (session?.user) {
+            try {
+              await createUserFromSession(session.user, false); // Session refresh
+            } catch (refreshError) {
+              console.error('Error during token refresh user creation:', refreshError);
+              localStorage.removeItem('supabase.auth.token');
+              sessionStorage.removeItem('supabase.auth.token');
+              await supabase.auth.signOut();
+              setUser(null);
+              setIsLoading(false);
+            }
+          } else {
+            // Handle case where token refresh failed
+            console.log('Token refresh failed, signing out user');
+            localStorage.removeItem('supabase.auth.token');
+            sessionStorage.removeItem('supabase.auth.token');
+            setUser(null);
+            setIsLoading(false);
+          }
         } else if (event === 'TOKEN_REFRESHED' && !session) {
           // Handle case where token refresh failed
           console.log('Token refresh failed, signing out user');
@@ -244,7 +265,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => subscription.unsubscribe();
   }, []);
 
-  const createUserFromSession = async (supabaseUser: SupabaseUser) => {
+  const createUserFromSession = async (supabaseUser: SupabaseUser, isNewLogin: boolean = false) => {
     try {
       console.log('Starting createUserFromSession for user:', supabaseUser.id);
       
@@ -299,8 +320,52 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } else if (profileError?.code === 'PGRST116' || profileResult.type === 'timeout') {
         // Profile doesn't exist (PGRST116 = no rows found) or fetch timed out
         if (profileResult.type === 'timeout') {
-          console.error('Profile fetch timed out, cannot establish user session safely');
-          throw new Error('Unable to verify user profile - session timeout');
+          console.warn('Profile fetch timed out during session creation');
+          
+          if (isNewLogin) {
+            // For new logins, allow user to proceed with fallback profile
+            console.log('New login detected - proceeding with fallback viewer profile due to timeout');
+            
+            const fallbackRole = mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
+            const fallbackUser: User = {
+              id: supabaseUser.id,
+              email: supabaseUser.email || '',
+              name: supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User',
+              avatar: supabaseUser.user_metadata?.avatar_url,
+              role: fallbackRole,
+              permissions: fallbackRole.permissions,
+              department: undefined,
+              lastLogin: new Date().toISOString(),
+              preferences: { theme: 'light' },
+            };
+            
+            console.log('Setting fallback user data in state');
+            setUser(fallbackUser);
+            setIsLoading(false);
+            
+            // Try to create profile in background (non-blocking)
+            console.log('Attempting to create profile in background...');
+            supabase
+              .from('user_profiles')
+              .upsert({
+                id: supabaseUser.id,
+                full_name: fallbackUser.name,
+                email: supabaseUser.email,
+                role: 'viewer' as 'admin' | 'manager' | 'buyer' | 'viewer',
+                preferences: fallbackUser.preferences,
+                last_login: new Date().toISOString(),
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              }, { onConflict: 'id' })
+              .then(() => console.log('Background profile creation successful'))
+              .catch(err => console.warn('Background profile creation failed (non-critical):', err));
+            
+            return; // Exit successfully with fallback user
+          } else {
+            // For session re-establishment, require valid profile data
+            console.error('Profile fetch timed out, cannot establish user session safely');
+            throw new Error('Unable to verify user profile - session timeout');
+          }
         }
         
         console.log('Profile not found, creating new profile with default viewer role...');
