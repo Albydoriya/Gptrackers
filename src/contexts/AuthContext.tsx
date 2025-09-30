@@ -141,6 +141,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Helper function to clear all authentication storage
+  const clearAuthStorage = () => {
+    try {
+      // Clear localStorage
+      localStorage.removeItem('supabase.auth.token');
+      localStorage.removeItem('sb-' + import.meta.env.VITE_SUPABASE_URL?.split('//')[1]?.split('.')[0] + '-auth-token');
+      
+      // Clear sessionStorage
+      sessionStorage.removeItem('supabase.auth.token');
+      sessionStorage.removeItem('sb-' + import.meta.env.VITE_SUPABASE_URL?.split('//')[1]?.split('.')[0] + '-auth-token');
+      
+      // Clear any other potential auth keys
+      Object.keys(localStorage).forEach(key => {
+        if (key.includes('supabase') || key.includes('auth')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.includes('supabase') || key.includes('auth')) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    } catch (error) {
+      console.warn('Error clearing auth storage:', error);
+    }
+  };
+
   useEffect(() => {
     // Get initial session
     const getInitialSession = async () => {
@@ -157,8 +185,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         )) {
           console.log('Invalid or expired refresh token detected, clearing session...');
           // Clear any stored auth data
-          localStorage.removeItem('supabase.auth.token');
-          sessionStorage.removeItem('supabase.auth.token');
+          clearAuthStorage();
           await supabase.auth.signOut();
           setUser(null);
           setIsLoading(false);
@@ -171,8 +198,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (error) {
           console.error('Session retrieval error:', error);
           // Clear potentially corrupted auth data for any auth error
-          localStorage.removeItem('supabase.auth.token');
-          sessionStorage.removeItem('supabase.auth.token');
+          clearAuthStorage();
           await supabase.auth.signOut();
           setUser(null);
           setIsLoading(false);
@@ -187,8 +213,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           } catch (userCreationError) {
             console.error('Error creating user from session:', userCreationError);
             // If user creation fails, sign out to prevent stuck state
-            localStorage.removeItem('supabase.auth.token');
-            sessionStorage.removeItem('supabase.auth.token');
+            clearAuthStorage();
             await supabase.auth.signOut();
             setUser(null);
             setIsLoading(false);
@@ -209,8 +234,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         )) {
           console.log('Session recovery failed due to invalid/expired refresh token, user will need to sign in again');
           // Clear any stored auth data
-          localStorage.removeItem('supabase.auth.token');
-          sessionStorage.removeItem('supabase.auth.token');
+          clearAuthStorage();
           await supabase.auth.signOut();
         } else {
           console.error('Error getting initial session:', sessionError);
@@ -234,8 +258,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } else if (event === 'TOKEN_REFRESHED' && !session) {
           // Handle case where token refresh failed
           console.log('Token refresh failed, signing out user');
-          localStorage.removeItem('supabase.auth.token');
-          sessionStorage.removeItem('supabase.auth.token');
+          clearAuthStorage();
           setUser(null);
           setIsLoading(false);
           // Force page reload to clear all browser state
@@ -244,8 +267,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } catch (authChangeError) {
         console.error('Error handling auth state change:', authChangeError);
         // Clear auth data on any auth change error
-        localStorage.removeItem('supabase.auth.token');
-        sessionStorage.removeItem('supabase.auth.token');
+        clearAuthStorage();
         setUser(null);
         setIsLoading(false);
         // Force page reload to clear all browser state
@@ -270,7 +292,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           .single()
           .then(result => ({ type: 'success', ...result })),
         new Promise(resolve =>
-          setTimeout(() => resolve({ type: 'timeout', data: null, error: { message: 'Profile fetch timeout' } }), 15000)
+          setTimeout(() => resolve({ type: 'timeout', data: null, error: { message: 'Network timeout while fetching user profile. Please check your connection and try again.' } }), 30000)
         )
       ]) as any;
       
@@ -312,7 +334,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // Profile doesn't exist (PGRST116 = no rows found) or fetch timed out
         if (profileResult.type === 'timeout') {
           console.error('Profile fetch timed out, cannot establish user session safely');
-          throw new Error('Unable to verify user profile - session timeout');
+          throw new Error('Network timeout while verifying user profile. Please check your internet connection and try signing in again.');
         }
         
         console.log('Profile not found, creating new profile with default viewer role...');
@@ -341,7 +363,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             .single()
             .then(result => ({ type: 'success', ...result })),
           new Promise(resolve =>
-            setTimeout(() => resolve({ type: 'timeout', data: null, error: { message: 'Profile creation timeout' } }), 15000)
+            setTimeout(() => resolve({ type: 'timeout', data: null, error: { message: 'Network timeout while creating user profile. Please try again.' } }), 30000)
           )
         ]) as any;
         
@@ -353,7 +375,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         if (insertError || insertResult.type === 'timeout') {
           console.error('Profile creation failed or timed out:', insertError || 'timeout');
-          throw new Error('Unable to create user profile - please try signing in again');
+          throw new Error('Network timeout while creating user profile. Please check your connection and try signing in again.');
         }
         
         if (upsertedProfile) {
@@ -402,8 +424,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       // Clear any potentially corrupted auth data and force sign out
       try {
-        localStorage.removeItem('supabase.auth.token');
-        sessionStorage.removeItem('supabase.auth.token');
+        clearAuthStorage();
         await supabase.auth.signOut();
         // Force page reload to clear all browser state
         window.location.reload();
@@ -446,6 +467,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
     try {
+      // Clear any existing auth storage before attempting new sign in
+      clearAuthStorage();
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -548,7 +572,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const sessionResult = await Promise.race([
         supabase.auth.getSession(),
         new Promise((resolve) =>
-          setTimeout(() => resolve({ data: { session: null }, error: { message: 'Session check timeout' } }), 15000)
+          setTimeout(() => resolve({ data: { session: null }, error: { message: 'Network timeout during session check. Please try again.' } }), 30000)
         )
       ]) as any;
       
@@ -557,8 +581,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Handle timeout gracefully
       if (error && error.message === 'Session check timeout') {
         console.log('Session check timed out, treating as invalid session');
-        localStorage.removeItem('supabase.auth.token');
-        sessionStorage.removeItem('supabase.auth.token');
+        clearAuthStorage();
         await supabase.auth.signOut();
         setUser(null);
         // Force page reload to clear all browser state
@@ -574,8 +597,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         error.code === 'refresh_token_not_found'
       )) {
         console.log('Invalid refresh token detected during session check, signing out...');
-        localStorage.removeItem('supabase.auth.token');
-        sessionStorage.removeItem('supabase.auth.token');
+        clearAuthStorage();
         await supabase.auth.signOut();
         setUser(null);
         // Force page reload to clear all browser state
@@ -586,8 +608,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // If no session or other auth error, sign out
       if (!session || error) {
         console.log('No valid session found or auth error:', error?.message || 'No session');
-        localStorage.removeItem('supabase.auth.token');
-        sessionStorage.removeItem('supabase.auth.token');
+        clearAuthStorage();
         await supabase.auth.signOut();
         setUser(null);
         // Force page reload to clear all browser state
@@ -605,8 +626,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } catch (userCreationError) {
           console.error('Failed to recreate user from valid session:', userCreationError);
           // If we can't recreate the user, the session is effectively invalid
-          localStorage.removeItem('supabase.auth.token');
-          sessionStorage.removeItem('supabase.auth.token');
+          clearAuthStorage();
           await supabase.auth.signOut();
           setUser(null);
           // Force page reload to clear all browser state
@@ -621,8 +641,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (error) {
       console.error('Error during session check:', error);
       // On any error, assume session is invalid and sign out
-      localStorage.removeItem('supabase.auth.token');
-      sessionStorage.removeItem('supabase.auth.token');
+      clearAuthStorage();
       await supabase.auth.signOut();
       setUser(null);
       // Force page reload to clear all browser state
