@@ -181,8 +181,9 @@ export const useNotifications = () => {
           if (status === 'SUBSCRIBED') {
             console.log('Successfully subscribed to notifications');
           } else if (status === 'CHANNEL_ERROR') {
-            console.error('Error subscribing to notifications channel:', err);
-            setError('Failed to connect to real-time notifications');
+            const errorMessage = err?.message || err?.error_description || err?.toString() || 'Unknown subscription error';
+            console.error('Error subscribing to notifications channel:', errorMessage);
+            setError(`Failed to connect to real-time notifications: ${errorMessage}`);
           } else if (status === 'TIMED_OUT') {
             console.error('Notifications subscription timed out');
             setError('Notifications connection timed out');

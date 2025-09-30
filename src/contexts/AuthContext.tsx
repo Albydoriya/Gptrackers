@@ -333,66 +333,62 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } else if (profileError?.code === 'PGRST116' || profileResult.type === 'timeout') {
         // Profile doesn't exist (PGRST116 = no rows found) or fetch timed out
         if (profileResult.type === 'timeout') {
-          console.error('Profile fetch timed out, cannot establish user session safely');
-          throw new Error('Network timeout while verifying user profile. Please check your internet connection and try signing in again.');
-        }
-        
-        console.log('Profile not found, creating new profile with default viewer role...');
-        
-        // For new users, start with viewer role - admin can upgrade later
-        userRole = mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
-        
-        // Use upsert to handle potential race conditions
-        const profileDataToUpsert = {
-          id: supabaseUser.id,
-          full_name: fullName,
-          email: supabaseUser.email,
-          role: userRole.name as 'admin' | 'manager' | 'buyer' | 'viewer',
-          preferences: {},
-          last_login: new Date().toISOString(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-
-        // Wrap profile creation in timeout to prevent application freeze
-        const insertResult = await Promise.race([
-          supabase
-            .from('user_profiles')
-            .upsert(profileDataToUpsert, { onConflict: 'id' })
-            .select('id, full_name, avatar_url, role, department, email, preferences, last_login, created_at, updated_at')
-            .single()
-            .then(result => ({ type: 'success', ...result })),
-          new Promise(resolve =>
-            setTimeout(() => resolve({ type: 'timeout', data: null, error: { message: 'Network timeout while creating user profile. Please try again.' } }), 30000)
-          )
-        ]) as any;
-        
-        const { data: upsertedProfile, error: insertError } = insertResult.type === 'timeout' 
-          ? { data: null, error: insertResult.error }
-          : insertResult;
-        
-        console.log('Profile creation completed. Error:', insertError, 'Timeout:', insertResult.type === 'timeout');
-
-        if (insertError || insertResult.type === 'timeout') {
-          console.error('Profile creation failed or timed out:', insertError || 'timeout');
-          throw new Error('Network timeout while creating user profile. Please check your connection and try signing in again.');
-        }
-        
-        if (upsertedProfile) {
-          console.log('Successfully created new user profile');
-          const roleFromProfile = mockRoles.find(role => role.name === upsertedProfile.role);
-          if (!roleFromProfile) {
-            console.error('Invalid role in created profile:', upsertedProfile.role);
-            throw new Error('Profile creation resulted in invalid role');
-          }
-          userRole = roleFromProfile;
-          
-          if (upsertedProfile.full_name) {
-            fullName = upsertedProfile.full_name;
-          }
+          console.warn('Profile fetch timed out, proceeding with default user profile');
+          // Instead of throwing an error, proceed with a default profile
+          userRole = mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
         } else {
-          console.error('Profile creation succeeded but no data returned');
-          throw new Error('Profile creation failed - no data returned');
+          console.log('Profile not found, creating new profile with default viewer role...');
+          
+          // For new users, start with viewer role - admin can upgrade later
+          userRole = mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
+        }
+        
+        // Only attempt to create profile if it's not a timeout
+        if (profileResult.type !== 'timeout') {
+          // Use upsert to handle potential race conditions
+          const profileDataToUpsert = {
+            id: supabaseUser.id,
+            full_name: fullName,
+            email: supabaseUser.email,
+            role: userRole.name as 'admin' | 'manager' | 'buyer' | 'viewer',
+            preferences: {},
+            last_login: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+
+          // Wrap profile creation in timeout to prevent application freeze
+          const insertResult = await Promise.race([
+            supabase
+              .from('user_profiles')
+              .upsert(profileDataToUpsert, { onConflict: 'id' })
+              .select('id, full_name, avatar_url, role, department, email, preferences, last_login, created_at, updated_at')
+              .single()
+              .then(result => ({ type: 'success', ...result })),
+            new Promise(resolve =>
+              setTimeout(() => resolve({ type: 'timeout', data: null, error: { message: 'Network timeout while creating user profile. Please try again.' } }), 30000)
+            )
+          ]) as any;
+          
+          const { data: upsertedProfile, error: insertError } = insertResult.type === 'timeout' 
+            ? { data: null, error: insertResult.error }
+            : insertResult;
+          
+          console.log('Profile creation completed. Error:', insertError, 'Timeout:', insertResult.type === 'timeout');
+
+          if (insertError || insertResult.type === 'timeout') {
+            console.warn('Profile creation failed or timed out, proceeding with default profile:', insertError || 'timeout');
+            // Don't throw error, proceed with default profile
+          } else if (upsertedProfile) {
+            console.log('Successfully created new user profile');
+            const roleFromProfile = mockRoles.find(role => role.name === upsertedProfile.role);
+            if (roleFromProfile) {
+              userRole = roleFromProfile;
+              if (upsertedProfile.full_name) {
+                fullName = upsertedProfile.full_name;
+              }
+            }
+          }
         }
       } else if (profileError) {
         console.error('Critical profile fetch error:', profileError);
