@@ -385,6 +385,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error('Error creating user from session:', error);
       console.log('Critical error - signing out user and clearing session');
       
+      // Immediately set loading to false to prevent loading loop
+      setIsLoading(false);
+      
       // Clear any potentially corrupted auth data and force sign out
       try {
         localStorage.removeItem('supabase.auth.token');
