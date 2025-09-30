@@ -265,7 +265,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => subscription.unsubscribe();
   }, []);
 
-  const createUserFromSession = async (supabaseUser: SupabaseUser, isNewLogin: boolean = false) => {
+  const createUserFromSession = React.useCallback(async (supabaseUser: SupabaseUser, isNewLogin: boolean = false) => {
     try {
       console.log('Starting createUserFromSession for user:', supabaseUser.id);
       
@@ -465,9 +465,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(null);
       throw error; // Re-throw to ensure calling code knows the session creation failed
     }
-  };
+  }, [setUser, setIsLoading]);
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signUp = React.useCallback(async (email: string, password: string, fullName: string) => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -490,9 +490,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [setIsLoading]);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = React.useCallback(async (email: string, password: string) => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -509,9 +509,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [setIsLoading]);
 
-  const signOut = async () => {
+  const signOut = React.useCallback(async () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
@@ -520,9 +520,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error('Sign out error:', error);
       throw new Error(error.message || 'Failed to sign out');
     }
-  };
+  }, [setUser]);
 
-  const resetPassword = async (email: string) => {
+  const resetPassword = React.useCallback(async (email: string) => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`
@@ -532,21 +532,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error('Password reset error:', error);
       throw new Error(error.message || 'Failed to send reset email');
     }
-  };
+  }, []);
 
-  const hasPermission = (resource: string, action: string): boolean => {
+  const hasPermission = React.useCallback((resource: string, action: string): boolean => {
     if (!user) return false;
     return user.permissions.some(permission => 
       permission.resource === resource && permission.action === action
     );
-  };
+  }, [user]);
 
-  const hasRole = (roleName: string): boolean => {
+  const hasRole = React.useCallback((roleName: string): boolean => {
     if (!user) return false;
     return user.role.name === roleName;
-  };
+  }, [user]);
 
-  const updateUserProfile = async (updates: Partial<User>): Promise<void> => {
+  const updateUserProfile = React.useCallback(async (updates: Partial<User>): Promise<void> => {
     if (!user) {
       throw new Error('No user logged in');
     }
@@ -585,9 +585,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error('Error updating user profile:', error);
       throw new Error(error.message || 'Failed to update user profile');
     }
-  };
+  }, [user, setUser]);
 
-  const checkAndRefreshSession = async (): Promise<boolean> => {
+  const checkAndRefreshSession = React.useCallback(async (): Promise<boolean> => {
     setIsLoading(true);
     
     try {
@@ -723,7 +723,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Always reset loading state when session check completes
       setIsLoading(false);
     }
-  };
+  }, [createUserFromSession, setUser, setIsLoading, user]);
 
   const value: AuthContextType = {
     user,
