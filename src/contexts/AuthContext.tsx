@@ -652,7 +652,59 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           sessionStorage.removeItem('supabase.auth.token');
           await supabase.auth.signOut();
           setUser(null);
-          return false;
+          console.warn('Profile fetch timed out during session recovery, proceeding with fallback profile');
+          
+          // Create fallback user with basic viewer role to prevent logout
+          const fallbackRole = mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
+          const fallbackUser: User = {
+            id: supabaseUser.id,
+            email: supabaseUser.email || '',
+            name: supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User',
+            avatar: supabaseUser.user_metadata?.avatar_url,
+            role: fallbackRole,
+            permissions: fallbackRole.permissions,
+            department: undefined,
+            lastLogin: new Date().toISOString(),
+            preferences: { theme: 'light' },
+          };
+          
+          console.log('Setting fallback user data for session recovery');
+          setUser(fallbackUser);
+          setIsLoading(false);
+          
+          // Attempt to recover full profile in background (non-blocking)
+          console.log('Attempting background profile recovery...');
+          setTimeout(async () => {
+            try {
+              const { data: recoveredProfile, error: recoveryError } = await supabase
+                .from('user_profiles')
+                .select('*')
+                .eq('id', supabaseUser.id)
+                .single();
+              
+              if (recoveredProfile && !recoveryError) {
+                console.log('Background profile recovery successful, updating user data');
+                const recoveredRole = mockRoles.find(role => role.name === recoveredProfile.role);
+                if (recoveredRole) {
+                  const updatedUser: User = {
+                    ...fallbackUser,
+                    name: recoveredProfile.full_name || fallbackUser.name,
+                    role: recoveredRole,
+                    permissions: recoveredRole.permissions,
+                    department: recoveredProfile.department || undefined,
+                    preferences: recoveredProfile.preferences || fallbackUser.preferences,
+                  };
+                  setUser(updatedUser);
+                }
+              } else {
+                console.warn('Background profile recovery failed, user continues with fallback profile');
+              }
+            } catch (recoveryError) {
+              console.warn('Background profile recovery error (non-critical):', recoveryError);
+            }
+          }, 2000); // Retry after 2 seconds
+          
+          return; // Exit successfully with fallback user
         }
       }
       
