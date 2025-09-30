@@ -520,6 +520,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const checkAndRefreshSession = async (): Promise<boolean> => {
+    setIsLoading(true);
+    
     try {
       console.log('Checking session validity...');
       
@@ -597,6 +599,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       await supabase.auth.signOut();
       setUser(null);
       return false;
+    } finally {
+      // Always reset loading state when session check completes
+      setIsLoading(false);
     }
   };
 
