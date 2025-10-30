@@ -302,6 +302,47 @@ const QuoteDetailsModal: React.FC<QuoteDetailsModalProps> = ({
                 <Truck className="h-5 w-5 mr-2 text-orange-600 dark:text-orange-400" />
                 Shipping Options
               </h3>
+
+              {/* Price List Information */}
+              {quote.seaFreightPriceListId && quote.priceListSnapshot && (
+                <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Ship className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100">Price List Applied</h4>
+                        {quote.manualPriceOverride && (
+                          <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-xs rounded">
+                            Manually Adjusted
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{quote.priceListSnapshot.itemName}</p>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                        <div>
+                          <span className="text-gray-500 dark:text-gray-400">Category:</span>
+                          <p className="font-medium text-gray-900 dark:text-gray-100">{quote.priceListSnapshot.category}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 dark:text-gray-400">Shipping Type:</span>
+                          <p className="font-medium text-gray-900 dark:text-gray-100">{quote.priceListSnapshot.shippingType}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 dark:text-gray-400">List Price:</span>
+                          <p className="font-medium text-green-600 dark:text-green-400">${quote.priceListSnapshot.customerPrice.toFixed(2)}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 dark:text-gray-400">Applied:</span>
+                          <p className="font-medium text-gray-900 dark:text-gray-100">
+                            {quote.priceListAppliedAt ? new Date(quote.priceListAppliedAt).toLocaleDateString() : 'N/A'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className={`p-4 rounded-lg border-2 ${
                   quote.shippingCosts.selected === 'sea' 

@@ -22,7 +22,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Quote, QuotePart, Customer, Part, QuoteStatus } from '../types';
+import { Quote, QuotePart, Customer, Part, QuoteStatus, SeaFreightPriceListItem } from '../types';
+import PriceListSelector from './PriceListSelector';
 
 interface EditQuoteProps {
   isOpen: boolean;
@@ -44,6 +45,9 @@ interface QuoteFormData {
   };
   agentFees: number;
   localShippingFees: number;
+  seaFreightPriceListId?: string;
+  priceListSnapshot?: SeaFreightPriceListItem;
+  manualPriceOverride: boolean;
 }
 
 const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, quote }) => {
@@ -74,7 +78,10 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
       selected: 'sea'
     },
     agentFees: 0,
-    localShippingFees: 0
+    localShippingFees: 0,
+    seaFreightPriceListId: undefined,
+    priceListSnapshot: undefined,
+    manualPriceOverride: false
   });
   const [availableParts, setAvailableParts] = useState<Part[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -97,7 +104,10 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
           selected: 'sea'
         },
         agentFees: 0,
-        localShippingFees: 0
+        localShippingFees: 0,
+        seaFreightPriceListId: undefined,
+        priceListSnapshot: undefined,
+        manualPriceOverride: false
       });
       setSubmitError(null);
       setCurrentStep(1);
@@ -120,7 +130,10 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
             selected: quote.shippingCosts.selected
           },
           agentFees: quote.agentFees,
-          localShippingFees: quote.localShippingFees
+          localShippingFees: quote.localShippingFees,
+          seaFreightPriceListId: quote.seaFreightPriceListId,
+          priceListSnapshot: quote.priceListSnapshot,
+          manualPriceOverride: quote.manualPriceOverride || false
         });
         setSubmitError(null);
       }
@@ -349,6 +362,38 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
     }
   };
 
+  const handlePriceListSelect = (item: SeaFreightPriceListItem) => {
+    setFormData(prev => ({
+      ...prev,
+      shippingCosts: {
+        ...prev.shippingCosts,
+        sea: item.customerPrice,
+        selected: 'sea'
+      },
+      seaFreightPriceListId: item.id,
+      priceListSnapshot: item,
+      manualPriceOverride: false
+    }));
+  };
+
+  const handlePriceListClear = () => {
+    setFormData(prev => ({
+      ...prev,
+      seaFreightPriceListId: undefined,
+      priceListSnapshot: undefined,
+      manualPriceOverride: false
+    }));
+  };
+
+  const handleManualShippingChange = () => {
+    if (formData.seaFreightPriceListId) {
+      setFormData(prev => ({
+        ...prev,
+        manualPriceOverride: true
+      }));
+    }
+  };
+
   const handleSubmit = (status: QuoteStatus) => {
     updateQuoteInSupabase(status);
   };
@@ -386,7 +431,11 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
         grand_total_amount: grandTotalAmount,
         expiry_date: formData.expiryDate,
         notes: formData.notes.trim() || null,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        sea_freight_price_list_id: formData.seaFreightPriceListId || null,
+        price_list_applied_at: formData.seaFreightPriceListId && !quote.seaFreightPriceListId ? new Date().toISOString() : quote.priceListAppliedAt,
+        manual_price_override: formData.manualPriceOverride,
+        price_list_snapshot: formData.priceListSnapshot || null
       };
 
       // Update the main quote details
@@ -810,6 +859,28 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
                       />
                     </div>
 
+                    {/* Price List Selector */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Sea Freight Pricing
+                      </label>
+                      <PriceListSelector
+                        onSelect={handlePriceListSelect}
+                        onClear={handlePriceListClear}
+                        selectedItemId={formData.seaFreightPriceListId}
+                      />
+                      {formData.manualPriceOverride && (
+                        <div className="mt-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                          <div className="flex items-center space-x-2">
+                            <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                            <span className="text-sm text-amber-800 dark:text-amber-300">
+                              Manual adjustments made to price list values
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                     {/* Shipping Options */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -837,11 +908,12 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
                             value={formData.shippingCosts.sea}
                             onChange={(e) => {
                               e.stopPropagation();
-                              setFormData(prev => ({ 
-                                ...prev, 
-                                shippingCosts: { 
-                                  ...prev.shippingCosts, 
-                                  sea: parseFloat(e.target.value) || 0 
+                              handleManualShippingChange();
+                              setFormData(prev => ({
+                                ...prev,
+                                shippingCosts: {
+                                  ...prev.shippingCosts,
+                                  sea: parseFloat(e.target.value) || 0
                                 }
                               }));
                             }}
@@ -871,11 +943,12 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
                             value={formData.shippingCosts.air}
                             onChange={(e) => {
                               e.stopPropagation();
-                              setFormData(prev => ({ 
-                                ...prev, 
-                                shippingCosts: { 
-                                  ...prev.shippingCosts, 
-                                  air: parseFloat(e.target.value) || 0 
+                              handleManualShippingChange();
+                              setFormData(prev => ({
+                                ...prev,
+                                shippingCosts: {
+                                  ...prev.shippingCosts,
+                                  air: parseFloat(e.target.value) || 0
                                 }
                               }));
                             }}

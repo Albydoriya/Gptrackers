@@ -130,6 +130,10 @@ export interface Quote {
   notes?: string;
   createdBy: string;
   convertedToOrderId?: string;
+  seaFreightPriceListId?: string;
+  priceListAppliedAt?: string;
+  manualPriceOverride?: boolean;
+  priceListSnapshot?: SeaFreightPriceListItem;
 }
 
 export interface QuotePart {

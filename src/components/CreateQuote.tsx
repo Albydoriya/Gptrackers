@@ -24,7 +24,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Part, Customer, QuotePart, Quote } from '../types';
+import { Part, Customer, QuotePart, Quote, SeaFreightPriceListItem } from '../types';
+import PriceListSelector from './PriceListSelector';
 
 interface CreateQuoteProps {
   isOpen: boolean;
@@ -45,6 +46,9 @@ interface QuoteFormData {
   localShippingFees: number;
   expiryDate: string;
   notes: string;
+  seaFreightPriceListId?: string;
+  priceListSnapshot?: SeaFreightPriceListItem;
+  manualPriceOverride: boolean;
 }
 
 const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreated }) => {
@@ -76,7 +80,10 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
     agentFees: 0,
     localShippingFees: 0,
     expiryDate: '',
-    notes: ''
+    notes: '',
+    seaFreightPriceListId: undefined,
+    priceListSnapshot: undefined,
+    manualPriceOverride: false
   });
   const [availableParts, setAvailableParts] = useState<Part[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -505,6 +512,38 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
     }
   };
 
+  const handlePriceListSelect = (item: SeaFreightPriceListItem) => {
+    setFormData(prev => ({
+      ...prev,
+      shippingCosts: {
+        ...prev.shippingCosts,
+        sea: item.customerPrice,
+        selected: 'sea'
+      },
+      seaFreightPriceListId: item.id,
+      priceListSnapshot: item,
+      manualPriceOverride: false
+    }));
+  };
+
+  const handlePriceListClear = () => {
+    setFormData(prev => ({
+      ...prev,
+      seaFreightPriceListId: undefined,
+      priceListSnapshot: undefined,
+      manualPriceOverride: false
+    }));
+  };
+
+  const handleManualShippingChange = () => {
+    if (formData.seaFreightPriceListId) {
+      setFormData(prev => ({
+        ...prev,
+        manualPriceOverride: true
+      }));
+    }
+  };
+
   const handleSubmit = (status: 'draft' | 'sent') => {
     createQuoteInSupabase(status);
   };
@@ -537,7 +576,11 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
         quote_date: new Date().toISOString().split('T')[0],
         expiry_date: formData.expiryDate,
         notes: formData.notes.trim() || null,
-        created_by: user.id
+        created_by: user.id,
+        sea_freight_price_list_id: formData.seaFreightPriceListId || null,
+        price_list_applied_at: formData.seaFreightPriceListId ? new Date().toISOString() : null,
+        manual_price_override: formData.manualPriceOverride,
+        price_list_snapshot: formData.priceListSnapshot || null
       };
 
       // Insert the main quote
@@ -609,7 +652,10 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
         agentFees: 0,
         localShippingFees: 0,
         expiryDate: '',
-        notes: ''
+        notes: '',
+        seaFreightPriceListId: undefined,
+        priceListSnapshot: undefined,
+        manualPriceOverride: false
       });
 
     } catch (error: any) {
@@ -1139,6 +1185,32 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                         <Truck className="h-4 w-4 mr-2 text-orange-600 dark:text-orange-400" />
                         Shipping Options
                       </h4>
+
+                      {/* Price List Selector */}
+                      <div className="mb-6">
+                        <PriceListSelector
+                          onSelect={handlePriceListSelect}
+                          onClear={handlePriceListClear}
+                          selectedItemId={formData.seaFreightPriceListId}
+                        />
+                        {formData.manualPriceOverride && (
+                          <div className="mt-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                            <div className="flex items-center space-x-2">
+                              <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                              <span className="text-sm text-amber-800 dark:text-amber-300">
+                                Manual adjustments made to price list values
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                        <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                          Manual Shipping Cost Entry
+                        </h5>
+                      </div>
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -1148,13 +1220,16 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                             type="number"
                             step="0.01"
                             value={formData.shippingCosts.sea || ''}
-                            onChange={(e) => setFormData(prev => ({ 
-                              ...prev, 
-                              shippingCosts: { 
-                                ...prev.shippingCosts, 
-                                sea: parseFloat(e.target.value) || 0 
-                              } 
-                            }))}
+                            onChange={(e) => {
+                              handleManualShippingChange();
+                              setFormData(prev => ({
+                                ...prev,
+                                shippingCosts: {
+                                  ...prev.shippingCosts,
+                                  sea: parseFloat(e.target.value) || 0
+                                }
+                              }));
+                            }}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                             placeholder="0.00"
                           />
@@ -1168,13 +1243,16 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                             type="number"
                             step="0.01"
                             value={formData.shippingCosts.air || ''}
-                            onChange={(e) => setFormData(prev => ({ 
-                              ...prev, 
-                              shippingCosts: { 
-                                ...prev.shippingCosts, 
-                                air: parseFloat(e.target.value) || 0 
-                              } 
-                            }))}
+                            onChange={(e) => {
+                              handleManualShippingChange();
+                              setFormData(prev => ({
+                                ...prev,
+                                shippingCosts: {
+                                  ...prev.shippingCosts,
+                                  air: parseFloat(e.target.value) || 0
+                                }
+                              }));
+                            }}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                             placeholder="0.00"
                           />
