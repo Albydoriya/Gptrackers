@@ -186,3 +186,54 @@ export interface SeaFreightCostBreakdown {
   color: string;
   percentage: number;
 }
+
+export interface SeaFreightPriceListItem {
+  id: string;
+  partId?: string;
+  itemName: string;
+  itemDescription: string;
+  category: string;
+  shippingType: string;
+  supplierPartsCost: number;
+  supplierPackingFee: number;
+  supplierBankingFee: number;
+  supplierOtherFees: number;
+  totalSupplierCost: number;
+  markupPercentage: number;
+  customerPrice: number;
+  currency: string;
+  isActive: boolean;
+  effectiveDate: string;
+  expirationDate?: string;
+  notes?: string;
+  tags: string[];
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SeaFreightPriceHistory {
+  id: string;
+  priceListId: string;
+  itemName: string;
+  itemDescription?: string;
+  category?: string;
+  shippingType?: string;
+  supplierPartsCost: number;
+  supplierPackingFee: number;
+  supplierBankingFee: number;
+  supplierOtherFees: number;
+  totalSupplierCost: number;
+  markupPercentage: number;
+  customerPrice: number;
+  currency: string;
+  changeReason?: string;
+  changedAt: string;
+}
+
+export interface SeaFreightPriceListFilters {
+  category?: string;
+  shippingType?: string;
+  searchTerm?: string;
+  isActive?: boolean;
+}

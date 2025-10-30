@@ -2,46 +2,58 @@ import React, { useState, useEffect } from 'react';
 import {
   X,
   DollarSign,
-  TrendingUp,
-  TrendingDown,
-  Minus,
   Plus,
-  Calendar,
   Save,
   Trash2,
   Edit3,
-  BarChart3,
-  PieChart,
-  FileText,
   AlertCircle,
   Ship,
   Package,
-  Users,
   Building2,
   CreditCard,
   Loader2,
   Search,
-  ArrowLeft,
-  Receipt
+  Filter,
+  TrendingUp,
+  CheckCircle,
+  XCircle,
+  Calendar,
+  Tag,
+  History,
+  List,
+  FileText,
+  Eye,
+  Percent,
+  ArrowRight
 } from 'lucide-react';
-import { Quote, SeaFreightPricingRecord, SeaFreightPricingAnalytics } from '../types';
+import { SeaFreightPriceListItem, SeaFreightPriceHistory } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
 interface SeaFreightPricingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  quote: Quote | null;
+  quote: any | null;
 }
 
-interface PricingFormData {
-  partsCost: number;
-  agentServiceFee: number;
+interface PriceListFormData {
+  itemName: string;
+  itemDescription: string;
+  category: string;
+  shippingType: string;
+  supplierPartsCost: number;
   supplierPackingFee: number;
-  bankingFee: number;
+  supplierBankingFee: number;
+  supplierOtherFees: number;
+  markupPercentage: number;
+  effectiveDate: string;
+  expirationDate: string;
   notes: string;
-  recordedDate: string;
+  tags: string;
 }
+
+const CATEGORIES = ['Engine', 'Transmission', 'Body Parts', 'Electronics', 'Interior', 'Exterior', 'General'];
+const SHIPPING_TYPES = ['FCL 20ft', 'FCL 40ft', 'LCL', 'Air Freight', 'Express'];
 
 const SeaFreightPricingModal: React.FC<SeaFreightPricingModalProps> = ({
   isOpen,
@@ -49,261 +61,154 @@ const SeaFreightPricingModal: React.FC<SeaFreightPricingModalProps> = ({
   quote
 }) => {
   const { user, hasPermission } = useAuth();
-  const [activeTab, setActiveTab] = useState<'add' | 'history' | 'analytics'>('add');
+  const [activeTab, setActiveTab] = useState<'list' | 'add' | 'history'>('list');
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const [selectedQuote, setSelectedQuote] = useState<Quote | null>(quote);
-  const [availableQuotes, setAvailableQuotes] = useState<Quote[]>([]);
-  const [isLoadingQuotes, setIsLoadingQuotes] = useState(false);
-  const [quoteSearchTerm, setQuoteSearchTerm] = useState('');
-  const [showQuoteSelector, setShowQuoteSelector] = useState(!quote);
+  const [priceList, setPriceList] = useState<SeaFreightPriceListItem[]>([]);
+  const [filteredPriceList, setFilteredPriceList] = useState<SeaFreightPriceListItem[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [shippingTypeFilter, setShippingTypeFilter] = useState('all');
+  const [showActiveOnly, setShowActiveOnly] = useState(true);
 
-  const [formData, setFormData] = useState<PricingFormData>({
-    partsCost: 0,
-    agentServiceFee: 0,
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [viewHistoryItemId, setViewHistoryItemId] = useState<string | null>(null);
+  const [priceHistory, setPriceHistory] = useState<SeaFreightPriceHistory[]>([]);
+
+  const [formData, setFormData] = useState<PriceListFormData>({
+    itemName: '',
+    itemDescription: '',
+    category: 'General',
+    shippingType: 'FCL 20ft',
+    supplierPartsCost: 0,
     supplierPackingFee: 0,
-    bankingFee: 0,
+    supplierBankingFee: 0,
+    supplierOtherFees: 0,
+    markupPercentage: 25,
+    effectiveDate: new Date().toISOString().split('T')[0],
+    expirationDate: '',
     notes: '',
-    recordedDate: new Date().toISOString().split('T')[0]
+    tags: ''
   });
-
-  const [pricingRecords, setPricingRecords] = useState<SeaFreightPricingRecord[]>([]);
-  const [analytics, setAnalytics] = useState<SeaFreightPricingAnalytics | null>(null);
-  const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
-      if (quote) {
-        setSelectedQuote(quote);
-        setShowQuoteSelector(false);
-        fetchPricingRecords();
-        fetchAnalytics();
-      } else {
-        setShowQuoteSelector(true);
-        fetchAvailableQuotes();
-      }
-    } else {
-      setSelectedQuote(null);
-      setShowQuoteSelector(!quote);
-      setPricingRecords([]);
-      setAnalytics(null);
+      fetchPriceList();
     }
-  }, [isOpen, quote]);
+  }, [isOpen]);
 
   useEffect(() => {
-    if (selectedQuote) {
-      fetchPricingRecords();
-      fetchAnalytics();
-    }
-  }, [selectedQuote]);
+    applyFilters();
+  }, [priceList, searchTerm, categoryFilter, shippingTypeFilter, showActiveOnly]);
 
-  const fetchAvailableQuotes = async () => {
-    setIsLoadingQuotes(true);
-    setError(null);
-
-    try {
-      const { data: quotesData, error: quotesError } = await supabase
-        .from('quotes')
-        .select(`
-          *,
-          quote_parts!quote_parts_quote_id_fkey(
-            *,
-            parts(*)
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (quotesError) throw quotesError;
-
-      if (!quotesData || quotesData.length === 0) {
-        setAvailableQuotes([]);
-        return;
-      }
-
-      const customerIds = [...new Set(quotesData.map(q => q.customer_id).filter(Boolean))];
-
-      const { data: customersData, error: customersError } = await supabase
-        .from('customers')
-        .select('*')
-        .in('id', customerIds);
-
-      if (customersError) throw customersError;
-
-      const customersMap = new Map();
-      (customersData || []).forEach(customer => {
-        customersMap.set(customer.id, customer);
-      });
-
-      const { data: pricingCounts, error: countError } = await supabase
-        .from('sea_freight_pricing_records')
-        .select('quote_id');
-
-      if (countError) throw countError;
-
-      const pricingCountsMap = new Map();
-      (pricingCounts || []).forEach(record => {
-        const count = pricingCountsMap.get(record.quote_id) || 0;
-        pricingCountsMap.set(record.quote_id, count + 1);
-      });
-
-      const transformedQuotes: Quote[] = quotesData.map(quoteData => {
-        const customerData = customersMap.get(quoteData.customer_id);
-
-        return {
-          id: quoteData.id,
-          quoteNumber: quoteData.quote_number,
-          customer: customerData ? {
-            id: customerData.id,
-            name: customerData.name,
-            contactPerson: customerData.contact_person,
-            email: customerData.email,
-            phone: customerData.phone,
-            address: customerData.address,
-            createdAt: customerData.created_at,
-            updatedAt: customerData.updated_at
-          } : {
-            id: '',
-            name: 'Unknown Customer',
-            contactPerson: 'Unknown',
-            email: 'unknown@example.com',
-            phone: 'N/A',
-            address: 'N/A',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          },
-          status: quoteData.status,
-          parts: quoteData.quote_parts.map((quotePart: any) => ({
-            id: quotePart.id,
-            part: quotePart.part ? {
-              id: quotePart.part.id,
-              partNumber: quotePart.part.part_number,
-              name: quotePart.part.name,
-              description: quotePart.part.description,
-              category: quotePart.part.category,
-              specifications: quotePart.part.specifications,
-              priceHistory: [],
-              currentStock: quotePart.part.current_stock,
-              minStock: quotePart.part.min_stock,
-              preferredSuppliers: quotePart.part.preferred_suppliers
-            } : undefined,
-            customPartName: quotePart.custom_part_name,
-            customPartDescription: quotePart.custom_part_description,
-            quantity: quotePart.quantity,
-            unitPrice: quotePart.unit_price,
-            totalPrice: quotePart.total_price,
-            isCustomPart: quotePart.is_custom_part
-          })),
-          totalBidItemsCost: quoteData.total_bid_items_cost,
-          shippingCosts: {
-            sea: quoteData.shipping_cost_sea,
-            air: quoteData.shipping_cost_air,
-            selected: quoteData.selected_shipping_method
-          },
-          agentFees: quoteData.agent_fees,
-          localShippingFees: quoteData.local_shipping_fees,
-          subtotalAmount: quoteData.subtotal_amount,
-          gstAmount: quoteData.gst_amount,
-          grandTotalAmount: quoteData.grand_total_amount,
-          quoteDate: quoteData.quote_date,
-          expiryDate: quoteData.expiry_date,
-          notes: quoteData.notes,
-          createdBy: quoteData.created_by || 'Unknown',
-          convertedToOrderId: quoteData.converted_to_order_id
-        };
-      });
-
-      setAvailableQuotes(transformedQuotes);
-    } catch (err: any) {
-      console.error('Error fetching quotes:', err);
-      setError(err.message || 'Failed to fetch quotes');
-    } finally {
-      setIsLoadingQuotes(false);
-    }
-  };
-
-  const fetchPricingRecords = async () => {
-    if (!selectedQuote) return;
-
+  const fetchPriceList = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
       const { data, error: fetchError } = await supabase
-        .from('sea_freight_pricing_records')
+        .from('sea_freight_price_list')
         .select('*')
-        .eq('quote_id', selectedQuote.id)
-        .order('recorded_date', { ascending: false });
+        .order('item_name', { ascending: true });
 
       if (fetchError) throw fetchError;
 
-      const transformedRecords: SeaFreightPricingRecord[] = (data || []).map(record => ({
-        id: record.id,
-        quoteId: record.quote_id,
-        partsCost: parseFloat(record.parts_cost),
-        agentServiceFee: parseFloat(record.agent_service_fee),
-        supplierPackingFee: parseFloat(record.supplier_packing_fee),
-        bankingFee: parseFloat(record.banking_fee),
-        totalSeaFreightCost: parseFloat(record.total_sea_freight_cost),
-        currency: record.currency,
-        recordedDate: record.recorded_date,
-        createdBy: record.created_by,
-        notes: record.notes,
-        createdAt: record.created_at,
-        updatedAt: record.updated_at
+      const transformedData: SeaFreightPriceListItem[] = (data || []).map(item => ({
+        id: item.id,
+        partId: item.part_id,
+        itemName: item.item_name,
+        itemDescription: item.item_description || '',
+        category: item.category,
+        shippingType: item.shipping_type,
+        supplierPartsCost: parseFloat(item.supplier_parts_cost),
+        supplierPackingFee: parseFloat(item.supplier_packing_fee),
+        supplierBankingFee: parseFloat(item.supplier_banking_fee),
+        supplierOtherFees: parseFloat(item.supplier_other_fees),
+        totalSupplierCost: parseFloat(item.total_supplier_cost),
+        markupPercentage: parseFloat(item.markup_percentage),
+        customerPrice: parseFloat(item.customer_price),
+        currency: item.currency,
+        isActive: item.is_active,
+        effectiveDate: item.effective_date,
+        expirationDate: item.expiration_date,
+        notes: item.notes,
+        tags: item.tags || [],
+        createdBy: item.created_by,
+        createdAt: item.created_at,
+        updatedAt: item.updated_at
       }));
 
-      setPricingRecords(transformedRecords);
+      setPriceList(transformedData);
     } catch (err: any) {
-      console.error('Error fetching pricing records:', err);
-      setError(err.message || 'Failed to fetch pricing records');
+      console.error('Error fetching price list:', err);
+      setError(err.message || 'Failed to fetch price list');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchAnalytics = async () => {
-    if (!selectedQuote) return;
+  const applyFilters = () => {
+    let filtered = [...priceList];
 
-    try {
-      const { data, error: analyticsError } = await supabase
-        .rpc('get_sea_freight_pricing_analytics', { p_quote_id: selectedQuote.id });
-
-      if (analyticsError) throw analyticsError;
-
-      if (data && data.length > 0) {
-        const analyticsData = data[0];
-        setAnalytics({
-          totalRecords: parseInt(analyticsData.total_records) || 0,
-          averageTotalCost: parseFloat(analyticsData.average_total_cost) || 0,
-          averagePartsCost: parseFloat(analyticsData.average_parts_cost) || 0,
-          averageAgentFee: parseFloat(analyticsData.average_agent_fee) || 0,
-          averageSupplierPackingFee: parseFloat(analyticsData.average_supplier_packing_fee) || 0,
-          averageBankingFee: parseFloat(analyticsData.average_banking_fee) || 0,
-          latestTotalCost: parseFloat(analyticsData.latest_total_cost) || 0,
-          minTotalCost: parseFloat(analyticsData.min_total_cost) || 0,
-          maxTotalCost: parseFloat(analyticsData.max_total_cost) || 0,
-          costTrendDirection: analyticsData.cost_trend_direction || 'stable'
-        });
-      }
-    } catch (err: any) {
-      console.error('Error fetching analytics:', err);
+    if (showActiveOnly) {
+      filtered = filtered.filter(item => item.isActive);
     }
+
+    if (categoryFilter !== 'all') {
+      filtered = filtered.filter(item => item.category === categoryFilter);
+    }
+
+    if (shippingTypeFilter !== 'all') {
+      filtered = filtered.filter(item => item.shippingType === shippingTypeFilter);
+    }
+
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(item =>
+        item.itemName.toLowerCase().includes(searchLower) ||
+        item.itemDescription.toLowerCase().includes(searchLower)
+      );
+    }
+
+    setFilteredPriceList(filtered);
   };
 
-  const calculateTotal = () => {
-    return formData.partsCost + formData.agentServiceFee +
-           formData.supplierPackingFee + formData.bankingFee;
+  const calculateTotalSupplierCost = () => {
+    return formData.supplierPartsCost + formData.supplierPackingFee +
+           formData.supplierBankingFee + formData.supplierOtherFees;
+  };
+
+  const calculateCustomerPrice = () => {
+    const totalCost = calculateTotalSupplierCost();
+    return totalCost * (1 + formData.markupPercentage / 100);
+  };
+
+  const calculateProfitMargin = () => {
+    const customerPrice = calculateCustomerPrice();
+    const totalCost = calculateTotalSupplierCost();
+    if (customerPrice === 0) return 0;
+    return ((customerPrice - totalCost) / customerPrice) * 100;
   };
 
   const handleSave = async () => {
-    if (!selectedQuote || !user) return;
+    if (!user) return;
 
-    if (formData.partsCost < 0 || formData.agentServiceFee < 0 ||
-        formData.supplierPackingFee < 0 || formData.bankingFee < 0) {
+    if (!formData.itemName.trim()) {
+      setError('Item name is required');
+      return;
+    }
+
+    if (formData.supplierPartsCost < 0 || formData.supplierPackingFee < 0 ||
+        formData.supplierBankingFee < 0 || formData.supplierOtherFees < 0) {
       setError('All cost values must be non-negative');
+      return;
+    }
+
+    if (formData.markupPercentage < 0) {
+      setError('Markup percentage must be non-negative');
       return;
     }
 
@@ -312,73 +217,80 @@ const SeaFreightPricingModal: React.FC<SeaFreightPricingModalProps> = ({
     setSuccessMessage(null);
 
     try {
-      const recordData = {
-        quote_id: selectedQuote.id,
-        parts_cost: formData.partsCost,
-        agent_service_fee: formData.agentServiceFee,
+      const tags = formData.tags.split(',').map(t => t.trim()).filter(t => t);
+
+      const itemData = {
+        item_name: formData.itemName.trim(),
+        item_description: formData.itemDescription.trim(),
+        category: formData.category,
+        shipping_type: formData.shippingType,
+        supplier_parts_cost: formData.supplierPartsCost,
         supplier_packing_fee: formData.supplierPackingFee,
-        banking_fee: formData.bankingFee,
+        supplier_banking_fee: formData.supplierBankingFee,
+        supplier_other_fees: formData.supplierOtherFees,
+        markup_percentage: formData.markupPercentage,
         currency: 'AUD',
-        recorded_date: formData.recordedDate,
-        created_by: user.id,
-        notes: formData.notes.trim() || null
+        is_active: true,
+        effective_date: formData.effectiveDate,
+        expiration_date: formData.expirationDate || null,
+        notes: formData.notes.trim() || null,
+        tags: tags.length > 0 ? tags : [],
+        created_by: user.id
       };
 
-      if (editingRecordId) {
+      if (editingItemId) {
         const { error: updateError } = await supabase
-          .from('sea_freight_pricing_records')
-          .update(recordData)
-          .eq('id', editingRecordId);
+          .from('sea_freight_price_list')
+          .update(itemData)
+          .eq('id', editingItemId);
 
         if (updateError) throw updateError;
-        setSuccessMessage('Pricing record updated successfully!');
-        setEditingRecordId(null);
+        setSuccessMessage('Price list item updated successfully!');
+        setEditingItemId(null);
       } else {
         const { error: insertError } = await supabase
-          .from('sea_freight_pricing_records')
-          .insert([recordData]);
+          .from('sea_freight_price_list')
+          .insert([itemData]);
 
         if (insertError) throw insertError;
-        setSuccessMessage('Pricing record added successfully!');
+        setSuccessMessage('Price list item added successfully!');
       }
 
-      setFormData({
-        partsCost: 0,
-        agentServiceFee: 0,
-        supplierPackingFee: 0,
-        bankingFee: 0,
-        notes: '',
-        recordedDate: new Date().toISOString().split('T')[0]
-      });
-
-      await fetchPricingRecords();
-      await fetchAnalytics();
-      setActiveTab('history');
+      resetForm();
+      await fetchPriceList();
+      setActiveTab('list');
 
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
-      console.error('Error saving pricing record:', err);
-      setError(err.message || 'Failed to save pricing record');
+      console.error('Error saving price list item:', err);
+      setError(err.message || 'Failed to save price list item');
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleEdit = (record: SeaFreightPricingRecord) => {
+  const handleEdit = (item: SeaFreightPriceListItem) => {
     setFormData({
-      partsCost: record.partsCost,
-      agentServiceFee: record.agentServiceFee,
-      supplierPackingFee: record.supplierPackingFee,
-      bankingFee: record.bankingFee,
-      notes: record.notes || '',
-      recordedDate: record.recordedDate.split('T')[0]
+      itemName: item.itemName,
+      itemDescription: item.itemDescription,
+      category: item.category,
+      shippingType: item.shippingType,
+      supplierPartsCost: item.supplierPartsCost,
+      supplierPackingFee: item.supplierPackingFee,
+      supplierBankingFee: item.supplierBankingFee,
+      supplierOtherFees: item.supplierOtherFees,
+      markupPercentage: item.markupPercentage,
+      effectiveDate: item.effectiveDate.split('T')[0],
+      expirationDate: item.expirationDate ? item.expirationDate.split('T')[0] : '',
+      notes: item.notes || '',
+      tags: item.tags.join(', ')
     });
-    setEditingRecordId(record.id);
+    setEditingItemId(item.id);
     setActiveTab('add');
   };
 
-  const handleDelete = async (recordId: string) => {
-    if (!window.confirm('Are you sure you want to delete this pricing record?')) {
+  const handleDelete = async (itemId: string) => {
+    if (!window.confirm('Are you sure you want to delete this price list item?')) {
       return;
     }
 
@@ -386,96 +298,97 @@ const SeaFreightPricingModal: React.FC<SeaFreightPricingModalProps> = ({
 
     try {
       const { error: deleteError } = await supabase
-        .from('sea_freight_pricing_records')
+        .from('sea_freight_price_list')
         .delete()
-        .eq('id', recordId);
+        .eq('id', itemId);
 
       if (deleteError) throw deleteError;
 
-      setSuccessMessage('Pricing record deleted successfully!');
-      await fetchPricingRecords();
-      await fetchAnalytics();
+      setSuccessMessage('Price list item deleted successfully!');
+      await fetchPriceList();
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
-      console.error('Error deleting pricing record:', err);
-      setError(err.message || 'Failed to delete pricing record');
+      console.error('Error deleting price list item:', err);
+      setError(err.message || 'Failed to delete price list item');
     }
   };
 
-  const getCostBreakdown = (record: SeaFreightPricingRecord) => {
-    const total = record.totalSeaFreightCost;
-    return [
-      {
-        label: 'Parts Cost',
-        value: record.partsCost,
-        color: 'bg-blue-500',
-        percentage: total > 0 ? (record.partsCost / total) * 100 : 0
-      },
-      {
-        label: 'Agent Service Fee',
-        value: record.agentServiceFee,
-        color: 'bg-green-500',
-        percentage: total > 0 ? (record.agentServiceFee / total) * 100 : 0
-      },
-      {
-        label: 'Supplier Packing Fee',
-        value: record.supplierPackingFee,
-        color: 'bg-orange-500',
-        percentage: total > 0 ? (record.supplierPackingFee / total) * 100 : 0
-      },
-      {
-        label: 'Banking Fee',
-        value: record.bankingFee,
-        color: 'bg-purple-500',
-        percentage: total > 0 ? (record.bankingFee / total) * 100 : 0
-      }
-    ];
-  };
+  const handleToggleActive = async (itemId: string, currentStatus: boolean) => {
+    setError(null);
 
-  const getTrendIcon = () => {
-    if (!analytics) return <Minus className="h-5 w-5" />;
+    try {
+      const { error: updateError } = await supabase
+        .from('sea_freight_price_list')
+        .update({ is_active: !currentStatus })
+        .eq('id', itemId);
 
-    switch (analytics.costTrendDirection) {
-      case 'increasing':
-        return <TrendingUp className="h-5 w-5 text-red-500" />;
-      case 'decreasing':
-        return <TrendingDown className="h-5 w-5 text-green-500" />;
-      default:
-        return <Minus className="h-5 w-5 text-gray-500" />;
+      if (updateError) throw updateError;
+
+      setSuccessMessage(`Item ${!currentStatus ? 'activated' : 'deactivated'} successfully!`);
+      await fetchPriceList();
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err: any) {
+      console.error('Error toggling item status:', err);
+      setError(err.message || 'Failed to update item status');
     }
   };
 
-  const handleQuoteSelect = (quote: Quote) => {
-    setSelectedQuote(quote);
-    setShowQuoteSelector(false);
-    setActiveTab('add');
+  const handleViewHistory = async (itemId: string) => {
+    setViewHistoryItemId(itemId);
+    setIsLoading(true);
+
+    try {
+      const { data, error: fetchError } = await supabase
+        .rpc('get_sea_freight_price_history', { p_price_list_id: itemId });
+
+      if (fetchError) throw fetchError;
+
+      const transformedHistory: SeaFreightPriceHistory[] = (data || []).map((record: any) => ({
+        id: record.id,
+        priceListId: itemId,
+        itemName: record.item_name,
+        itemDescription: record.item_description,
+        category: record.category,
+        shippingType: record.shipping_type,
+        supplierPartsCost: parseFloat(record.supplier_parts_cost),
+        supplierPackingFee: parseFloat(record.supplier_packing_fee),
+        supplierBankingFee: parseFloat(record.supplier_banking_fee),
+        supplierOtherFees: parseFloat(record.supplier_other_fees),
+        totalSupplierCost: parseFloat(record.total_supplier_cost),
+        markupPercentage: parseFloat(record.markup_percentage),
+        customerPrice: parseFloat(record.customer_price),
+        currency: record.currency,
+        changeReason: record.change_reason,
+        changedAt: record.changed_at
+      }));
+
+      setPriceHistory(transformedHistory);
+      setActiveTab('history');
+    } catch (err: any) {
+      console.error('Error fetching price history:', err);
+      setError(err.message || 'Failed to fetch price history');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleBackToQuoteSelector = () => {
-    setSelectedQuote(null);
-    setShowQuoteSelector(true);
-    setPricingRecords([]);
-    setAnalytics(null);
-    setEditingRecordId(null);
+  const resetForm = () => {
     setFormData({
-      partsCost: 0,
-      agentServiceFee: 0,
+      itemName: '',
+      itemDescription: '',
+      category: 'General',
+      shippingType: 'FCL 20ft',
+      supplierPartsCost: 0,
       supplierPackingFee: 0,
-      bankingFee: 0,
+      supplierBankingFee: 0,
+      supplierOtherFees: 0,
+      markupPercentage: 25,
+      effectiveDate: new Date().toISOString().split('T')[0],
+      expirationDate: '',
       notes: '',
-      recordedDate: new Date().toISOString().split('T')[0]
+      tags: ''
     });
-  };
-
-  const getFilteredQuotes = () => {
-    if (!quoteSearchTerm) return availableQuotes;
-
-    const searchLower = quoteSearchTerm.toLowerCase();
-    return availableQuotes.filter(q =>
-      q.quoteNumber.toLowerCase().includes(searchLower) ||
-      q.customer.name.toLowerCase().includes(searchLower) ||
-      q.customer.contactPerson.toLowerCase().includes(searchLower)
-    );
+    setEditingItemId(null);
   };
 
   if (!isOpen) return null;
@@ -484,7 +397,7 @@ const SeaFreightPricingModal: React.FC<SeaFreightPricingModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-6xl w-full max-h-[95vh] overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-7xl w-full max-h-[95vh] overflow-hidden flex flex-col">
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -493,10 +406,10 @@ const SeaFreightPricingModal: React.FC<SeaFreightPricingModalProps> = ({
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  Sea Freight Pricing Analytics
+                  Sea Freight Price List
                 </h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {selectedQuote ? `Quote: ${selectedQuote.quoteNumber}` : 'Select a quote to manage pricing'}
+                  Manage global pricing for sea freight parts and shipping
                 </p>
               </div>
             </div>
@@ -508,19 +421,27 @@ const SeaFreightPricingModal: React.FC<SeaFreightPricingModalProps> = ({
             </button>
           </div>
 
-          {selectedQuote && !quote && (
-            <button
-              onClick={handleBackToQuoteSelector}
-              className="flex items-center space-x-2 px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors mt-4"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Back to Quote Selection</span>
-            </button>
-          )}
-
           <div className="flex space-x-4 mt-6">
             <button
-              onClick={() => setActiveTab('add')}
+              onClick={() => {
+                setActiveTab('list');
+                setViewHistoryItemId(null);
+              }}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                activeTab === 'list'
+                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              <List className="h-4 w-4" />
+              <span>Price List ({filteredPriceList.length})</span>
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('add');
+                resetForm();
+                setViewHistoryItemId(null);
+              }}
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
                 activeTab === 'add'
                   ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
@@ -528,109 +449,25 @@ const SeaFreightPricingModal: React.FC<SeaFreightPricingModalProps> = ({
               }`}
             >
               <Plus className="h-4 w-4" />
-              <span>{editingRecordId ? 'Edit Record' : 'Add Record'}</span>
+              <span>{editingItemId ? 'Edit Item' : 'Add New Item'}</span>
             </button>
-            <button
-              onClick={() => setActiveTab('history')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                activeTab === 'history'
-                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
-            >
-              <FileText className="h-4 w-4" />
-              <span>History ({pricingRecords.length})</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('analytics')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                activeTab === 'analytics'
-                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
-            >
-              <BarChart3 className="h-4 w-4" />
-              <span>Analytics</span>
-            </button>
+            {viewHistoryItemId && (
+              <button
+                onClick={() => setActiveTab('history')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                  activeTab === 'history'
+                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                <History className="h-4 w-4" />
+                <span>Price History</span>
+              </button>
+            )}
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
-          {showQuoteSelector ? (
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                  Select a Quote
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Choose a quote to view and manage sea freight pricing records
-                </p>
-
-                <div className="relative mb-6">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <input
-                    type="text"
-                    placeholder="Search quotes by number or customer..."
-                    value={quoteSearchTerm}
-                    onChange={(e) => setQuoteSearchTerm(e.target.value)}
-                    className="pl-10 pr-4 py-2 w-full border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                  />
-                </div>
-
-                {isLoadingQuotes ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
-                  </div>
-                ) : getFilteredQuotes().length === 0 ? (
-                  <div className="text-center py-12 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                    <Receipt className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-                    <p className="text-gray-600 dark:text-gray-400">
-                      {quoteSearchTerm ? 'No quotes match your search' : 'No quotes available'}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 gap-3 max-h-96 overflow-y-auto">
-                    {getFilteredQuotes().map((q) => (
-                      <button
-                        key={q.id}
-                        onClick={() => handleQuoteSelect(q)}
-                        className="text-left p-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-md transition-all"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <h4 className="font-semibold text-gray-900 dark:text-gray-100">
-                                {q.quoteNumber}
-                              </h4>
-                              <span className={`text-xs px-2 py-1 rounded-full ${
-                                q.status === 'accepted' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
-                                q.status === 'sent' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' :
-                                'bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-300'
-                              }`}>
-                                {q.status.replace('_', ' ')}
-                              </span>
-                            </div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                              {q.customer.name}
-                            </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              {q.customer.contactPerson} • {new Date(q.quoteDate).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                              ${q.grandTotalAmount.toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <>
           {error && (
             <div className="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
               <div className="flex items-center space-x-2">
@@ -643,9 +480,198 @@ const SeaFreightPricingModal: React.FC<SeaFreightPricingModalProps> = ({
           {successMessage && (
             <div className="mb-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
               <div className="flex items-center space-x-2">
-                <AlertCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
                 <span className="text-sm text-green-800 dark:text-green-300">{successMessage}</span>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'list' && (
+            <div className="space-y-6">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <input
+                    type="text"
+                    placeholder="Search by name or description..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-4 py-2 w-full border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  />
+                </div>
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="all">All Categories</option>
+                  {CATEGORIES.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+                <select
+                  value={shippingTypeFilter}
+                  onChange={(e) => setShippingTypeFilter(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="all">All Shipping Types</option>
+                  {SHIPPING_TYPES.map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+                <label className="flex items-center space-x-2 px-4 py-2 bg-gray-50 dark:bg-gray-700 rounded-md">
+                  <input
+                    type="checkbox"
+                    checked={showActiveOnly}
+                    onChange={(e) => setShowActiveOnly(e.target.checked)}
+                    className="rounded text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Active only</span>
+                </label>
+              </div>
+
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
+                </div>
+              ) : filteredPriceList.length === 0 ? (
+                <div className="text-center py-12 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                  <Package className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                  <p className="text-gray-600 dark:text-gray-400">No price list items found</p>
+                  <button
+                    onClick={() => setActiveTab('add')}
+                    className="mt-4 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+                  >
+                    Add your first item
+                  </button>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                          Item
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                          Category
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                          Shipping Type
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                          Supplier Cost
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                          Markup
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                          Customer Price
+                        </th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                          Status
+                        </th>
+                        {canManage && (
+                          <th className="px-4 py-3 text-center text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                            Actions
+                          </th>
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                      {filteredPriceList.map((item) => (
+                        <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                          <td className="px-4 py-4">
+                            <div>
+                              <div className="font-medium text-gray-900 dark:text-gray-100">
+                                {item.itemName}
+                              </div>
+                              {item.itemDescription && (
+                                <div className="text-sm text-gray-500 dark:text-gray-400">
+                                  {item.itemDescription}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+                            {item.category}
+                          </td>
+                          <td className="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+                            {item.shippingType}
+                          </td>
+                          <td className="px-4 py-4 text-right">
+                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              ${item.totalSupplierCost.toFixed(2)}
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 text-right">
+                            <div className="flex items-center justify-end space-x-1">
+                              <Percent className="h-3 w-3 text-gray-400" />
+                              <span className="text-sm text-gray-700 dark:text-gray-300">
+                                {item.markupPercentage.toFixed(1)}%
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 text-right">
+                            <div className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                              ${item.customerPrice.toFixed(2)}
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 text-center">
+                            {item.isActive ? (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                                Active
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-300">
+                                Inactive
+                              </span>
+                            )}
+                          </td>
+                          {canManage && (
+                            <td className="px-4 py-4">
+                              <div className="flex items-center justify-center space-x-2">
+                                <button
+                                  onClick={() => handleViewHistory(item.id)}
+                                  className="p-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600 rounded"
+                                  title="View history"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleEdit(item)}
+                                  className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
+                                  title="Edit"
+                                >
+                                  <Edit3 className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleToggleActive(item.id, item.isActive)}
+                                  className={`p-1.5 rounded ${
+                                    item.isActive
+                                      ? 'text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/30'
+                                      : 'text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30'
+                                  }`}
+                                  title={item.isActive ? 'Deactivate' : 'Activate'}
+                                >
+                                  {item.isActive ? <XCircle className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(item.id)}
+                                  className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
+                                  title="Delete"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 
@@ -653,418 +679,403 @@ const SeaFreightPricingModal: React.FC<SeaFreightPricingModalProps> = ({
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                  {editingRecordId ? 'Edit Pricing Record' : 'Add New Pricing Record'}
+                  {editingItemId ? 'Edit Price List Item' : 'Add New Price List Item'}
                 </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        <Package className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                        <span>Parts Cost ($)</span>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Item Name *
                       </label>
                       <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={formData.partsCost || ''}
-                        onChange={(e) => setFormData(prev => ({ ...prev, partsCost: parseFloat(e.target.value) || 0 }))}
+                        type="text"
+                        value={formData.itemName}
+                        onChange={(e) => setFormData(prev => ({ ...prev, itemName: e.target.value }))}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                        placeholder="0.00"
+                        placeholder="e.g., Engine V6 3.5L"
                       />
                     </div>
 
                     <div>
-                      <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        <Users className="h-4 w-4 text-green-600 dark:text-green-400" />
-                        <span>Agent Service Fee ($)</span>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Category
                       </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={formData.agentServiceFee || ''}
-                        onChange={(e) => setFormData(prev => ({ ...prev, agentServiceFee: parseFloat(e.target.value) || 0 }))}
+                      <select
+                        value={formData.category}
+                        onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                        placeholder="0.00"
-                      />
+                      >
+                        {CATEGORIES.map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 
-                  <div className="space-y-4">
-                    <div>
-                      <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        <Building2 className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                        <span>Supplier Packing Fee ($)</span>
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={formData.supplierPackingFee || ''}
-                        onChange={(e) => setFormData(prev => ({ ...prev, supplierPackingFee: parseFloat(e.target.value) || 0 }))}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                        placeholder="0.00"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        <CreditCard className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                        <span>Banking Fee ($)</span>
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={formData.bankingFee || ''}
-                        onChange={(e) => setFormData(prev => ({ ...prev, bankingFee: parseFloat(e.target.value) || 0 }))}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                        placeholder="0.00"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-6 p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Sea Freight Cost</p>
-                      <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                        ${calculateTotal().toFixed(2)}
-                      </p>
-                    </div>
-                    <DollarSign className="h-12 w-12 text-blue-400 dark:text-blue-600 opacity-50" />
-                  </div>
-                </div>
-
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      <Calendar className="h-4 w-4" />
-                      <span>Record Date</span>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Description
                     </label>
-                    <input
-                      type="date"
-                      value={formData.recordedDate}
-                      onChange={(e) => setFormData(prev => ({ ...prev, recordedDate: e.target.value }))}
-                      max={new Date().toISOString().split('T')[0]}
+                    <textarea
+                      value={formData.itemDescription}
+                      onChange={(e) => setFormData(prev => ({ ...prev, itemDescription: e.target.value }))}
+                      rows={2}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      placeholder="Enter item description..."
                     />
                   </div>
 
                   <div>
-                    <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      <FileText className="h-4 w-4" />
-                      <span>Notes (Optional)</span>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Shipping Type
                     </label>
-                    <input
-                      type="text"
-                      value={formData.notes}
-                      onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                    <select
+                      value={formData.shippingType}
+                      onChange={(e) => setFormData(prev => ({ ...prev, shippingType: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      placeholder="Add any additional notes..."
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-6 flex space-x-3">
-                  <button
-                    onClick={handleSave}
-                    disabled={isSaving || !canManage}
-                    className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-colors ${
-                      isSaving || !canManage
-                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        : 'bg-blue-600 dark:bg-blue-700 text-white hover:bg-blue-700 dark:hover:bg-blue-600'
-                    }`}
-                  >
-                    {isSaving ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>Saving...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4" />
-                        <span>{editingRecordId ? 'Update Record' : 'Save Record'}</span>
-                      </>
-                    )}
-                  </button>
-                  {editingRecordId && (
-                    <button
-                      onClick={() => {
-                        setEditingRecordId(null);
-                        setFormData({
-                          partsCost: 0,
-                          agentServiceFee: 0,
-                          supplierPackingFee: 0,
-                          bankingFee: 0,
-                          notes: '',
-                          recordedDate: new Date().toISOString().split('T')[0]
-                        });
-                      }}
-                      className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     >
-                      Cancel
+                      {SHIPPING_TYPES.map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                    <h4 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                      Supplier Cost Breakdown
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          <Package className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                          <span>Parts/Item Cost ($)</span>
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={formData.supplierPartsCost || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, supplierPartsCost: parseFloat(e.target.value) || 0 }))}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          placeholder="0.00"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          <Building2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                          <span>Packing Fee ($)</span>
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={formData.supplierPackingFee || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, supplierPackingFee: parseFloat(e.target.value) || 0 }))}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          placeholder="0.00"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          <CreditCard className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                          <span>Banking Fee ($)</span>
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={formData.supplierBankingFee || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, supplierBankingFee: parseFloat(e.target.value) || 0 }))}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          placeholder="0.00"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          <DollarSign className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                          <span>Other Fees ($)</span>
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={formData.supplierOtherFees || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, supplierOtherFees: parseFloat(e.target.value) || 0 }))}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Total Supplier Cost:
+                        </span>
+                        <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                          ${calculateTotalSupplierCost().toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                    <h4 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                      Customer Pricing
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          <Percent className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                          <span>Markup Percentage (%)</span>
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={formData.markupPercentage || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, markupPercentage: parseFloat(e.target.value) || 0 }))}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          placeholder="25.00"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-6 p-6 bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <div className="grid grid-cols-2 gap-6">
+                        <div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Customer Price</p>
+                          <div className="flex items-baseline space-x-2">
+                            <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                              ${calculateCustomerPrice().toFixed(2)}
+                            </p>
+                            <span className="text-sm text-gray-500 dark:text-gray-400">AUD</span>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Profit Margin</p>
+                          <div className="flex items-center space-x-2">
+                            <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
+                            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                              {calculateProfitMargin().toFixed(2)}%
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-800">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">Profit Amount:</span>
+                          <span className="font-semibold text-gray-900 dark:text-gray-100">
+                            ${(calculateCustomerPrice() - calculateTotalSupplierCost()).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                    <h4 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                      Additional Information
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          <Calendar className="h-4 w-4" />
+                          <span>Effective Date</span>
+                        </label>
+                        <input
+                          type="date"
+                          value={formData.effectiveDate}
+                          onChange={(e) => setFormData(prev => ({ ...prev, effectiveDate: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          <Calendar className="h-4 w-4" />
+                          <span>Expiration Date (Optional)</span>
+                        </label>
+                        <input
+                          type="date"
+                          value={formData.expirationDate}
+                          onChange={(e) => setFormData(prev => ({ ...prev, expirationDate: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          <Tag className="h-4 w-4" />
+                          <span>Tags (comma-separated)</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.tags}
+                          onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          placeholder="popular, premium, heavy"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          <FileText className="h-4 w-4" />
+                          <span>Notes (Optional)</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.notes}
+                          onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          placeholder="Add any additional notes..."
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-3 pt-6">
+                    <button
+                      onClick={handleSave}
+                      disabled={isSaving || !canManage}
+                      className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-colors ${
+                        isSaving || !canManage
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'bg-blue-600 dark:bg-blue-700 text-white hover:bg-blue-700 dark:hover:bg-blue-600'
+                      }`}
+                    >
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Saving...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4" />
+                          <span>{editingItemId ? 'Update Item' : 'Save Item'}</span>
+                        </>
+                      )}
                     </button>
-                  )}
+                    {editingItemId && (
+                      <button
+                        onClick={() => {
+                          setEditingItemId(null);
+                          resetForm();
+                          setActiveTab('list');
+                        }}
+                        className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
-          {activeTab === 'history' && (
+          {activeTab === 'history' && viewHistoryItemId && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  Pricing History
+                  Price Change History
                 </h3>
+                <button
+                  onClick={() => {
+                    setViewHistoryItemId(null);
+                    setActiveTab('list');
+                  }}
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium"
+                >
+                  Back to List
+                </button>
               </div>
 
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
                 </div>
-              ) : pricingRecords.length === 0 ? (
+              ) : priceHistory.length === 0 ? (
                 <div className="text-center py-12 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                  <Ship className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-                  <p className="text-gray-600 dark:text-gray-400">No pricing records yet</p>
-                  <button
-                    onClick={() => setActiveTab('add')}
-                    className="mt-4 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
-                  >
-                    Add your first pricing record
-                  </button>
+                  <History className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                  <p className="text-gray-600 dark:text-gray-400">No price changes recorded yet</p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {pricingRecords.map((record) => {
-                    const breakdown = getCostBreakdown(record);
-                    return (
-                      <div
-                        key={record.id}
-                        className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-6"
-                      >
-                        <div className="flex items-start justify-between mb-4">
-                          <div>
-                            <div className="flex items-center space-x-3">
-                              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                                ${record.totalSeaFreightCost.toFixed(2)}
-                              </p>
-                              <span className="text-sm text-gray-500 dark:text-gray-400">
-                                {record.currency}
-                              </span>
-                            </div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                              Recorded: {new Date(record.recordedDate).toLocaleDateString()}
-                            </p>
-                          </div>
-                          {canManage && (
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => handleEdit(record)}
-                                className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
-                              >
-                                <Edit3 className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDelete(record.id)}
-                                className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
-                          )}
+                  {priceHistory.map((record) => (
+                    <div
+                      key={record.id}
+                      className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-6"
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div>
+                          <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                            {record.itemName}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            Changed: {new Date(record.changedAt).toLocaleString()}
+                          </p>
                         </div>
-
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                          {breakdown.map((item, index) => (
-                            <div key={index} className="bg-gray-50 dark:bg-gray-600 rounded-lg p-3">
-                              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">{item.label}</p>
-                              <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                ${item.value.toFixed(2)}
-                              </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                {item.percentage.toFixed(1)}%
-                              </p>
-                            </div>
-                          ))}
+                        <div className="text-right">
+                          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                            ${record.customerPrice.toFixed(2)}
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {record.markupPercentage.toFixed(1)}% markup
+                          </p>
                         </div>
-
-                        <div className="h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden flex">
-                          {breakdown.map((item, index) => (
-                            <div
-                              key={index}
-                              className={item.color}
-                              style={{ width: `${item.percentage}%` }}
-                              title={`${item.label}: ${item.percentage.toFixed(1)}%`}
-                            />
-                          ))}
-                        </div>
-
-                        {record.notes && (
-                          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                            <p className="text-sm text-gray-700 dark:text-gray-300">
-                              <span className="font-medium">Note:</span> {record.notes}
-                            </p>
-                          </div>
-                        )}
                       </div>
-                    );
-                  })}
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="bg-gray-50 dark:bg-gray-600 rounded-lg p-3">
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Parts Cost</p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            ${record.supplierPartsCost.toFixed(2)}
+                          </p>
+                        </div>
+                        <div className="bg-gray-50 dark:bg-gray-600 rounded-lg p-3">
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Packing Fee</p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            ${record.supplierPackingFee.toFixed(2)}
+                          </p>
+                        </div>
+                        <div className="bg-gray-50 dark:bg-gray-600 rounded-lg p-3">
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Banking Fee</p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            ${record.supplierBankingFee.toFixed(2)}
+                          </p>
+                        </div>
+                        <div className="bg-gray-50 dark:bg-gray-600 rounded-lg p-3">
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Total Supplier</p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            ${record.totalSupplierCost.toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+
+                      {record.changeReason && (
+                        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                          <p className="text-sm text-gray-700 dark:text-gray-300">
+                            <span className="font-medium">Reason:</span> {record.changeReason}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
-          )}
-
-          {!showQuoteSelector && activeTab === 'analytics' && (
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                Cost Analytics & Insights
-              </h3>
-
-              {isLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
-                </div>
-              ) : !analytics || analytics.totalRecords === 0 ? (
-                <div className="text-center py-12 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                  <PieChart className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-                  <p className="text-gray-600 dark:text-gray-400">
-                    No data available for analytics
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                    Add pricing records to see insights and trends
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm font-medium text-blue-900 dark:text-blue-300">Latest Cost</p>
-                        {getTrendIcon()}
-                      </div>
-                      <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                        ${analytics.latestTotalCost.toFixed(2)}
-                      </p>
-                      <p className="text-xs text-blue-700 dark:text-blue-400 mt-2 capitalize">
-                        Trend: {analytics.costTrendDirection}
-                      </p>
-                    </div>
-
-                    <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg p-6 border border-green-200 dark:border-green-800">
-                      <p className="text-sm font-medium text-green-900 dark:text-green-300 mb-2">Average Cost</p>
-                      <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-                        ${analytics.averageTotalCost.toFixed(2)}
-                      </p>
-                      <p className="text-xs text-green-700 dark:text-green-400 mt-2">
-                        Across {analytics.totalRecords} record{analytics.totalRecords !== 1 ? 's' : ''}
-                      </p>
-                    </div>
-
-                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg p-6 border border-purple-200 dark:border-purple-800">
-                      <p className="text-sm font-medium text-purple-900 dark:text-purple-300 mb-2">Cost Range</p>
-                      <div className="flex items-baseline space-x-2">
-                        <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                          ${analytics.minTotalCost.toFixed(2)}
-                        </p>
-                        <span className="text-purple-400 dark:text-purple-500">→</span>
-                        <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                          ${analytics.maxTotalCost.toFixed(2)}
-                        </p>
-                      </div>
-                      <p className="text-xs text-purple-700 dark:text-purple-400 mt-2">
-                        Min to Max
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-6">
-                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-                      <PieChart className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
-                      Average Cost Breakdown
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                            <span className="text-sm text-gray-700 dark:text-gray-300">Parts Cost</span>
-                          </div>
-                          <span className="font-semibold text-gray-900 dark:text-gray-100">
-                            ${analytics.averagePartsCost.toFixed(2)}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                            <span className="text-sm text-gray-700 dark:text-gray-300">Agent Service Fee</span>
-                          </div>
-                          <span className="font-semibold text-gray-900 dark:text-gray-100">
-                            ${analytics.averageAgentFee.toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                            <span className="text-sm text-gray-700 dark:text-gray-300">Supplier Packing Fee</span>
-                          </div>
-                          <span className="font-semibold text-gray-900 dark:text-gray-100">
-                            ${analytics.averageSupplierPackingFee.toFixed(2)}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-                            <span className="text-sm text-gray-700 dark:text-gray-300">Banking Fee</span>
-                          </div>
-                          <span className="font-semibold text-gray-900 dark:text-gray-100">
-                            ${analytics.averageBankingFee.toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                    <div className="flex items-start space-x-3">
-                      <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
-                      <div>
-                        <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-1">Insights</h4>
-                        <ul className="text-sm text-blue-800 dark:text-blue-400 space-y-1">
-                          <li>
-                            • Total of {analytics.totalRecords} pricing record{analytics.totalRecords !== 1 ? 's' : ''} tracked
-                          </li>
-                          <li>
-                            • Cost trend is {analytics.costTrendDirection} over time
-                          </li>
-                          <li>
-                            • Average parts cost represents {
-                              ((analytics.averagePartsCost / analytics.averageTotalCost) * 100).toFixed(1)
-                            }% of total cost
-                          </li>
-                          <li>
-                            • Variance range: ${(analytics.maxTotalCost - analytics.minTotalCost).toFixed(2)}
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-            </>
           )}
         </div>
 
         <div className="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Track detailed sea freight costs and analyze trends over time
+              Manage your sea freight pricing catalog for easy quoting
             </p>
             <button
               onClick={onClose}
