@@ -1,11 +1,11 @@
-import React from 'react';
-import { 
-  X, 
-  FileText, 
-  Building, 
-  User, 
-  Mail, 
-  Phone, 
+import React, { useState } from 'react';
+import {
+  X,
+  FileText,
+  Building,
+  User,
+  Mail,
+  Phone,
   MapPin,
   Calendar,
   DollarSign,
@@ -20,10 +20,12 @@ import {
   ShoppingCart,
   Receipt,
   Truck,
-  Globe
+  Globe,
+  Ship
 } from 'lucide-react';
 import { Quote } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import SeaFreightPricingModal from './SeaFreightPricingModal';
 
 interface QuoteDetailsModalProps {
   isOpen: boolean;
@@ -43,6 +45,7 @@ const QuoteDetailsModal: React.FC<QuoteDetailsModalProps> = ({
   isConverting = false
 }) => {
   const { hasPermission } = useAuth();
+  const [isSeaFreightPricingOpen, setIsSeaFreightPricingOpen] = useState(false);
 
   if (!isOpen || !quote) return null;
 
@@ -298,10 +301,19 @@ const QuoteDetailsModal: React.FC<QuoteDetailsModalProps> = ({
 
             {/* Shipping Options Comparison */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-                <Truck className="h-5 w-5 mr-2 text-orange-600 dark:text-orange-400" />
-                Shipping Options
-              </h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                  <Truck className="h-5 w-5 mr-2 text-orange-600 dark:text-orange-400" />
+                  Shipping Options
+                </h3>
+                <button
+                  onClick={() => setIsSeaFreightPricingOpen(true)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors text-sm font-medium"
+                >
+                  <Ship className="h-4 w-4" />
+                  <span>View Sea Freight Pricing</span>
+                </button>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className={`p-4 rounded-lg border-2 ${
                   quote.shippingCosts.selected === 'sea' 
@@ -409,6 +421,12 @@ const QuoteDetailsModal: React.FC<QuoteDetailsModalProps> = ({
           </div>
         </div>
       </div>
+
+      <SeaFreightPricingModal
+        isOpen={isSeaFreightPricingOpen}
+        onClose={() => setIsSeaFreightPricingOpen(false)}
+        quote={quote}
+      />
     </div>
   );
 };

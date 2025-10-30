@@ -143,10 +143,46 @@ export interface QuotePart {
   isCustomPart: boolean;
 }
 
-export type QuoteStatus = 
+export type QuoteStatus =
   | 'draft'
   | 'sent'
   | 'accepted'
   | 'rejected'
   | 'converted_to_order'
   | 'expired';
+
+export interface SeaFreightPricingRecord {
+  id: string;
+  quoteId: string;
+  partsCost: number;
+  agentServiceFee: number;
+  supplierPackingFee: number;
+  bankingFee: number;
+  totalSeaFreightCost: number;
+  currency: string;
+  recordedDate: string;
+  createdBy: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SeaFreightPricingAnalytics {
+  totalRecords: number;
+  averageTotalCost: number;
+  averagePartsCost: number;
+  averageAgentFee: number;
+  averageSupplierPackingFee: number;
+  averageBankingFee: number;
+  latestTotalCost: number;
+  minTotalCost: number;
+  maxTotalCost: number;
+  costTrendDirection: 'increasing' | 'decreasing' | 'stable';
+}
+
+export interface SeaFreightCostBreakdown {
+  label: string;
+  value: number;
+  color: string;
+  percentage: number;
+}
