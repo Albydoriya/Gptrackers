@@ -19,7 +19,10 @@ import {
   Users,
   Building2,
   CreditCard,
-  Loader2
+  Loader2,
+  Search,
+  ArrowLeft,
+  Receipt
 } from 'lucide-react';
 import { Quote, SeaFreightPricingRecord, SeaFreightPricingAnalytics } from '../types';
 import { supabase } from '../lib/supabase';
@@ -52,6 +55,12 @@ const SeaFreightPricingModal: React.FC<SeaFreightPricingModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  const [selectedQuote, setSelectedQuote] = useState<Quote | null>(quote);
+  const [availableQuotes, setAvailableQuotes] = useState<Quote[]>([]);
+  const [isLoadingQuotes, setIsLoadingQuotes] = useState(false);
+  const [quoteSearchTerm, setQuoteSearchTerm] = useState('');
+  const [showQuoteSelector, setShowQuoteSelector] = useState(!quote);
+
   const [formData, setFormData] = useState<PricingFormData>({
     partsCost: 0,
     agentServiceFee: 0,
@@ -66,14 +75,157 @@ const SeaFreightPricingModal: React.FC<SeaFreightPricingModalProps> = ({
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isOpen && quote) {
-      fetchPricingRecords();
-      fetchAnalytics();
+    if (isOpen) {
+      if (quote) {
+        setSelectedQuote(quote);
+        setShowQuoteSelector(false);
+        fetchPricingRecords();
+        fetchAnalytics();
+      } else {
+        setShowQuoteSelector(true);
+        fetchAvailableQuotes();
+      }
+    } else {
+      setSelectedQuote(null);
+      setShowQuoteSelector(!quote);
+      setPricingRecords([]);
+      setAnalytics(null);
     }
   }, [isOpen, quote]);
 
+  useEffect(() => {
+    if (selectedQuote) {
+      fetchPricingRecords();
+      fetchAnalytics();
+    }
+  }, [selectedQuote]);
+
+  const fetchAvailableQuotes = async () => {
+    setIsLoadingQuotes(true);
+    setError(null);
+
+    try {
+      const { data: quotesData, error: quotesError } = await supabase
+        .from('quotes')
+        .select(`
+          *,
+          quote_parts!quote_parts_quote_id_fkey(
+            *,
+            parts(*)
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (quotesError) throw quotesError;
+
+      if (!quotesData || quotesData.length === 0) {
+        setAvailableQuotes([]);
+        return;
+      }
+
+      const customerIds = [...new Set(quotesData.map(q => q.customer_id).filter(Boolean))];
+
+      const { data: customersData, error: customersError } = await supabase
+        .from('customers')
+        .select('*')
+        .in('id', customerIds);
+
+      if (customersError) throw customersError;
+
+      const customersMap = new Map();
+      (customersData || []).forEach(customer => {
+        customersMap.set(customer.id, customer);
+      });
+
+      const { data: pricingCounts, error: countError } = await supabase
+        .from('sea_freight_pricing_records')
+        .select('quote_id');
+
+      if (countError) throw countError;
+
+      const pricingCountsMap = new Map();
+      (pricingCounts || []).forEach(record => {
+        const count = pricingCountsMap.get(record.quote_id) || 0;
+        pricingCountsMap.set(record.quote_id, count + 1);
+      });
+
+      const transformedQuotes: Quote[] = quotesData.map(quoteData => {
+        const customerData = customersMap.get(quoteData.customer_id);
+
+        return {
+          id: quoteData.id,
+          quoteNumber: quoteData.quote_number,
+          customer: customerData ? {
+            id: customerData.id,
+            name: customerData.name,
+            contactPerson: customerData.contact_person,
+            email: customerData.email,
+            phone: customerData.phone,
+            address: customerData.address,
+            createdAt: customerData.created_at,
+            updatedAt: customerData.updated_at
+          } : {
+            id: '',
+            name: 'Unknown Customer',
+            contactPerson: 'Unknown',
+            email: 'unknown@example.com',
+            phone: 'N/A',
+            address: 'N/A',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          status: quoteData.status,
+          parts: quoteData.quote_parts.map((quotePart: any) => ({
+            id: quotePart.id,
+            part: quotePart.part ? {
+              id: quotePart.part.id,
+              partNumber: quotePart.part.part_number,
+              name: quotePart.part.name,
+              description: quotePart.part.description,
+              category: quotePart.part.category,
+              specifications: quotePart.part.specifications,
+              priceHistory: [],
+              currentStock: quotePart.part.current_stock,
+              minStock: quotePart.part.min_stock,
+              preferredSuppliers: quotePart.part.preferred_suppliers
+            } : undefined,
+            customPartName: quotePart.custom_part_name,
+            customPartDescription: quotePart.custom_part_description,
+            quantity: quotePart.quantity,
+            unitPrice: quotePart.unit_price,
+            totalPrice: quotePart.total_price,
+            isCustomPart: quotePart.is_custom_part
+          })),
+          totalBidItemsCost: quoteData.total_bid_items_cost,
+          shippingCosts: {
+            sea: quoteData.shipping_cost_sea,
+            air: quoteData.shipping_cost_air,
+            selected: quoteData.selected_shipping_method
+          },
+          agentFees: quoteData.agent_fees,
+          localShippingFees: quoteData.local_shipping_fees,
+          subtotalAmount: quoteData.subtotal_amount,
+          gstAmount: quoteData.gst_amount,
+          grandTotalAmount: quoteData.grand_total_amount,
+          quoteDate: quoteData.quote_date,
+          expiryDate: quoteData.expiry_date,
+          notes: quoteData.notes,
+          createdBy: quoteData.created_by || 'Unknown',
+          convertedToOrderId: quoteData.converted_to_order_id
+        };
+      });
+
+      setAvailableQuotes(transformedQuotes);
+    } catch (err: any) {
+      console.error('Error fetching quotes:', err);
+      setError(err.message || 'Failed to fetch quotes');
+    } finally {
+      setIsLoadingQuotes(false);
+    }
+  };
+
   const fetchPricingRecords = async () => {
-    if (!quote) return;
+    if (!selectedQuote) return;
 
     setIsLoading(true);
     setError(null);
@@ -82,7 +234,7 @@ const SeaFreightPricingModal: React.FC<SeaFreightPricingModalProps> = ({
       const { data, error: fetchError } = await supabase
         .from('sea_freight_pricing_records')
         .select('*')
-        .eq('quote_id', quote.id)
+        .eq('quote_id', selectedQuote.id)
         .order('recorded_date', { ascending: false });
 
       if (fetchError) throw fetchError;
@@ -113,11 +265,11 @@ const SeaFreightPricingModal: React.FC<SeaFreightPricingModalProps> = ({
   };
 
   const fetchAnalytics = async () => {
-    if (!quote) return;
+    if (!selectedQuote) return;
 
     try {
       const { data, error: analyticsError } = await supabase
-        .rpc('get_sea_freight_pricing_analytics', { p_quote_id: quote.id });
+        .rpc('get_sea_freight_pricing_analytics', { p_quote_id: selectedQuote.id });
 
       if (analyticsError) throw analyticsError;
 
@@ -147,7 +299,7 @@ const SeaFreightPricingModal: React.FC<SeaFreightPricingModalProps> = ({
   };
 
   const handleSave = async () => {
-    if (!quote || !user) return;
+    if (!selectedQuote || !user) return;
 
     if (formData.partsCost < 0 || formData.agentServiceFee < 0 ||
         formData.supplierPackingFee < 0 || formData.bankingFee < 0) {
@@ -161,7 +313,7 @@ const SeaFreightPricingModal: React.FC<SeaFreightPricingModalProps> = ({
 
     try {
       const recordData = {
-        quote_id: quote.id,
+        quote_id: selectedQuote.id,
         parts_cost: formData.partsCost,
         agent_service_fee: formData.agentServiceFee,
         supplier_packing_fee: formData.supplierPackingFee,
@@ -293,7 +445,40 @@ const SeaFreightPricingModal: React.FC<SeaFreightPricingModalProps> = ({
     }
   };
 
-  if (!isOpen || !quote) return null;
+  const handleQuoteSelect = (quote: Quote) => {
+    setSelectedQuote(quote);
+    setShowQuoteSelector(false);
+    setActiveTab('add');
+  };
+
+  const handleBackToQuoteSelector = () => {
+    setSelectedQuote(null);
+    setShowQuoteSelector(true);
+    setPricingRecords([]);
+    setAnalytics(null);
+    setEditingRecordId(null);
+    setFormData({
+      partsCost: 0,
+      agentServiceFee: 0,
+      supplierPackingFee: 0,
+      bankingFee: 0,
+      notes: '',
+      recordedDate: new Date().toISOString().split('T')[0]
+    });
+  };
+
+  const getFilteredQuotes = () => {
+    if (!quoteSearchTerm) return availableQuotes;
+
+    const searchLower = quoteSearchTerm.toLowerCase();
+    return availableQuotes.filter(q =>
+      q.quoteNumber.toLowerCase().includes(searchLower) ||
+      q.customer.name.toLowerCase().includes(searchLower) ||
+      q.customer.contactPerson.toLowerCase().includes(searchLower)
+    );
+  };
+
+  if (!isOpen) return null;
 
   const canManage = hasPermission('quotes', 'update');
 
@@ -311,7 +496,7 @@ const SeaFreightPricingModal: React.FC<SeaFreightPricingModalProps> = ({
                   Sea Freight Pricing Analytics
                 </h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Quote: {quote.quoteNumber}
+                  {selectedQuote ? `Quote: ${selectedQuote.quoteNumber}` : 'Select a quote to manage pricing'}
                 </p>
               </div>
             </div>
@@ -322,6 +507,16 @@ const SeaFreightPricingModal: React.FC<SeaFreightPricingModalProps> = ({
               <X className="h-5 w-5" />
             </button>
           </div>
+
+          {selectedQuote && !quote && (
+            <button
+              onClick={handleBackToQuoteSelector}
+              className="flex items-center space-x-2 px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors mt-4"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back to Quote Selection</span>
+            </button>
+          )}
 
           <div className="flex space-x-4 mt-6">
             <button
@@ -361,6 +556,81 @@ const SeaFreightPricingModal: React.FC<SeaFreightPricingModalProps> = ({
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
+          {showQuoteSelector ? (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                  Select a Quote
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Choose a quote to view and manage sea freight pricing records
+                </p>
+
+                <div className="relative mb-6">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <input
+                    type="text"
+                    placeholder="Search quotes by number or customer..."
+                    value={quoteSearchTerm}
+                    onChange={(e) => setQuoteSearchTerm(e.target.value)}
+                    className="pl-10 pr-4 py-2 w-full border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                  />
+                </div>
+
+                {isLoadingQuotes ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
+                  </div>
+                ) : getFilteredQuotes().length === 0 ? (
+                  <div className="text-center py-12 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <Receipt className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400">
+                      {quoteSearchTerm ? 'No quotes match your search' : 'No quotes available'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-3 max-h-96 overflow-y-auto">
+                    {getFilteredQuotes().map((q) => (
+                      <button
+                        key={q.id}
+                        onClick={() => handleQuoteSelect(q)}
+                        className="text-left p-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-md transition-all"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-2">
+                              <h4 className="font-semibold text-gray-900 dark:text-gray-100">
+                                {q.quoteNumber}
+                              </h4>
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                q.status === 'accepted' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
+                                q.status === 'sent' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' :
+                                'bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-300'
+                              }`}>
+                                {q.status.replace('_', ' ')}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {q.customer.name}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              {q.customer.contactPerson} • {new Date(q.quoteDate).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                              ${q.grandTotalAmount.toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <>
           {error && (
             <div className="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
               <div className="flex items-center space-x-2">
@@ -647,7 +917,7 @@ const SeaFreightPricingModal: React.FC<SeaFreightPricingModalProps> = ({
             </div>
           )}
 
-          {activeTab === 'analytics' && (
+          {!showQuoteSelector && activeTab === 'analytics' && (
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 Cost Analytics & Insights
@@ -786,6 +1056,8 @@ const SeaFreightPricingModal: React.FC<SeaFreightPricingModalProps> = ({
                 </div>
               )}
             </div>
+          )}
+            </>
           )}
         </div>
 
