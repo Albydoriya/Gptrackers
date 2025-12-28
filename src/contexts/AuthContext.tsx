@@ -36,6 +36,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   signUp: (email: string, password: string, fullName: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   hasPermission: (resource: string, action: string) => boolean;
@@ -465,7 +466,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       // Clear any existing auth storage before attempting new sign in
       clearAuthStorage();
-      
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -479,6 +480,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       throw new Error(error.message || 'Failed to sign in');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      // OAuth flow will redirect to Google and back
+      // User will be set via the onAuthStateChange listener after redirect
+    } catch (error: any) {
+      console.error('Google sign in error:', error);
+      throw new Error(error.message || 'Failed to sign in with Google');
     }
   };
 
@@ -655,6 +679,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     isAuthenticated: !!user,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
     resetPassword,
     hasPermission,
