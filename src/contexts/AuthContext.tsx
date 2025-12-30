@@ -142,24 +142,52 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Helper function to cache user role
+  const cacheUserRole = (userId: string, role: string) => {
+    try {
+      localStorage.setItem(`user_role_${userId}`, role);
+    } catch (error) {
+      console.warn('Error caching user role:', error);
+    }
+  };
+
+  // Helper function to get cached user role
+  const getCachedUserRole = (userId: string): string | null => {
+    try {
+      return localStorage.getItem(`user_role_${userId}`);
+    } catch (error) {
+      console.warn('Error getting cached user role:', error);
+      return null;
+    }
+  };
+
+  // Helper function to clear cached user role
+  const clearCachedUserRole = (userId: string) => {
+    try {
+      localStorage.removeItem(`user_role_${userId}`);
+    } catch (error) {
+      console.warn('Error clearing cached user role:', error);
+    }
+  };
+
   // Helper function to clear all authentication storage
   const clearAuthStorage = () => {
     try {
       // Clear localStorage
       localStorage.removeItem('supabase.auth.token');
       localStorage.removeItem('sb-' + import.meta.env.VITE_SUPABASE_URL?.split('//')[1]?.split('.')[0] + '-auth-token');
-      
+
       // Clear sessionStorage
       sessionStorage.removeItem('supabase.auth.token');
       sessionStorage.removeItem('sb-' + import.meta.env.VITE_SUPABASE_URL?.split('//')[1]?.split('.')[0] + '-auth-token');
-      
-      // Clear any other potential auth keys
+
+      // Clear any other potential auth keys including cached user roles
       Object.keys(localStorage).forEach(key => {
-        if (key.includes('supabase') || key.includes('auth')) {
+        if (key.includes('supabase') || key.includes('auth') || key.includes('user_role_')) {
           localStorage.removeItem(key);
         }
       });
-      
+
       Object.keys(sessionStorage).forEach(key => {
         if (key.includes('supabase') || key.includes('auth')) {
           sessionStorage.removeItem(key);
@@ -315,16 +343,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           throw new Error('Invalid user role in database profile');
         }
         userRole = roleFromProfile;
-        
+
+        // Cache the user's role for fallback during timeouts
+        cacheUserRole(supabaseUser.id, profile.role);
+
         if (profile.full_name) {
           fullName = profile.full_name;
         }
-        
+
         // Update last login for existing profile
         console.log('Updating last login timestamp (non-blocking)');
         supabase
           .from('user_profiles')
-          .update({ 
+          .update({
             last_login: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
@@ -334,9 +365,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } else if (profileError?.code === 'PGRST116' || profileResult.type === 'timeout') {
         // Profile doesn't exist (PGRST116 = no rows found) or fetch timed out
         if (profileResult.type === 'timeout') {
-          console.warn('Profile fetch timed out, proceeding with default user profile');
-          // Instead of throwing an error, proceed with a default profile
-          userRole = mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
+          console.warn('Profile fetch timed out, checking for cached role...');
+
+          // Try to get cached role for existing users
+          const cachedRole = getCachedUserRole(supabaseUser.id);
+
+          if (cachedRole) {
+            console.log('Using cached role:', cachedRole);
+            const roleFromCache = mockRoles.find(role => role.name === cachedRole);
+            if (roleFromCache) {
+              userRole = roleFromCache;
+            } else {
+              console.warn('Cached role not found in mockRoles, defaulting to viewer');
+              userRole = mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
+            }
+          } else {
+            console.warn('No cached role found, defaulting to viewer for new user');
+            userRole = mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
+          }
         } else {
           console.log('Profile not found, creating new profile with default viewer role...');
           
@@ -385,6 +431,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const roleFromProfile = mockRoles.find(role => role.name === upsertedProfile.role);
             if (roleFromProfile) {
               userRole = roleFromProfile;
+              // Cache the newly created role
+              cacheUserRole(supabaseUser.id, upsertedProfile.role);
               if (upsertedProfile.full_name) {
                 fullName = upsertedProfile.full_name;
               }
@@ -509,6 +557,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const signOut = async () => {
     try {
+      // Clear cached role before signing out
+      if (user) {
+        clearCachedUserRole(user.id);
+      }
+
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       setUser(null);
