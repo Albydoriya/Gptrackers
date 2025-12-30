@@ -44,6 +44,14 @@ export interface Part {
   wholesalePrice?: number;
   tradePrice?: number;
   retailPrice?: number;
+  // Weight and dimensions for freight calculation
+  actualWeightKg?: number;
+  lengthCm?: number;
+  widthCm?: number;
+  heightCm?: number;
+  dimFactor?: number;
+  volumetricWeightKg?: number;
+  chargeableWeightKg?: number;
 }
 
 export interface Supplier {

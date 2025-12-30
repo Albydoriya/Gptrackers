@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  X, 
-  Package, 
-  DollarSign, 
-  FileText, 
+import {
+  X,
+  Package,
+  DollarSign,
+  FileText,
   Settings,
   Plus,
   Minus,
@@ -11,7 +11,9 @@ import {
   AlertCircle,
   TrendingUp,
   TrendingDown,
-  History
+  History,
+  Weight,
+  Ruler
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -35,16 +37,17 @@ interface PartFormData {
   newPrice?: number;
   newSupplier?: string;
   priceUpdateReason?: string;
-  // New markup percentages
+  // Markup percentages
   internalUsageMarkupPercentage: number;
   wholesaleMarkupPercentage: number;
   tradeMarkupPercentage: number;
   retailMarkupPercentage: number;
-  // New markup percentages
-  internalUsageMarkupPercentage: number;
-  wholesaleMarkupPercentage: number;
-  tradeMarkupPercentage: number;
-  retailMarkupPercentage: number;
+  // Weight and dimensions
+  actualWeightKg: number;
+  lengthCm: number;
+  widthCm: number;
+  heightCm: number;
+  dimFactor: number;
 }
 
 const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, part }) => {
@@ -60,7 +63,12 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
     internalUsageMarkupPercentage: 0,
     wholesaleMarkupPercentage: 0,
     tradeMarkupPercentage: 0,
-    retailMarkupPercentage: 0
+    retailMarkupPercentage: 0,
+    actualWeightKg: 0,
+    lengthCm: 0,
+    widthCm: 0,
+    heightCm: 0,
+    dimFactor: 5000
   });
 
   const [specKey, setSpecKey] = useState('');
@@ -107,7 +115,12 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
         internalUsageMarkupPercentage: part.internalUsageMarkupPercentage || 0,
         wholesaleMarkupPercentage: part.wholesaleMarkupPercentage || 0,
         tradeMarkupPercentage: part.tradeMarkupPercentage || 0,
-        retailMarkupPercentage: part.retailMarkupPercentage || 0
+        retailMarkupPercentage: part.retailMarkupPercentage || 0,
+        actualWeightKg: part.actualWeightKg || 0,
+        lengthCm: part.lengthCm || 0,
+        widthCm: part.widthCm || 0,
+        heightCm: part.heightCm || 0,
+        dimFactor: part.dimFactor || 5000
       });
     }
   }, [part]);
@@ -191,7 +204,12 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
         internal_usage_markup_percentage: formData.internalUsageMarkupPercentage,
         wholesale_markup_percentage: formData.wholesaleMarkupPercentage,
         trade_markup_percentage: formData.tradeMarkupPercentage,
-        retail_markup_percentage: formData.retailMarkupPercentage
+        retail_markup_percentage: formData.retailMarkupPercentage,
+        actual_weight_kg: formData.actualWeightKg || null,
+        length_cm: formData.lengthCm || null,
+        width_cm: formData.widthCm || null,
+        height_cm: formData.heightCm || null,
+        dim_factor: formData.dimFactor || 5000
       };
 
       // 2. Update the main part details in Supabase
@@ -519,6 +537,127 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
                       </p>
                     )}
                   </div>
+                </div>
+              </div>
+
+              {/* Weight & Dimensions Section */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center">
+                  <Weight className="h-5 w-5 mr-2 text-orange-600 dark:text-orange-400" />
+                  Weight & Dimensions (for Freight Calculation)
+                </h3>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Actual Weight (kg)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.001"
+                        min="0"
+                        value={formData.actualWeightKg || ''}
+                        onChange={(e) => handleInputChange('actualWeightKg', parseFloat(e.target.value) || 0)}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                        placeholder="0.000"
+                      />
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Physical weight of the item</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Dim Factor
+                      </label>
+                      <input
+                        type="number"
+                        step="1"
+                        min="1"
+                        value={formData.dimFactor || 5000}
+                        onChange={(e) => handleInputChange('dimFactor', parseFloat(e.target.value) || 5000)}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                        placeholder="5000"
+                      />
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Default: 5000 for air freight</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                      <Ruler className="h-4 w-4 mr-1 text-orange-600 dark:text-orange-400" />
+                      Dimensions (cm)
+                    </label>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={formData.lengthCm || ''}
+                          onChange={(e) => handleInputChange('lengthCm', parseFloat(e.target.value) || 0)}
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                          placeholder="Length"
+                        />
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 text-center">Length</p>
+                      </div>
+                      <div>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={formData.widthCm || ''}
+                          onChange={(e) => handleInputChange('widthCm', parseFloat(e.target.value) || 0)}
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                          placeholder="Width"
+                        />
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 text-center">Width</p>
+                      </div>
+                      <div>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={formData.heightCm || ''}
+                          onChange={(e) => handleInputChange('heightCm', parseFloat(e.target.value) || 0)}
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                          placeholder="Height"
+                        />
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 text-center">Height</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Calculated Weight Display */}
+                  {(formData.actualWeightKg > 0 || (formData.lengthCm > 0 && formData.widthCm > 0 && formData.heightCm > 0)) && (
+                    <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                      <div className="grid grid-cols-3 gap-4">
+                        <div>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Volumetric Weight</p>
+                          <p className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                            {formData.lengthCm > 0 && formData.widthCm > 0 && formData.heightCm > 0 && formData.dimFactor > 0
+                              ? ((formData.lengthCm * formData.widthCm * formData.heightCm) / formData.dimFactor).toFixed(3)
+                              : '0.000'} kg
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Actual Weight</p>
+                          <p className="text-lg font-bold text-gray-700 dark:text-gray-300">
+                            {formData.actualWeightKg.toFixed(3)} kg
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Chargeable Weight</p>
+                          <p className="text-lg font-bold text-green-600 dark:text-green-400">
+                            {(() => {
+                              const volWeight = formData.lengthCm > 0 && formData.widthCm > 0 && formData.heightCm > 0 && formData.dimFactor > 0
+                                ? (formData.lengthCm * formData.widthCm * formData.heightCm) / formData.dimFactor
+                                : 0;
+                              return Math.max(formData.actualWeightKg, volWeight).toFixed(3);
+                            })()} kg
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

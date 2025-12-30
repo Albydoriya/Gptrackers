@@ -93,7 +93,15 @@ function Parts() {
             ? parseFloat(partData.price_history[partData.price_history.length - 1].price)
             : 0;
           return currentPrice * (1 + (partData.retail_markup_percentage || 50) / 100)*1.1;
-        })()
+        })(),
+        // Weight and dimensions
+        actualWeightKg: partData.actual_weight_kg ? parseFloat(partData.actual_weight_kg) : undefined,
+        lengthCm: partData.length_cm ? parseFloat(partData.length_cm) : undefined,
+        widthCm: partData.width_cm ? parseFloat(partData.width_cm) : undefined,
+        heightCm: partData.height_cm ? parseFloat(partData.height_cm) : undefined,
+        dimFactor: partData.dim_factor ? parseFloat(partData.dim_factor) : undefined,
+        volumetricWeightKg: partData.volumetric_weight_kg ? parseFloat(partData.volumetric_weight_kg) : undefined,
+        chargeableWeightKg: partData.chargeable_weight_kg ? parseFloat(partData.chargeable_weight_kg) : undefined
       }));
 
       setParts(transformedParts);
@@ -497,6 +505,41 @@ function Parts() {
                   </div>
                 </div>
               </div>
+
+              {/* Weight & Dimensions Section */}
+              {(selectedPart.actualWeightKg || selectedPart.lengthCm || selectedPart.widthCm || selectedPart.heightCm) && (
+                <div>
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Weight & Dimensions</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    {selectedPart.actualWeightKg && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Actual Weight:</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">{selectedPart.actualWeightKg.toFixed(3)} kg</span>
+                      </div>
+                    )}
+                    {selectedPart.volumetricWeightKg && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Volumetric Weight:</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">{selectedPart.volumetricWeightKg.toFixed(3)} kg</span>
+                      </div>
+                    )}
+                    {selectedPart.chargeableWeightKg && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Chargeable Weight:</span>
+                        <span className="font-semibold text-green-600 dark:text-green-400">{selectedPart.chargeableWeightKg.toFixed(3)} kg</span>
+                      </div>
+                    )}
+                    {(selectedPart.lengthCm && selectedPart.widthCm && selectedPart.heightCm) && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Dimensions (L×W×H):</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">
+                          {selectedPart.lengthCm} × {selectedPart.widthCm} × {selectedPart.heightCm} cm
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div>
                 <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Price History</h4>
