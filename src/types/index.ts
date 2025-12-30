@@ -242,50 +242,31 @@ export interface SeaFreightPriceListFilters {
   isActive?: boolean;
 }
 
-export interface AirFreightPriceListItem {
+export interface AirFreightCarrier {
   id: string;
-  partId?: string;
-  itemName: string;
-  itemDescription: string;
-  category: string;
-  supplierCostPerKg: number;
-  supplierPackingFeePerKg: number;
-  supplierBankingFee: number;
-  supplierOtherFees: number;
-  totalSupplierCostPerKg: number;
-  markupPercentage: number;
-  customerPricePerKg: number;
+  carrierName: string;
+  costRatePerKg: number;
+  chargeRatePerKg: number;
+  profitPerKg: number;
+  profitMarginPercentage: number;
   currency: string;
   isActive: boolean;
   effectiveDate: string;
   expirationDate?: string;
   notes?: string;
-  tags: string[];
   createdBy: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface AirFreightPriceHistory {
+export interface AirFreightCarrierHistory {
   id: string;
-  priceListId: string;
-  itemName: string;
-  itemDescription?: string;
-  category?: string;
-  supplierCostPerKg: number;
-  supplierPackingFeePerKg: number;
-  supplierBankingFee: number;
-  supplierOtherFees: number;
-  totalSupplierCostPerKg: number;
-  markupPercentage: number;
-  customerPricePerKg: number;
+  carrierId: string;
+  carrierName: string;
+  costRatePerKg: number;
+  chargeRatePerKg: number;
+  profitPerKg: number;
   currency: string;
   changeReason?: string;
   changedAt: string;
-}
-
-export interface AirFreightPriceListFilters {
-  category?: string;
-  searchTerm?: string;
-  isActive?: boolean;
 }
