@@ -25,7 +25,8 @@ import {
   XCircle,
   Archive,
   RefreshCw as StatusUpdate,
-  Ship
+  Ship,
+  Plane
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Quote, Customer, QuotePart, Part } from '../types';
@@ -35,6 +36,7 @@ import EditQuote from './EditQuote';
 import QuoteDetailsModal from './QuoteDetailsModal';
 import QuoteStatusUpdateModal from './QuoteStatusUpdateModal';
 import SeaFreightPricingModal from './SeaFreightPricingModal';
+import AirFreightPricingModal from './AirFreightPricingModal';
 
 const Quotes: React.FC = () => {
   const { hasPermission } = useAuth();
@@ -54,6 +56,7 @@ const Quotes: React.FC = () => {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [isConverting, setIsConverting] = useState<string | null>(null);
   const [isSeaFreightPricingOpen, setIsSeaFreightPricingOpen] = useState(false);
+  const [isAirFreightPricingOpen, setIsAirFreightPricingOpen] = useState(false);
 
   // Fetch quotes from Supabase
   const fetchQuotes = async () => {
@@ -443,14 +446,24 @@ const Quotes: React.FC = () => {
         </div>
         <div className="flex items-center space-x-3">
           {hasPermission('quotes', 'update') && (
-            <button
-              onClick={() => setIsSeaFreightPricingOpen(true)}
-              className="flex items-center space-x-2 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors"
-              title="Manage sea freight pricing across all quotes"
-            >
-              <Ship className="h-4 w-4" />
-              <span>Sea Freight Pricing</span>
-            </button>
+            <>
+              <button
+                onClick={() => setIsSeaFreightPricingOpen(true)}
+                className="flex items-center space-x-2 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors"
+                title="Manage sea freight pricing across all quotes"
+              >
+                <Ship className="h-4 w-4" />
+                <span>Sea Freight Pricing</span>
+              </button>
+              <button
+                onClick={() => setIsAirFreightPricingOpen(true)}
+                className="flex items-center space-x-2 bg-sky-600 text-white px-4 py-2 rounded-lg hover:bg-sky-700 transition-colors"
+                title="Manage air freight pricing (per kg) across all quotes"
+              >
+                <Plane className="h-4 w-4" />
+                <span>Air Freight Pricing</span>
+              </button>
+            </>
           )}
           {hasPermission('quotes', 'create') && (
             <button
@@ -861,6 +874,13 @@ const Quotes: React.FC = () => {
       <SeaFreightPricingModal
         isOpen={isSeaFreightPricingOpen}
         onClose={() => setIsSeaFreightPricingOpen(false)}
+        quote={null}
+      />
+
+      {/* Air Freight Pricing Modal */}
+      <AirFreightPricingModal
+        isOpen={isAirFreightPricingOpen}
+        onClose={() => setIsAirFreightPricingOpen(false)}
         quote={null}
       />
     </div>
