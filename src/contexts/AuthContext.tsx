@@ -411,6 +411,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       console.log('Setting user data in state');
       setUser(userData);
+      setIsLoading(false);
       console.log('User session created successfully');
     } catch (error) {
       console.error('Error creating user from session:', error);
