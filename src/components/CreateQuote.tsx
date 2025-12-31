@@ -1524,16 +1524,75 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Review Quote</h3>
 
-                {/* Top Section: Shipping Details and Quote Info */}
+                {/* Top Section: Quote Info and Fees */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                  {/* Shipping & Freight Details */}
+                  {/* Quote Information & Air Freight */}
                   <div className="lg:col-span-2">
                     <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-4">
+                      {/* Quote Information */}
                       <div>
-                        <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3 flex items-center">
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Quote Information</h4>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">Quote Number:</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">{formData.quoteNumber}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">Customer:</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">{formData.customer?.name}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">Requested By:</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">{user?.name || 'N/A'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">Submitted Date:</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">
+                              {new Date().toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">Expiry Date:</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">
+                              {new Date(formData.expiryDate).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="border-t border-gray-200 dark:border-gray-600 pt-3 mt-3">
+                          <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                            <Truck className="h-4 w-4 mr-1 text-orange-600 dark:text-orange-400" />
+                            Shipping Options
+                          </h5>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600 dark:text-gray-400">Selected Method:</span>
+                              <span className="font-medium text-gray-900 dark:text-gray-100 capitalize">
+                                {totals.selectedMethod} Freight
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600 dark:text-gray-400">Sea Freight Cost:</span>
+                              <span className="font-medium text-gray-900 dark:text-gray-100">${formData.shippingCosts.sea.toFixed(2)}</span>
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">20-30 days delivery</p>
+                          </div>
+                        </div>
+
+                        {formData.notes && (
+                          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                            <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-2 text-sm">Notes & Terms</h5>
+                            <p className="text-sm text-gray-700 dark:text-gray-300">{formData.notes}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Air Freight Details */}
+                      <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
+                        <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
                           <Plane className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
                           Air Freight Details
-                        </h4>
+                        </h5>
                         <div className="space-y-3 text-sm">
                           {formData.parts.length > 0 && (
                             <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
@@ -1555,82 +1614,27 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                           <p className="text-xs text-gray-500 dark:text-gray-400">5-7 days delivery</p>
                         </div>
                       </div>
-
-                      <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
-                        <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
-                          <Calculator className="h-4 w-4 mr-2 text-green-600 dark:text-green-400" />
-                          Additional Fees
-                        </h5>
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 dark:text-gray-400">Agent Fees:</span>
-                            <span className="font-medium text-gray-900 dark:text-gray-100">${formData.agentFees.toFixed(2)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 dark:text-gray-400">Local Shipping:</span>
-                            <span className="font-medium text-gray-900 dark:text-gray-100">${formData.localShippingFees.toFixed(2)}</span>
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   </div>
 
-                  {/* Quote Information & Cost Summary */}
+                  {/* Additional Fees & Cost Summary */}
                   <div className="space-y-4">
-                    {/* Quote Information */}
+                    {/* Additional Fees */}
                     <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                      <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Quote Information</h4>
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3 flex items-center">
+                        <Calculator className="h-4 w-4 mr-2 text-green-600 dark:text-green-400" />
+                        Additional Fees
+                      </h4>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Quote Number:</span>
-                          <span className="font-medium text-gray-900 dark:text-gray-100">{formData.quoteNumber}</span>
+                          <span className="text-gray-600 dark:text-gray-400">Agent Fees:</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">${formData.agentFees.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Customer:</span>
-                          <span className="font-medium text-gray-900 dark:text-gray-100">{formData.customer?.name}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Requested By:</span>
-                          <span className="font-medium text-gray-900 dark:text-gray-100">{user?.name || 'N/A'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Submitted Date:</span>
-                          <span className="font-medium text-gray-900 dark:text-gray-100">
-                            {new Date().toLocaleDateString()}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Expiry Date:</span>
-                          <span className="font-medium text-gray-900 dark:text-gray-100">
-                            {new Date(formData.expiryDate).toLocaleDateString()}
-                          </span>
-                        </div>
-
-                        <div className="border-t border-gray-200 dark:border-gray-600 pt-3 mt-3">
-                          <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
-                            <Truck className="h-4 w-4 mr-1 text-orange-600 dark:text-orange-400" />
-                            Shipping Options
-                          </h5>
-                          <div className="flex justify-between mb-2">
-                            <span className="text-gray-600 dark:text-gray-400">Selected Method:</span>
-                            <span className="font-medium text-gray-900 dark:text-gray-100 capitalize">
-                              {totals.selectedMethod} Freight
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 dark:text-gray-400">Sea Freight Cost:</span>
-                            <span className="font-medium text-gray-900 dark:text-gray-100">${formData.shippingCosts.sea.toFixed(2)}</span>
-                          </div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">20-30 days delivery</p>
+                          <span className="text-gray-600 dark:text-gray-400">Local Shipping:</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">${formData.localShippingFees.toFixed(2)}</span>
                         </div>
                       </div>
-
-                      {formData.notes && (
-                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-                          <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-2 text-sm">Notes & Terms</h5>
-                          <p className="text-sm text-gray-700 dark:text-gray-300">{formData.notes}</p>
-                        </div>
-                      )}
                     </div>
 
                     {/* Cost Summary */}
