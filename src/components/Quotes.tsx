@@ -37,6 +37,7 @@ import QuoteDetailsModal from './QuoteDetailsModal';
 import QuoteStatusUpdateModal from './QuoteStatusUpdateModal';
 import SeaFreightPricingModal from './SeaFreightPricingModal';
 import AirFreightPricingModal from './AirFreightPricingModal';
+import AgentFeePricingModal from './AgentFeePricingModal';
 
 const Quotes: React.FC = () => {
   const { hasPermission } = useAuth();
@@ -57,6 +58,7 @@ const Quotes: React.FC = () => {
   const [isConverting, setIsConverting] = useState<string | null>(null);
   const [isSeaFreightPricingOpen, setIsSeaFreightPricingOpen] = useState(false);
   const [isAirFreightPricingOpen, setIsAirFreightPricingOpen] = useState(false);
+  const [isAgentFeePricingOpen, setIsAgentFeePricingOpen] = useState(false);
 
   // Fetch quotes from Supabase
   const fetchQuotes = async () => {
@@ -462,6 +464,14 @@ const Quotes: React.FC = () => {
               >
                 <Plane className="h-4 w-4" />
                 <span>Air Freight Pricing</span>
+              </button>
+              <button
+                onClick={() => setIsAgentFeePricingOpen(true)}
+                className="flex items-center space-x-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
+                title="Manage agent fees linked to suppliers"
+              >
+                <User className="h-4 w-4" />
+                <span>Agent Fee Pricing</span>
               </button>
             </>
           )}
@@ -882,6 +892,12 @@ const Quotes: React.FC = () => {
         isOpen={isAirFreightPricingOpen}
         onClose={() => setIsAirFreightPricingOpen(false)}
         quote={null}
+      />
+
+      {/* Agent Fee Pricing Modal */}
+      <AgentFeePricingModal
+        isOpen={isAgentFeePricingOpen}
+        onClose={() => setIsAgentFeePricingOpen(false)}
       />
     </div>
   );

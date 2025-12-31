@@ -278,3 +278,32 @@ export interface AirFreightCarrierHistory {
   changeReason?: string;
   changedAt: string;
 }
+
+export interface AgentFee {
+  id: string;
+  supplierId: string;
+  agentName: string;
+  feeAmount: number;
+  feeType: 'percentage' | 'fixed';
+  currency: string;
+  isActive: boolean;
+  effectiveDate: string;
+  expirationDate?: string;
+  notes?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  supplier?: Supplier;
+}
+
+export interface AgentFeeHistory {
+  id: string;
+  agentFeeId: string;
+  supplierId: string;
+  agentName: string;
+  feeAmount: number;
+  feeType: string;
+  currency: string;
+  changeReason?: string;
+  changedAt: string;
+}
