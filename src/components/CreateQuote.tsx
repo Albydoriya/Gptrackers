@@ -1287,27 +1287,6 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                         </h5>
                         <div>
 
-                          {/* Total Weight Display */}
-                          {formData.parts.length > 0 && (
-                            <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                              <div className="flex justify-between items-center">
-                                <span className="text-sm font-medium text-blue-900 dark:text-blue-100 flex items-center">
-                                  <Weight className="h-4 w-4 mr-1" />
-                                  Total Chargeable Weight:
-                                </span>
-                                <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                                  {calculateTotalChargeableWeight().toFixed(3)} kg
-                                </span>
-                              </div>
-                              {formData.parts.some(p => !p.part?.chargeableWeightKg) && (
-                                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center">
-                                  <AlertCircle className="h-3 w-3 mr-1" />
-                                  Some parts are missing weight information
-                                </p>
-                              )}
-                            </div>
-                          )}
-
                           {/* Carrier Options */}
                           {airFreightCarriers.length > 0 ? (
                             <div className="space-y-2.5">
@@ -1466,6 +1445,32 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                         </div>
                       </div>
                     </div>
+
+                    {/* Total Chargeable Weight Section */}
+                    {formData.parts.length > 0 && (
+                      <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                          <Weight className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
+                          Total Chargeable Weight
+                        </h4>
+                        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                              Total Weight:
+                            </span>
+                            <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                              {calculateTotalChargeableWeight().toFixed(3)} kg
+                            </span>
+                          </div>
+                          {formData.parts.some(p => !p.part?.chargeableWeightKg) && (
+                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 flex items-center">
+                              <AlertCircle className="h-3 w-3 mr-1" />
+                              Some parts are missing weight information
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                     <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                       <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
