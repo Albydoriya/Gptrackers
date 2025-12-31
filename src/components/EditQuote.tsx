@@ -1030,6 +1030,16 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
                           <span className="font-medium text-gray-900 dark:text-gray-100">{formData.customer?.name}</span>
                         </div>
                         <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Requested By:</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">{user?.name || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Submitted Date:</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">
+                            {new Date().toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
                           <span className="text-gray-600 dark:text-gray-400">Expiry Date:</span>
                           <span className="font-medium text-gray-900 dark:text-gray-100">
                             {new Date(formData.expiryDate).toLocaleDateString()}
