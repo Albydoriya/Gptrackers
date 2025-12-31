@@ -1442,7 +1442,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                       <div className="space-y-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Agent Fees
+                            Japan Agent Fees
                           </label>
                           <input
                             type="number"
@@ -1455,7 +1455,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Local Shipping Fees
+                            Local Japan Shipping Fees
                           </label>
                           <input
                             type="number"
