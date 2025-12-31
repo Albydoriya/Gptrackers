@@ -1524,13 +1524,63 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Review Quote</h3>
 
-                {/* Top Section: Quote Info and Cost Summary */}
+                {/* Top Section: Shipping Details and Quote Info */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                  {/* Quote Information */}
+                  {/* Shipping & Freight Details */}
                   <div className="lg:col-span-2">
+                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-4">
+                      <div>
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3 flex items-center">
+                          <Plane className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
+                          Air Freight Details
+                        </h4>
+                        <div className="space-y-3 text-sm">
+                          {formData.parts.length > 0 && (
+                            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm font-medium text-blue-900 dark:text-blue-100 flex items-center">
+                                  <Weight className="h-4 w-4 mr-1" />
+                                  Total Chargeable Weight:
+                                </span>
+                                <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                                  {calculateTotalChargeableWeight().toFixed(3)} kg
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">Air Freight Cost:</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">${formData.shippingCosts.air.toFixed(2)}</span>
+                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">5-7 days delivery</p>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
+                        <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+                          <Calculator className="h-4 w-4 mr-2 text-green-600 dark:text-green-400" />
+                          Additional Fees
+                        </h5>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">Agent Fees:</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">${formData.agentFees.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">Local Shipping:</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">${formData.localShippingFees.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quote Information & Cost Summary */}
+                  <div className="space-y-4">
+                    {/* Quote Information */}
                     <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                       <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Quote Information</h4>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
                           <span className="text-gray-600 dark:text-gray-400">Quote Number:</span>
                           <span className="font-medium text-gray-900 dark:text-gray-100">{formData.quoteNumber}</span>
@@ -1555,13 +1605,26 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                             {new Date(formData.expiryDate).toLocaleDateString()}
                           </span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Shipping Method:</span>
-                          <span className="font-medium text-gray-900 dark:text-gray-100 capitalize">
-                            {totals.selectedMethod} Freight
-                          </span>
+
+                        <div className="border-t border-gray-200 dark:border-gray-600 pt-3 mt-3">
+                          <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                            <Truck className="h-4 w-4 mr-1 text-orange-600 dark:text-orange-400" />
+                            Shipping Options
+                          </h5>
+                          <div className="flex justify-between mb-2">
+                            <span className="text-gray-600 dark:text-gray-400">Selected Method:</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100 capitalize">
+                              {totals.selectedMethod} Freight
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">Sea Freight Cost:</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">${formData.shippingCosts.sea.toFixed(2)}</span>
+                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">20-30 days delivery</p>
                         </div>
                       </div>
+
                       {formData.notes && (
                         <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
                           <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-2 text-sm">Notes & Terms</h5>
@@ -1569,10 +1632,8 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                         </div>
                       )}
                     </div>
-                  </div>
 
-                  {/* Cost Summary */}
-                  <div>
+                    {/* Cost Summary */}
                     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                       <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Cost Summary</h4>
                       <div className="space-y-2 text-sm">
