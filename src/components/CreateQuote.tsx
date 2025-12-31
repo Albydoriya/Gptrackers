@@ -547,9 +547,20 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
 
   const calculateTotals = () => {
     const totalBidItemsCost = formData.parts.reduce((sum, part) => sum + part.totalPrice, 0);
-    const selectedShippingCost = formData.shippingCosts.selected === 'sea' 
-      ? formData.shippingCosts.sea 
-      : formData.shippingCosts.air;
+
+    // Auto-determine which shipping method to use based on costs
+    let selectedShippingCost = 0;
+    let selectedMethod: 'sea' | 'air' = 'sea';
+
+    if (formData.shippingCosts.air > 0 && formData.shippingCosts.sea === 0) {
+      selectedShippingCost = formData.shippingCosts.air;
+      selectedMethod = 'air';
+    } else {
+      // Default to sea freight (even if both are zero or both have values)
+      selectedShippingCost = formData.shippingCosts.sea;
+      selectedMethod = 'sea';
+    }
+
     const subtotalAmount = totalBidItemsCost + selectedShippingCost + formData.agentFees + formData.localShippingFees;
     const gstAmount = subtotalAmount * 0.1; // 10% GST
     const grandTotalAmount = subtotalAmount + gstAmount;
@@ -557,6 +568,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
     return {
       totalBidItemsCost,
       selectedShippingCost,
+      selectedMethod,
       subtotalAmount,
       gstAmount,
       grandTotalAmount
@@ -643,7 +655,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
         total_bid_items_cost: totals.totalBidItemsCost,
         shipping_cost_sea: formData.shippingCosts.sea,
         shipping_cost_air: formData.shippingCosts.air,
-        selected_shipping_method: formData.shippingCosts.selected,
+        selected_shipping_method: totals.selectedMethod,
         agent_fees: formData.agentFees,
         local_shipping_fees: formData.localShippingFees,
         subtotal_amount: totals.subtotalAmount,
@@ -1463,81 +1475,40 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                           </p>
                         </div>
                       </div>
-                      
-                      <div className="mt-4">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Default Shipping Method
-                        </label>
-                        <div className="flex space-x-4">
-                          <label className="flex items-center">
-                            <input
-                              type="radio"
-                              name="shippingMethod"
-                              value="sea"
-                              checked={formData.shippingCosts.selected === 'sea'}
-                              onChange={(e) => setFormData(prev => ({ 
-                                ...prev, 
-                                shippingCosts: { 
-                                  ...prev.shippingCosts, 
-                                  selected: e.target.value as 'sea' | 'air' 
-                                } 
-                              }))}
-                              className="mr-2"
-                            />
-                            <span className="text-sm text-gray-700 dark:text-gray-300">Sea Freight (Economical)</span>
-                          </label>
-                          <label className="flex items-center">
-                            <input
-                              type="radio"
-                              name="shippingMethod"
-                              value="air"
-                              checked={formData.shippingCosts.selected === 'air'}
-                              onChange={(e) => setFormData(prev => ({ 
-                                ...prev, 
-                                shippingCosts: { 
-                                  ...prev.shippingCosts, 
-                                  selected: e.target.value as 'sea' | 'air' 
-                                } 
-                              }))}
-                              className="mr-2"
-                            />
-                            <span className="text-sm text-gray-700 dark:text-gray-300">Air Freight (Express)</span>
-                          </label>
-                        </div>
-                      </div>
-                    </div>
 
-                    <div>
-                      <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-                        <Calculator className="h-4 w-4 mr-2 text-purple-600 dark:text-purple-400" />
-                        Additional Fees
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Agent Fees
-                          </label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={formData.agentFees || ''}
-                            onChange={(e) => setFormData(prev => ({ ...prev, agentFees: parseFloat(e.target.value) || 0 }))}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                            placeholder="0.00"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Local Shipping Fees
-                          </label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={formData.localShippingFees || ''}
-                            onChange={(e) => setFormData(prev => ({ ...prev, localShippingFees: parseFloat(e.target.value) || 0 }))}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                            placeholder="0.00"
-                          />
+                      {/* Additional Fees Section */}
+                      <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+                        <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 flex items-center">
+                          <Calculator className="h-4 w-4 mr-2 text-green-600 dark:text-green-400" />
+                          Additional Fees
+                        </h5>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">
+                              Agent Fees
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={formData.agentFees || ''}
+                              onChange={(e) => setFormData(prev => ({ ...prev, agentFees: parseFloat(e.target.value) || 0 }))}
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                              placeholder="0.00"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">
+                              Local Shipping Fees
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={formData.localShippingFees || ''}
+                              onChange={(e) => setFormData(prev => ({ ...prev, localShippingFees: parseFloat(e.target.value) || 0 }))}
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                              placeholder="0.00"
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1576,7 +1547,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                         <div className="flex justify-between">
                           <span className="text-gray-600 dark:text-gray-400">Shipping Method:</span>
                           <span className="font-medium text-gray-900 dark:text-gray-100 capitalize">
-                            {formData.shippingCosts.selected} Freight
+                            {totals.selectedMethod} Freight
                           </span>
                         </div>
                       </div>
@@ -1601,7 +1572,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600 dark:text-gray-400">
-                            Shipping ({formData.shippingCosts.selected}):
+                            Shipping ({totals.selectedMethod}):
                           </span>
                           <span className="font-medium text-gray-900 dark:text-gray-100">${totals.selectedShippingCost.toFixed(2)}</span>
                         </div>
