@@ -1433,8 +1433,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                   </div>
                 </div>
               </div>
-            </div>
-      <div className="space-y-6">
+              <div className="space-y-6">
                     <div>
                       <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
                         <FileText className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
@@ -1517,6 +1516,8 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                       </div>
                     </div>
                   </div>
+            </div>
+      
           )}
 
           {/* Step 4: Review & Submit */}
