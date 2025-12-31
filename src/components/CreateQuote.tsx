@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  X, 
-  Plus, 
-  Search, 
-  Package, 
-  User, 
-  DollarSign, 
+import {
+  X,
+  Plus,
+  Search,
+  Package,
+  User,
+  DollarSign,
   Calendar,
   FileText,
   Send,
@@ -20,7 +20,9 @@ import {
   Phone,
   Truck,
   Calculator,
-  Loader2
+  Loader2,
+  Plane,
+  Weight
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -49,6 +51,7 @@ interface QuoteFormData {
   seaFreightPriceListId?: string;
   priceListSnapshot?: SeaFreightPriceListItem;
   manualPriceOverride: boolean;
+  airFreightCarrierId?: string;
 }
 
 const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreated }) => {
@@ -95,6 +98,15 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
     phone: '',
     address: ''
   });
+  const [airFreightCarriers, setAirFreightCarriers] = useState<Array<{
+    id: string;
+    carrier_name: string;
+    charge_rate_per_kg: number;
+    cost_rate_per_kg: number;
+    profit_per_kg: number;
+    currency: string;
+  }>>([]);
+  const [selectedAirCarrier, setSelectedAirCarrier] = useState<string | null>(null);
 
   const categories = ['all', ...new Set(availableParts.map(p => p.category))];
   
@@ -128,7 +140,14 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
           internalUsageMarkupPercentage: part.internal_usage_markup_percentage || 10,
           wholesaleMarkupPercentage: part.wholesale_markup_percentage || 20,
           tradeMarkupPercentage: part.trade_markup_percentage || 30,
-          retailMarkupPercentage: part.retail_markup_percentage || 50
+          retailMarkupPercentage: part.retail_markup_percentage || 50,
+          actualWeightKg: part.actual_weight_kg ? parseFloat(part.actual_weight_kg) : undefined,
+          lengthCm: part.length_cm ? parseFloat(part.length_cm) : undefined,
+          widthCm: part.width_cm ? parseFloat(part.width_cm) : undefined,
+          heightCm: part.height_cm ? parseFloat(part.height_cm) : undefined,
+          dimFactor: part.dim_factor ? parseFloat(part.dim_factor) : undefined,
+          volumetricWeightKg: part.volumetric_weight_kg ? parseFloat(part.volumetric_weight_kg) : undefined,
+          chargeableWeightKg: part.chargeable_weight_kg ? parseFloat(part.chargeable_weight_kg) : undefined
         }));
 
         setAvailableParts(transformedParts);
@@ -170,6 +189,63 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
 
     fetchCustomers();
   }, []);
+
+  // Fetch air freight carriers from Supabase
+  useEffect(() => {
+    const fetchAirFreightCarriers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('air_freight_carriers')
+          .select('*')
+          .eq('is_active', true)
+          .order('carrier_name', { ascending: true });
+
+        if (error) throw error;
+
+        setAirFreightCarriers(data || []);
+      } catch (error) {
+        console.error('Error fetching air freight carriers:', error);
+      }
+    };
+
+    fetchAirFreightCarriers();
+  }, []);
+
+  // Calculate total chargeable weight of all parts in the quote
+  const calculateTotalChargeableWeight = (): number => {
+    return formData.parts.reduce((total, quotePart) => {
+      const weight = quotePart.part?.chargeableWeightKg || 0;
+      return total + (weight * quotePart.quantity);
+    }, 0);
+  };
+
+  // Calculate air freight cost for a specific carrier
+  const calculateAirFreightCost = (carrierId: string): number => {
+    const carrier = airFreightCarriers.find(c => c.id === carrierId);
+    if (!carrier) return 0;
+
+    const totalWeight = calculateTotalChargeableWeight();
+    return totalWeight * carrier.charge_rate_per_kg;
+  };
+
+  // Update air freight cost when parts change and a carrier is selected
+  useEffect(() => {
+    if (selectedAirCarrier && airFreightCarriers.length > 0) {
+      const calculatedCost = calculateAirFreightCost(selectedAirCarrier);
+      setFormData(prev => {
+        if (prev.shippingCosts.air !== calculatedCost) {
+          return {
+            ...prev,
+            shippingCosts: {
+              ...prev.shippingCosts,
+              air: calculatedCost
+            }
+          };
+        }
+        return prev;
+      });
+    }
+  }, [formData.parts.length, selectedAirCarrier, airFreightCarriers.length]);
 
   const filteredParts = availableParts.filter(part => {
     const matchesSearch = part.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -1235,28 +1311,144 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                           />
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">20-30 days delivery</p>
                         </div>
+
+                        {/* Air Freight Carrier Selection */}
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Air Freight Cost
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                            <Plane className="h-4 w-4 mr-1" />
+                            Air Freight Options
                           </label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={formData.shippingCosts.air || ''}
-                            onChange={(e) => {
-                              handleManualShippingChange();
-                              setFormData(prev => ({
-                                ...prev,
-                                shippingCosts: {
-                                  ...prev.shippingCosts,
-                                  air: parseFloat(e.target.value) || 0
-                                }
-                              }));
-                            }}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                            placeholder="0.00"
-                          />
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">5-7 days delivery</p>
+
+                          {/* Total Weight Display */}
+                          {formData.parts.length > 0 && (
+                            <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm font-medium text-blue-900 dark:text-blue-100 flex items-center">
+                                  <Weight className="h-4 w-4 mr-1" />
+                                  Total Chargeable Weight:
+                                </span>
+                                <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                                  {calculateTotalChargeableWeight().toFixed(3)} kg
+                                </span>
+                              </div>
+                              {formData.parts.some(p => !p.part?.chargeableWeightKg) && (
+                                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center">
+                                  <AlertCircle className="h-3 w-3 mr-1" />
+                                  Some parts are missing weight information
+                                </p>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Carrier Options */}
+                          {airFreightCarriers.length > 0 ? (
+                            <div className="space-y-2 mb-3">
+                              {airFreightCarriers.map(carrier => {
+                                const calculatedCost = calculateAirFreightCost(carrier.id);
+                                const isSelected = selectedAirCarrier === carrier.id;
+
+                                return (
+                                  <div
+                                    key={carrier.id}
+                                    onClick={() => {
+                                      setSelectedAirCarrier(carrier.id);
+                                      setFormData(prev => ({
+                                        ...prev,
+                                        airFreightCarrierId: carrier.id,
+                                        shippingCosts: {
+                                          ...prev.shippingCosts,
+                                          air: calculatedCost
+                                        }
+                                      }));
+                                    }}
+                                    className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                                      isSelected
+                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-sm'
+                                        : 'border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-700'
+                                    }`}
+                                  >
+                                    <div className="flex justify-between items-start">
+                                      <div className="flex-1">
+                                        <div className="flex items-center">
+                                          <input
+                                            type="radio"
+                                            checked={isSelected}
+                                            onChange={() => {}}
+                                            className="mr-2"
+                                          />
+                                          <span className="font-medium text-gray-900 dark:text-gray-100">
+                                            {carrier.carrier_name}
+                                          </span>
+                                        </div>
+                                        <div className="ml-6 mt-1">
+                                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                                            ${carrier.charge_rate_per_kg.toFixed(2)} per kg
+                                          </p>
+                                          <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
+                                            5-7 days delivery
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <div className="text-right">
+                                        <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                                          ${calculatedCost.toFixed(2)}
+                                        </p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                          {carrier.currency}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                No air freight carriers available. Add carriers in the pricing settings.
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Manual Override Option */}
+                          <div className="mt-3">
+                            <label className="flex items-center text-xs text-gray-600 dark:text-gray-400 mb-2">
+                              <input
+                                type="checkbox"
+                                checked={selectedAirCarrier === null}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedAirCarrier(null);
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      airFreightCarrierId: undefined
+                                    }));
+                                  }
+                                }}
+                                className="mr-2"
+                              />
+                              Use manual cost entry
+                            </label>
+                            {selectedAirCarrier === null && (
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={formData.shippingCosts.air || ''}
+                                onChange={(e) => {
+                                  handleManualShippingChange();
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    shippingCosts: {
+                                      ...prev.shippingCosts,
+                                      air: parseFloat(e.target.value) || 0
+                                    }
+                                  }));
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                placeholder="0.00"
+                              />
+                            )}
+                          </div>
                         </div>
                       </div>
                       
