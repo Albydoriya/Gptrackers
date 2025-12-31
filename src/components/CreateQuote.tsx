@@ -190,7 +190,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
     fetchCustomers();
   }, []);
 
-  // Fetch air freight carriers from Supabase
+  // Fetch air freight carriers from Supabase with real-time updates
   useEffect(() => {
     const fetchAirFreightCarriers = async () => {
       try {
@@ -209,6 +209,29 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
     };
 
     fetchAirFreightCarriers();
+
+    // Set up real-time subscription to monitor price changes
+    const channel = supabase
+      .channel('air-freight-carriers-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'air_freight_carriers'
+        },
+        (payload) => {
+          console.log('Air freight carriers changed:', payload);
+          // Refetch carriers when any change occurs
+          fetchAirFreightCarriers();
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Calculate total chargeable weight of all parts in the quote

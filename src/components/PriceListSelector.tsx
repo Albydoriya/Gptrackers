@@ -46,6 +46,31 @@ const PriceListSelector: React.FC<PriceListSelectorProps> = ({
     if (isOpen) {
       fetchPriceList();
     }
+
+    // Set up real-time subscription to monitor sea freight price changes
+    const channel = supabase
+      .channel('sea-freight-price-list-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'sea_freight_price_list'
+        },
+        (payload) => {
+          console.log('Sea freight price list changed:', payload);
+          // Refetch price list when any change occurs
+          if (isOpen) {
+            fetchPriceList();
+          }
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription when component unmounts
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [isOpen]);
 
   useEffect(() => {
