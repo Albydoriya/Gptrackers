@@ -1281,43 +1281,48 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                         )}
                       </div>
 
-                      <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                        <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                          Manual Shipping Cost Entry
+                      {/* Sea Freight Section */}
+                      <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+                        <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+                          <Truck className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
+                          Sea Freight
                         </h5>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">
+                              Cost
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={formData.shippingCosts.sea || ''}
+                              onChange={(e) => {
+                                handleManualShippingChange();
+                                setFormData(prev => ({
+                                  ...prev,
+                                  shippingCosts: {
+                                    ...prev.shippingCosts,
+                                    sea: parseFloat(e.target.value) || 0
+                                  }
+                                }));
+                              }}
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                              placeholder="0.00"
+                            />
+                          </div>
+                          <div className="flex items-end">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 pb-2">20-30 days delivery</p>
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Air Freight Section */}
+                      <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+                        <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 flex items-center">
+                          <Plane className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
+                          Air Freight
+                        </h5>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Sea Freight Cost
-                          </label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={formData.shippingCosts.sea || ''}
-                            onChange={(e) => {
-                              handleManualShippingChange();
-                              setFormData(prev => ({
-                                ...prev,
-                                shippingCosts: {
-                                  ...prev.shippingCosts,
-                                  sea: parseFloat(e.target.value) || 0
-                                }
-                              }));
-                            }}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                            placeholder="0.00"
-                          />
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">20-30 days delivery</p>
-                        </div>
-
-                        {/* Air Freight Carrier Selection */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
-                            <Plane className="h-4 w-4 mr-1" />
-                            Air Freight Options
-                          </label>
 
                           {/* Total Weight Display */}
                           {formData.parts.length > 0 && (
@@ -1342,7 +1347,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
 
                           {/* Carrier Options */}
                           {airFreightCarriers.length > 0 ? (
-                            <div className="space-y-2 mb-3">
+                            <div className="space-y-2.5">
                               {airFreightCarriers.map(carrier => {
                                 const calculatedCost = calculateAirFreightCost(carrier.id);
                                 const isSelected = selectedAirCarrier === carrier.id;
@@ -1351,46 +1356,59 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                                   <div
                                     key={carrier.id}
                                     onClick={() => {
-                                      setSelectedAirCarrier(carrier.id);
-                                      setFormData(prev => ({
-                                        ...prev,
-                                        airFreightCarrierId: carrier.id,
-                                        shippingCosts: {
-                                          ...prev.shippingCosts,
-                                          air: calculatedCost
-                                        }
-                                      }));
+                                      if (selectedAirCarrier === carrier.id) {
+                                        setSelectedAirCarrier(null);
+                                        setFormData(prev => ({
+                                          ...prev,
+                                          airFreightCarrierId: undefined,
+                                          shippingCosts: {
+                                            ...prev.shippingCosts,
+                                            air: 0
+                                          }
+                                        }));
+                                      } else {
+                                        setSelectedAirCarrier(carrier.id);
+                                        setFormData(prev => ({
+                                          ...prev,
+                                          airFreightCarrierId: carrier.id,
+                                          shippingCosts: {
+                                            ...prev.shippingCosts,
+                                            air: calculatedCost
+                                          }
+                                        }));
+                                      }
                                     }}
-                                    className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                                    className={`p-3.5 border rounded-lg cursor-pointer transition-all ${
                                       isSelected
-                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-sm'
-                                        : 'border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-700'
+                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-md'
+                                        : 'border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-sm'
                                     }`}
                                   >
-                                    <div className="flex justify-between items-start">
-                                      <div className="flex-1">
-                                        <div className="flex items-center">
-                                          <input
-                                            type="radio"
-                                            checked={isSelected}
-                                            onChange={() => {}}
-                                            className="mr-2"
-                                          />
-                                          <span className="font-medium text-gray-900 dark:text-gray-100">
+                                    <div className="flex justify-between items-center">
+                                      <div className="flex items-center flex-1">
+                                        <input
+                                          type="checkbox"
+                                          checked={isSelected}
+                                          onChange={() => {}}
+                                          className="mr-3 cursor-pointer h-4 w-4"
+                                        />
+                                        <div>
+                                          <span className="font-medium text-gray-900 dark:text-gray-100 text-base">
                                             {carrier.carrier_name}
                                           </span>
-                                        </div>
-                                        <div className="ml-6 mt-1">
-                                          <p className="text-xs text-gray-600 dark:text-gray-400">
-                                            ${carrier.charge_rate_per_kg.toFixed(2)} per kg
-                                          </p>
-                                          <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
-                                            5-7 days delivery
-                                          </p>
+                                          <div className="flex items-center gap-3 mt-1">
+                                            <p className="text-xs text-gray-600 dark:text-gray-400">
+                                              ${carrier.charge_rate_per_kg.toFixed(2)}/kg
+                                            </p>
+                                            <span className="text-gray-400 dark:text-gray-600">•</span>
+                                            <p className="text-xs text-gray-500 dark:text-gray-500">
+                                              5-7 days
+                                            </p>
+                                          </div>
                                         </div>
                                       </div>
-                                      <div className="text-right">
-                                        <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                                      <div className="text-right ml-4">
+                                        <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
                                           ${calculatedCost.toFixed(2)}
                                         </p>
                                         <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -1403,33 +1421,19 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                               })}
                             </div>
                           ) : (
-                            <div className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <div className="p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
                               <p className="text-sm text-gray-600 dark:text-gray-400">
                                 No air freight carriers available. Add carriers in the pricing settings.
                               </p>
                             </div>
                           )}
 
-                          {/* Manual Override Option */}
-                          <div className="mt-3">
-                            <label className="flex items-center text-xs text-gray-600 dark:text-gray-400 mb-2">
-                              <input
-                                type="checkbox"
-                                checked={selectedAirCarrier === null}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setSelectedAirCarrier(null);
-                                    setFormData(prev => ({
-                                      ...prev,
-                                      airFreightCarrierId: undefined
-                                    }));
-                                  }
-                                }}
-                                className="mr-2"
-                              />
-                              Use manual cost entry
-                            </label>
-                            {selectedAirCarrier === null && (
+                          {/* Manual Cost Entry (shown when no carrier selected) */}
+                          {selectedAirCarrier === null && (
+                            <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+                              <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                Manual Air Freight Cost
+                              </label>
                               <input
                                 type="number"
                                 step="0.01"
@@ -1447,8 +1451,16 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                 placeholder="0.00"
                               />
-                            )}
-                          </div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                5-7 days delivery
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Helper text */}
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 italic">
+                            Click a carrier to select, click again to deselect and use manual entry
+                          </p>
                         </div>
                       </div>
                       
