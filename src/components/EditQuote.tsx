@@ -1013,13 +1013,14 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Review Quote</h3>
-                
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Quote Summary */}
-                  <div className="space-y-4">
+
+                {/* Top Section: Quote Info and Cost Summary */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                  {/* Quote Information */}
+                  <div className="lg:col-span-2">
                     <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                       <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Quote Information</h4>
-                      <div className="space-y-2 text-sm">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
                         <div className="flex justify-between">
                           <span className="text-gray-600 dark:text-gray-400">Quote Number:</span>
                           <span className="font-medium text-gray-900 dark:text-gray-100">{formData.quoteNumber}</span>
@@ -1041,56 +1042,113 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
                           </span>
                         </div>
                       </div>
+                      {formData.notes && (
+                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                          <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-2 text-sm">Notes & Terms</h5>
+                          <p className="text-sm text-gray-700 dark:text-gray-300">{formData.notes}</p>
+                        </div>
+                      )}
                     </div>
-
-                    {formData.notes && (
-                      <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                        <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Notes</h4>
-                        <p className="text-sm text-gray-700 dark:text-gray-300">{formData.notes}</p>
-                      </div>
-                    )}
                   </div>
 
-                  {/* Cost Breakdown */}
+                  {/* Cost Summary */}
                   <div>
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Cost Breakdown</h4>
-                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800">
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600 dark:text-gray-400">Bid Items Total:</span>
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Cost Summary</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Parts:</span>
                           <span className="font-medium text-gray-900 dark:text-gray-100">${getTotalBidItemsCost().toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600 dark:text-gray-400">Shipping ({formData.shippingCosts.selected}):</span>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Shipping:</span>
                           <span className="font-medium text-gray-900 dark:text-gray-100">
                             ${(formData.shippingCosts.selected === 'sea' ? formData.shippingCosts.sea : formData.shippingCosts.air).toFixed(2)}
                           </span>
                         </div>
-                        <div className="flex justify-between items-center">
+                        <div className="flex justify-between">
                           <span className="text-gray-600 dark:text-gray-400">Agent Fees:</span>
                           <span className="font-medium text-gray-900 dark:text-gray-100">${formData.agentFees.toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between items-center">
+                        <div className="flex justify-between">
                           <span className="text-gray-600 dark:text-gray-400">Local Shipping:</span>
                           <span className="font-medium text-gray-900 dark:text-gray-100">${formData.localShippingFees.toFixed(2)}</span>
                         </div>
-                        <div className="border-t border-gray-300 dark:border-gray-500 pt-3">
-                          <div className="flex justify-between items-center">
+                        <div className="border-t border-blue-200 dark:border-blue-700 pt-2 mt-2">
+                          <div className="flex justify-between">
                             <span className="text-gray-600 dark:text-gray-400">Subtotal:</span>
                             <span className="font-medium text-gray-900 dark:text-gray-100">${getSubtotalAmount().toFixed(2)}</span>
                           </div>
                         </div>
-                        <div className="flex justify-between items-center">
+                        <div className="flex justify-between">
                           <span className="text-gray-600 dark:text-gray-400">GST (10%):</span>
                           <span className="font-medium text-gray-900 dark:text-gray-100">${getGSTAmount().toFixed(2)}</span>
                         </div>
-                        <div className="border-t border-gray-300 dark:border-gray-500 pt-3">
+                        <div className="border-t-2 border-blue-300 dark:border-blue-600 pt-2 mt-2">
                           <div className="flex justify-between items-center">
-                            <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">Grand Total:</span>
-                            <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">${getGrandTotalAmount().toFixed(2)}</span>
+                            <span className="font-semibold text-gray-900 dark:text-gray-100">Grand Total:</span>
+                            <span className="text-xl font-bold text-blue-600 dark:text-blue-400">${getGrandTotalAmount().toFixed(2)}</span>
                           </div>
                         </div>
                       </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quote Items Table */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100">Quote Items</h4>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{formData.parts.length} items</span>
+                  </div>
+                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                              Item
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                              Description
+                            </th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                              Quantity
+                            </th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                              Unit Price
+                            </th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                              Total
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                          {formData.parts.map((quotePart, index) => (
+                            <tr key={quotePart.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                              <td className="px-4 py-3">
+                                <div className="font-medium text-gray-900 dark:text-gray-100">
+                                  {quotePart.isCustomPart ? quotePart.customPartName : quotePart.part?.name}
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="text-sm text-gray-600 dark:text-gray-400">
+                                  {quotePart.isCustomPart ? quotePart.customPartDescription : quotePart.part?.partNumber}
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <span className="text-gray-900 dark:text-gray-100">{quotePart.quantity}</span>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <span className="text-gray-900 dark:text-gray-100">${quotePart.unitPrice.toFixed(2)}</span>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <span className="font-medium text-gray-900 dark:text-gray-100">${quotePart.totalPrice.toFixed(2)}</span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 </div>
