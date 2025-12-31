@@ -1219,7 +1219,86 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   {/* Basic Quote Information */}
                   <div className="space-y-6">
-                    
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                        <FileText className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
+                        Quote Information
+                      </h4>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Quote Number
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.quoteNumber}
+                            onChange={(e) => setFormData(prev => ({ ...prev, quoteNumber: e.target.value }))}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Quote Expiry Date *
+                          </label>
+                          <input
+                            type="date"
+                            value={formData.expiryDate}
+                            onChange={(e) => setFormData(prev => ({ ...prev, expiryDate: e.target.value }))}
+                            min={new Date().toISOString().split('T')[0]}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Notes & Terms
+                          </label>
+                          <textarea
+                            value={formData.notes}
+                            onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                            rows={4}
+                            placeholder="Add any special terms, conditions, or notes for the customer..."
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Additional Fees Section */}
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                        <Calculator className="h-4 w-4 mr-2 text-green-600 dark:text-green-400" />
+                        Additional Fees
+                      </h4>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Agent Fees
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={formData.agentFees || ''}
+                            onChange={(e) => setFormData(prev => ({ ...prev, agentFees: parseFloat(e.target.value) || 0 }))}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            placeholder="0.00"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Local Shipping Fees
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={formData.localShippingFees || ''}
+                            onChange={(e) => setFormData(prev => ({ ...prev, localShippingFees: parseFloat(e.target.value) || 0 }))}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            placeholder="0.00"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -1445,13 +1524,13 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Review Quote</h3>
 
-                {/* Top Section: Quote Info and Shipping/Fees */}
+                {/* Top Section: Quote Info and Cost Summary */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                  {/* Quote Information with Shipping Options */}
+                  {/* Quote Information */}
                   <div className="lg:col-span-2">
                     <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                       <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Quote Information</h4>
-                      <div className="space-y-2 text-sm">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
                         <div className="flex justify-between">
                           <span className="text-gray-600 dark:text-gray-400">Quote Number:</span>
                           <span className="font-medium text-gray-900 dark:text-gray-100">{formData.quoteNumber}</span>
@@ -1476,86 +1555,24 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                             {new Date(formData.expiryDate).toLocaleDateString()}
                           </span>
                         </div>
-
-                        <div className="border-t border-gray-200 dark:border-gray-600 pt-3 mt-3">
-                          <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
-                            <Truck className="h-4 w-4 mr-1 text-orange-600 dark:text-orange-400" />
-                            Shipping Options
-                          </h5>
-                          <div className="space-y-2">
-                            <div className="flex justify-between">
-                              <span className="text-gray-600 dark:text-gray-400">Selected Method:</span>
-                              <span className="font-medium text-gray-900 dark:text-gray-100 capitalize">
-                                {totals.selectedMethod} Freight
-                              </span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600 dark:text-gray-400">Sea Freight Cost:</span>
-                              <span className="font-medium text-gray-900 dark:text-gray-100">${formData.shippingCosts.sea.toFixed(2)}</span>
-                            </div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">20-30 days delivery</p>
-                          </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Shipping Method:</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100 capitalize">
+                            {totals.selectedMethod} Freight
+                          </span>
                         </div>
-
-                        {formData.notes && (
-                          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-                            <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Notes & Terms</h5>
-                            <p className="text-gray-700 dark:text-gray-300">{formData.notes}</p>
-                          </div>
-                        )}
                       </div>
+                      {formData.notes && (
+                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                          <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-2 text-sm">Notes & Terms</h5>
+                          <p className="text-sm text-gray-700 dark:text-gray-300">{formData.notes}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* Air Freight, Additional Fees & Cost Summary */}
-                  <div className="space-y-4">
-                    {/* Air Freight Details */}
-                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                      <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3 flex items-center">
-                        <Plane className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
-                        Air Freight Details
-                      </h4>
-                      <div className="space-y-3 text-sm">
-                        {formData.parts.length > 0 && (
-                          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm font-medium text-blue-900 dark:text-blue-100 flex items-center">
-                                <Weight className="h-4 w-4 mr-1" />
-                                Total Chargeable Weight:
-                              </span>
-                              <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                                {calculateTotalChargeableWeight().toFixed(3)} kg
-                              </span>
-                            </div>
-                          </div>
-                        )}
-                        <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Air Freight Cost:</span>
-                          <span className="font-medium text-gray-900 dark:text-gray-100">${formData.shippingCosts.air.toFixed(2)}</span>
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">5-7 days delivery</p>
-                      </div>
-                    </div>
-
-                    {/* Additional Fees */}
-                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                      <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3 flex items-center">
-                        <Calculator className="h-4 w-4 mr-2 text-green-600 dark:text-green-400" />
-                        Additional Fees
-                      </h4>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Agent Fees:</span>
-                          <span className="font-medium text-gray-900 dark:text-gray-100">${formData.agentFees.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Local Shipping:</span>
-                          <span className="font-medium text-gray-900 dark:text-gray-100">${formData.localShippingFees.toFixed(2)}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Cost Summary */}
+                  {/* Cost Summary */}
+                  <div>
                     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                       <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Cost Summary</h4>
                       <div className="space-y-2 text-sm">
