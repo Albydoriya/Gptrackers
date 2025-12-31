@@ -562,12 +562,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         clearCachedUserRole(user.id);
       }
 
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      // Clear all auth storage first to ensure clean state
+      clearAuthStorage();
+
+      // Attempt to sign out from Supabase
+      // For OAuth providers, the session might already be invalid, so we handle errors gracefully
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
+
+      if (error) {
+        // Log the error but don't throw - we still want to clear the local user state
+        console.warn('Sign out warning (non-critical):', error.message);
+      }
+
+      // Always clear user state regardless of signOut success
       setUser(null);
+
+      // Force reload to ensure clean state
+      window.location.reload();
     } catch (error: any) {
+      // Even if signOut completely fails, clear local state
       console.error('Sign out error:', error);
-      throw new Error(error.message || 'Failed to sign out');
+      clearAuthStorage();
+      setUser(null);
+      // Force reload to ensure clean state
+      window.location.reload();
     }
   };
 
