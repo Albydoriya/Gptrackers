@@ -212,36 +212,47 @@ const QuoteDetailsModal: React.FC<QuoteDetailsModalProps> = ({
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-600">
-                      {quote.parts.map((quotePart, index) => (
-                        <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-600">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div>
-                              <div className="flex items-center space-x-2">
-                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                  {quotePart.isCustomPart ? quotePart.customPartName : quotePart.part?.name}
-                                </p>
-                                {quotePart.isCustomPart && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
-                                    Custom
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">
-                                {quotePart.isCustomPart ? quotePart.customPartDescription : quotePart.part?.partNumber}
-                              </p>
+                      {quote.parts.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="px-6 py-8 text-center">
+                            <div className="text-gray-500 dark:text-gray-400">
+                              <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                              <p className="text-sm">No items in this quote</p>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                            {quotePart.quantity}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                            ${quotePart.unitPrice.toFixed(2)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                            ${quotePart.totalPrice.toFixed(2)}
-                          </td>
                         </tr>
-                      ))}
+                      ) : (
+                        quote.parts.map((quotePart, index) => (
+                          <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-600">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div>
+                                <div className="flex items-center space-x-2">
+                                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                    {quotePart.isCustomPart ? quotePart.customPartName : quotePart.part?.name}
+                                  </p>
+                                  {quotePart.isCustomPart && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                                      Custom
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                  {quotePart.isCustomPart ? quotePart.customPartDescription : quotePart.part?.partNumber}
+                                </p>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                              {quotePart.quantity}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                              ${quotePart.unitPrice.toFixed(2)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                              ${quotePart.totalPrice.toFixed(2)}
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>

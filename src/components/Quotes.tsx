@@ -129,7 +129,7 @@ const Quotes: React.FC = () => {
           updatedAt: new Date().toISOString()
         },
         status: quoteData.status,
-        parts: quoteData.quote_parts.map((quotePart: any) => ({
+        parts: (quoteData.quote_parts || []).map((quotePart: any) => ({
           id: quotePart.id,
           part: quotePart.part ? {
             id: quotePart.part.id,
@@ -165,7 +165,11 @@ const Quotes: React.FC = () => {
         expiryDate: quoteData.expiry_date,
         notes: quoteData.notes,
         createdBy: quoteData.created_by || 'Unknown',
-        convertedToOrderId: quoteData.converted_to_order_id
+        convertedToOrderId: quoteData.converted_to_order_id,
+        seaFreightPriceListId: quoteData.sea_freight_price_list_id,
+        priceListAppliedAt: quoteData.price_list_applied_at,
+        manualPriceOverride: quoteData.manual_price_override,
+        priceListSnapshot: quoteData.price_list_snapshot
         };
       });
 
