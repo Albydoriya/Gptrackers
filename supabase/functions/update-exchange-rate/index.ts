@@ -9,8 +9,11 @@ const corsHeaders = {
 
 interface ExchangeRateResponse {
   success: boolean;
-  rate?: number;
-  source?: string;
+  rates?: Array<{
+    targetCurrency: string;
+    rate: number;
+    source: string;
+  }>;
   error?: string;
   timestamp?: string;
 }
@@ -29,73 +32,99 @@ Deno.serve(async (req: Request) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const baseCurrency = "AUD";
-    const targetCurrency = "JPY";
-    let rate: number | null = null;
-    let sourceApi = "frankfurter";
+    const targetCurrencies = ["JPY", "USD"];
+    const fetchedRates: Array<{
+      targetCurrency: string;
+      rate: number;
+      source: string;
+    }> = [];
 
-    try {
-      const response = await fetch(
-        `https://api.frankfurter.app/latest?from=${baseCurrency}&to=${targetCurrency}`
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        rate = data.rates?.[targetCurrency];
-
-        if (typeof rate !== "number") {
-          throw new Error("Invalid rate data from Frankfurter API");
-        }
-      } else {
-        throw new Error(`Frankfurter API returned status ${response.status}`);
-      }
-    } catch (primaryError) {
-      console.error("Frankfurter API failed, trying fallback:", primaryError);
+    const fetchRate = async (targetCurrency: string) => {
+      let rate: number | null = null;
+      let sourceApi = "frankfurter";
 
       try {
-        const fallbackResponse = await fetch(
-          `https://api.exchangerate-api.com/v4/latest/${baseCurrency}`
+        const response = await fetch(
+          `https://api.frankfurter.app/latest?from=${baseCurrency}&to=${targetCurrency}`
         );
 
-        if (fallbackResponse.ok) {
-          const fallbackData = await fallbackResponse.json();
-          rate = fallbackData.rates?.[targetCurrency];
-          sourceApi = "exchangerate-api";
+        if (response.ok) {
+          const data = await response.json();
+          rate = data.rates?.[targetCurrency];
 
           if (typeof rate !== "number") {
-            throw new Error("Invalid rate data from fallback API");
+            throw new Error("Invalid rate data from Frankfurter API");
           }
         } else {
-          throw new Error("Fallback API also failed");
+          throw new Error(`Frankfurter API returned status ${response.status}`);
         }
-      } catch (fallbackError) {
-        console.error("Both APIs failed:", fallbackError);
-        throw new Error("Unable to fetch exchange rate from any source");
+      } catch (primaryError) {
+        console.error(`Frankfurter API failed for ${targetCurrency}, trying fallback:`, primaryError);
+
+        try {
+          const fallbackResponse = await fetch(
+            `https://api.exchangerate-api.com/v4/latest/${baseCurrency}`
+          );
+
+          if (fallbackResponse.ok) {
+            const fallbackData = await fallbackResponse.json();
+            rate = fallbackData.rates?.[targetCurrency];
+            sourceApi = "exchangerate-api";
+
+            if (typeof rate !== "number") {
+              throw new Error("Invalid rate data from fallback API");
+            }
+          } else {
+            throw new Error("Fallback API also failed");
+          }
+        } catch (fallbackError) {
+          console.error(`Both APIs failed for ${targetCurrency}:`, fallbackError);
+          throw new Error(`Unable to fetch exchange rate for ${targetCurrency} from any source`);
+        }
+      }
+
+      if (rate === null) {
+        throw new Error(`Failed to obtain exchange rate for ${targetCurrency}`);
+      }
+
+      const { error: insertError } = await supabase
+        .from("exchange_rates")
+        .insert({
+          base_currency: baseCurrency,
+          target_currency: targetCurrency,
+          rate: rate,
+          fetched_at: new Date().toISOString(),
+          source_api: sourceApi,
+        });
+
+      if (insertError) {
+        console.error(`Database insert error for ${targetCurrency}:`, insertError);
+        throw new Error(`Failed to save rate for ${targetCurrency} to database: ${insertError.message}`);
+      }
+
+      return {
+        targetCurrency,
+        rate,
+        source: sourceApi,
+      };
+    };
+
+    for (const targetCurrency of targetCurrencies) {
+      try {
+        const rateData = await fetchRate(targetCurrency);
+        fetchedRates.push(rateData);
+      } catch (error) {
+        console.error(`Error fetching ${targetCurrency}:`, error);
       }
     }
 
-    if (rate === null) {
-      throw new Error("Failed to obtain exchange rate");
-    }
-
-    const { error: insertError } = await supabase
-      .from("exchange_rates")
-      .insert({
-        base_currency: baseCurrency,
-        target_currency: targetCurrency,
-        rate: rate,
-        fetched_at: new Date().toISOString(),
-        source_api: sourceApi,
-      });
-
-    if (insertError) {
-      console.error("Database insert error:", insertError);
-      throw new Error(`Failed to save rate to database: ${insertError.message}`);
+    if (fetchedRates.length === 0) {
+      throw new Error("Failed to fetch any exchange rates");
     }
 
     const responseData: ExchangeRateResponse = {
       success: true,
-      rate: rate,
-      source: sourceApi,
+      rates: fetchedRates,
       timestamp: new Date().toISOString(),
     };
 

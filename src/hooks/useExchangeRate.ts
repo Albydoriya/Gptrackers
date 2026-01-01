@@ -10,7 +10,7 @@ export const useExchangeRate = (baseCurrency = 'AUD', targetCurrency = 'JPY') =>
 
   const fetchRate = useCallback(async () => {
     try {
-      const cachedRate = exchangeRateService.getCachedRate();
+      const cachedRate = exchangeRateService.getCachedRate(baseCurrency, targetCurrency);
       if (cachedRate) {
         setRate(cachedRate);
         setLoading(false);

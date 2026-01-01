@@ -134,16 +134,17 @@ export const exchangeRateService = {
     }
   },
 
-  getCachedRate(): ExchangeRate | null {
+  getCachedRate(baseCurrency = 'AUD', targetCurrency = 'JPY'): ExchangeRate | null {
     try {
-      const cached = localStorage.getItem('exchange_rate_cache');
+      const cacheKey = `exchange_rate_cache_${baseCurrency}_${targetCurrency}`;
+      const cached = localStorage.getItem(cacheKey);
       if (!cached) return null;
 
       const { rate, timestamp } = JSON.parse(cached);
       const oneHourAgo = Date.now() - 60 * 60 * 1000;
 
       if (timestamp < oneHourAgo) {
-        localStorage.removeItem('exchange_rate_cache');
+        localStorage.removeItem(cacheKey);
         return null;
       }
 
@@ -156,8 +157,9 @@ export const exchangeRateService = {
 
   setCachedRate(rate: ExchangeRate): void {
     try {
+      const cacheKey = `exchange_rate_cache_${rate.base_currency}_${rate.target_currency}`;
       localStorage.setItem(
-        'exchange_rate_cache',
+        cacheKey,
         JSON.stringify({
           rate,
           timestamp: Date.now(),
