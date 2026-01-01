@@ -14,6 +14,7 @@ import Analytics from './components/Analytics';
 import StatusTracker from './components/StatusTracker';
 import UserManagement from './components/UserManagement';
 import Quotes from './components/Quotes';
+import { ExchangeRateFooter } from './components/ExchangeRateFooter';
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading, user, updateUserProfile } = useAuth();
@@ -166,15 +167,16 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <ThemeProvider 
+    <ThemeProvider
       initialTheme={user?.preferences?.theme}
       onThemeChange={handleThemeChange}
     >
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 pb-12">
         <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {renderActiveComponent()}
         </main>
+        <ExchangeRateFooter />
       </div>
     </ThemeProvider>
   );
