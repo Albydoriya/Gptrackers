@@ -333,7 +333,7 @@ const StatusUpdateModal: React.FC<StatusUpdateModalProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
               <User className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-              <span>Updated by: Current User</span>
+              <span>Updated by: {user?.name || user?.email || 'Unknown User'}</span>
             </div>
             <div className="flex items-center space-x-4">
               <button
