@@ -142,17 +142,17 @@ const Quotes: React.FC = () => {
         status: quoteData.status,
         parts: (quoteData.quote_parts || []).map((quotePart: any) => ({
           id: quotePart.id,
-          part: quotePart.part ? {
-            id: quotePart.part.id,
-            partNumber: quotePart.part.part_number,
-            name: quotePart.part.name,
-            description: quotePart.part.description,
-            category: quotePart.part.category,
-            specifications: quotePart.part.specifications,
+          part: quotePart.parts ? {
+            id: quotePart.parts.id,
+            partNumber: quotePart.parts.part_number,
+            name: quotePart.parts.name,
+            description: quotePart.parts.description,
+            category: quotePart.parts.category,
+            specifications: quotePart.parts.specifications,
             priceHistory: [],
-            currentStock: quotePart.part.current_stock,
-            minStock: quotePart.part.min_stock,
-            preferredSuppliers: quotePart.part.preferred_suppliers
+            currentStock: quotePart.parts.current_stock,
+            minStock: quotePart.parts.min_stock,
+            preferredSuppliers: quotePart.parts.preferred_suppliers
           } : undefined,
           customPartName: quotePart.custom_part_name,
           customPartDescription: quotePart.custom_part_description,
