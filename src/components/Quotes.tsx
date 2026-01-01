@@ -66,7 +66,7 @@ const Quotes: React.FC = () => {
     setError(null);
     
     try {
-      // Fetch quotes with quote_parts and creator info using the proper foreign key relationship
+      // Fetch quotes with quote_parts using the proper foreign key relationship
       const { data: quotesData, error: quotesError } = await supabase
         .from('quotes')
         .select(`
@@ -74,10 +74,6 @@ const Quotes: React.FC = () => {
           quote_parts!quote_parts_quote_id_fkey(
             *,
             parts(*)
-          ),
-          user_profiles!quotes_created_by_fkey(
-            full_name,
-            email
           )
         `)
         .order('created_at', { ascending: false });
@@ -89,9 +85,20 @@ const Quotes: React.FC = () => {
         return;
       }
 
+      // Fetch user profiles for creators
+      const creatorIds = [...new Set(quotesData.map(q => q.created_by).filter(Boolean))];
+      const { data: userProfilesData } = await supabase
+        .from('user_profiles')
+        .select('id, full_name, email')
+        .in('id', creatorIds);
+
+      const userProfilesMap = new Map(
+        userProfilesData?.map(profile => [profile.id, profile]) || []
+      );
+
       // Get unique customer IDs
       const customerIds = [...new Set(quotesData.map(quote => quote.customer_id).filter(Boolean))];
-      
+
       // Fetch customers separately
       const { data: customersData, error: customersError } = await supabase
         .from('customers')
@@ -168,7 +175,9 @@ const Quotes: React.FC = () => {
         quoteDate: quoteData.quote_date,
         expiryDate: quoteData.expiry_date,
         notes: quoteData.notes,
-        createdBy: quoteData.user_profiles?.full_name || quoteData.user_profiles?.email || 'Unknown',
+        createdBy: userProfilesMap.get(quoteData.created_by)?.full_name ||
+                   userProfilesMap.get(quoteData.created_by)?.email ||
+                   'Unknown',
         convertedToOrderId: quoteData.converted_to_order_id,
         seaFreightPriceListId: quoteData.sea_freight_price_list_id,
         priceListAppliedAt: quoteData.price_list_applied_at,
