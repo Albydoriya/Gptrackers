@@ -58,35 +58,34 @@ export const ExchangeRateFooter: React.FC = () => {
   };
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-gray-50 to-gray-100 border-t border-gray-200 px-4 py-2.5 shadow-lg z-50">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <span className="text-sm font-medium text-gray-700">Exchange Rates:</span>
-            {renderRate(jpyRate.rate, jpyRate.trend)}
-            <div className="h-4 w-px bg-gray-300" />
-            {renderRate(usdRate.rate, usdRate.trend)}
-            <div className="h-4 w-px bg-gray-300" />
-            <div className="flex items-center space-x-2 text-xs text-gray-500">
-              <span>
-                Updated: {jpyRate.rate ? formatDate(jpyRate.rate.fetched_at) : 'N/A'}
-              </span>
-            </div>
+    <footer className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-gray-50 to-gray-100 border-t border-gray-200 px-4 py-2 shadow-lg z-50">
+      <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <span className="text-sm font-medium text-gray-700">Exchange Rates:</span>
+          {renderRate(jpyRate.rate, jpyRate.trend)}
+          <div className="h-4 w-px bg-gray-300" />
+          {renderRate(usdRate.rate, usdRate.trend)}
+          <div className="h-4 w-px bg-gray-300" />
+          <div className="flex items-center space-x-2 text-xs text-gray-500">
+            <span>
+              Updated: {jpyRate.rate ? formatDate(jpyRate.rate.fetched_at) : 'N/A'}
+            </span>
+            <span className="text-gray-400">•</span>
+            <span className="text-gray-400 italic">
+              Auto-updates daily at 9:00 AM AEST
+            </span>
           </div>
-          <button
-            onClick={() => {
-              jpyRate.refetch();
-              usdRate.refetch();
-            }}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-            title="Refresh rates"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-          </button>
         </div>
-        <div className="mt-1 text-xs text-gray-400 italic">
-          Rates automatically update daily at 9:00 AM AEST
-        </div>
+        <button
+          onClick={() => {
+            jpyRate.refetch();
+            usdRate.refetch();
+          }}
+          className="text-gray-400 hover:text-gray-600 transition-colors"
+          title="Refresh rates"
+        >
+          <RefreshCw className="w-3.5 h-3.5" />
+        </button>
       </div>
     </footer>
   );
