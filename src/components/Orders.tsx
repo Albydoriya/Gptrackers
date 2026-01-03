@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Eye, 
-  Edit, 
+import {
+  Plus,
+  Search,
+  Filter,
+  Eye,
+  Edit,
   Trash2,
   Calendar,
   DollarSign,
@@ -18,7 +18,8 @@ import {
   Truck,
   Globe,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  FileDown
 } from 'lucide-react';
 import { getStatusColor, getStatusLabel } from '../data/mockData';
 import { mapSupabaseStatusToFrontendStatus } from '../data/mockData';
@@ -31,6 +32,7 @@ import EditOrder from './EditOrder';
 import StatusUpdateModal from './StatusUpdateModal';
 import PricingUpdateModal from './PricingUpdateModal';
 import ShippingCostModal from './ShippingCostModal';
+import { exportOrderTemplate, downloadExcelFile, generateExportFilename, updateOrderStatus as updateOrderStatusService } from '../services/orderExportService';
 
 const Orders: React.FC = () => {
   const { hasPermission } = useAuth();
@@ -56,6 +58,9 @@ const Orders: React.FC = () => {
   const [pricingUpdateOrder, setPricingUpdateOrder] = useState<Order | null>(null);
   const [isShippingCostOpen, setIsShippingCostOpen] = useState(false);
   const [shippingCostOrder, setShippingCostOrder] = useState<Order | null>(null);
+  const [selectedOrdersForExport, setSelectedOrdersForExport] = useState<Set<string>>(new Set());
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   // Fetch orders from Supabase
   const fetchOrders = async () => {
@@ -340,6 +345,78 @@ const Orders: React.FC = () => {
     setShippingCostOrder(null);
   };
 
+  // Export handler
+  const handleExportSelectedOrders = async () => {
+    if (selectedOrdersForExport.size === 0) return;
+
+    setIsExporting(true);
+    setExportError(null);
+    let successCount = 0;
+    let failCount = 0;
+
+    try {
+      for (const orderId of selectedOrdersForExport) {
+        const order = ordersList.find(o => o.id === orderId);
+        if (!order) continue;
+
+        try {
+          const filename = generateExportFilename(order.supplier.name, order.orderNumber);
+          const blob = await exportOrderTemplate(orderId, { templateType: 'hpi' });
+          await downloadExcelFile(blob, filename);
+
+          if (order.status === 'approved') {
+            await updateOrderStatusService(orderId, 'supplier_quoting');
+          }
+
+          successCount++;
+        } catch (error) {
+          console.error(`Failed to export order ${order.orderNumber}:`, error);
+          failCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        alert(`Successfully exported ${successCount} order(s)${failCount > 0 ? `, ${failCount} failed` : ''}`);
+        setSelectedOrdersForExport(new Set());
+        await fetchOrders();
+      } else {
+        throw new Error('All exports failed');
+      }
+    } catch (error: any) {
+      console.error('Export error:', error);
+      setExportError(error.message || 'Failed to export orders');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Checkbox handlers
+  const handleSelectOrder = (orderId: string) => {
+    const newSelection = new Set(selectedOrdersForExport);
+    if (newSelection.has(orderId)) {
+      newSelection.delete(orderId);
+    } else {
+      newSelection.add(orderId);
+    }
+    setSelectedOrdersForExport(newSelection);
+  };
+
+  const handleSelectAll = () => {
+    const exportableOrders = displayOrders.filter(order =>
+      ['approved', 'supplier_quoting'].includes(order.status)
+    );
+
+    if (selectedOrdersForExport.size === exportableOrders.length && exportableOrders.length > 0) {
+      setSelectedOrdersForExport(new Set());
+    } else {
+      setSelectedOrdersForExport(new Set(exportableOrders.map(o => o.id)));
+    }
+  };
+
+  const canExportOrder = (order: Order) => {
+    return ['approved', 'supplier_quoting'].includes(order.status);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -355,18 +432,39 @@ const Orders: React.FC = () => {
             <span>Refresh</span>
           </button>
         </div>
-        {hasPermission('orders', 'create') && (
-          <button 
-            onClick={() => setIsCreateOrderOpen(true)}
-            className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Create Order</span>
-          </button>
-        )}
+        <div className="flex items-center space-x-3">
+          {hasPermission('orders', 'create') && selectedOrdersForExport.size > 0 && (
+            <button
+              onClick={handleExportSelectedOrders}
+              disabled={isExporting}
+              className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isExporting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Exporting...</span>
+                </>
+              ) : (
+                <>
+                  <FileDown className="h-4 w-4" />
+                  <span>Export for Quote ({selectedOrdersForExport.size})</span>
+                </>
+              )}
+            </button>
+          )}
+          {hasPermission('orders', 'create') && (
+            <button
+              onClick={() => setIsCreateOrderOpen(true)}
+              className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Create Order</span>
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Error Message */}
+      {/* Error Messages */}
       {error && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
           <div className="flex items-center space-x-2">
@@ -381,6 +479,26 @@ const Orders: React.FC = () => {
                 Try again
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {exportError && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+              <div>
+                <h3 className="text-sm font-medium text-red-800 dark:text-red-300">Export Error</h3>
+                <p className="text-sm text-red-700 dark:text-red-400 mt-1">{exportError}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setExportError(null)}
+              className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
         </div>
       )}
@@ -522,6 +640,15 @@ const Orders: React.FC = () => {
               {/* Header Row */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center space-x-4">
+                  {canExportOrder(order) && (
+                    <input
+                      type="checkbox"
+                      checked={selectedOrdersForExport.has(order.id)}
+                      onChange={() => handleSelectOrder(order.id)}
+                      className="h-5 w-5 text-green-600 border-gray-300 rounded focus:ring-green-500 cursor-pointer"
+                      title="Select for export"
+                    />
+                  )}
                   <div className="p-3 bg-blue-100 rounded-lg">
                     <Package className="h-6 w-6 text-blue-600" />
                   </div>
