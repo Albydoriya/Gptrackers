@@ -352,7 +352,7 @@ const Orders: React.FC = () => {
     setIsExporting(true);
     setExportError(null);
     let successCount = 0;
-    let failCount = 0;
+    const failedExports: Array<{ orderNumber: string; error: string }> = [];
 
     try {
       for (const orderId of selectedOrdersForExport) {
@@ -369,18 +369,27 @@ const Orders: React.FC = () => {
           }
 
           successCount++;
-        } catch (error) {
+        } catch (error: any) {
           console.error(`Failed to export order ${order.orderNumber}:`, error);
-          failCount++;
+          failedExports.push({
+            orderNumber: order.orderNumber,
+            error: error.message || 'Unknown error'
+          });
         }
       }
 
       if (successCount > 0) {
-        alert(`Successfully exported ${successCount} order(s)${failCount > 0 ? `, ${failCount} failed` : ''}`);
+        if (failedExports.length > 0) {
+          const failedDetails = failedExports.map(f => `${f.orderNumber}: ${f.error}`).join('\n');
+          alert(`Successfully exported ${successCount} order(s)\n\nFailed exports:\n${failedDetails}`);
+        } else {
+          alert(`Successfully exported ${successCount} order(s)`);
+        }
         setSelectedOrdersForExport(new Set());
         await fetchOrders();
       } else {
-        throw new Error('All exports failed');
+        const errorDetails = failedExports.map(f => `• ${f.orderNumber}: ${f.error}`).join('\n');
+        throw new Error(`All exports failed:\n\n${errorDetails}`);
       }
     } catch (error: any) {
       console.error('Export error:', error);
@@ -485,17 +494,17 @@ const Orders: React.FC = () => {
 
       {exportError && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
-              <div>
+          <div className="flex justify-between">
+            <div className="flex space-x-3 flex-1">
+              <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
                 <h3 className="text-sm font-medium text-red-800 dark:text-red-300">Export Error</h3>
-                <p className="text-sm text-red-700 dark:text-red-400 mt-1">{exportError}</p>
+                <p className="text-sm text-red-700 dark:text-red-400 mt-1 whitespace-pre-line">{exportError}</p>
               </div>
             </div>
             <button
               onClick={() => setExportError(null)}
-              className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+              className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 flex-shrink-0"
             >
               <X className="h-4 w-4" />
             </button>
