@@ -54,10 +54,12 @@ export const useExchangeRate = (baseCurrency = 'AUD', targetCurrency = 'JPY') =>
         (payload) => {
           const newRate = payload.new as ExchangeRate;
           if (newRate.target_currency === targetCurrency) {
-            if (rate) {
-              setPreviousRate(parseFloat(rate.rate.toString()));
-            }
-            setRate(newRate);
+            setRate((currentRate) => {
+              if (currentRate) {
+                setPreviousRate(parseFloat(currentRate.rate.toString()));
+              }
+              return newRate;
+            });
             exchangeRateService.setCachedRate(newRate);
           }
         }
@@ -67,7 +69,7 @@ export const useExchangeRate = (baseCurrency = 'AUD', targetCurrency = 'JPY') =>
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchRate, baseCurrency, targetCurrency, rate]);
+  }, [fetchRate, baseCurrency, targetCurrency]);
 
   const getRateTrend = useCallback((): 'up' | 'down' | 'stable' => {
     if (!rate || !previousRate) return 'stable';

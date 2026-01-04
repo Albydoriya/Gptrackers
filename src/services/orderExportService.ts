@@ -12,28 +12,40 @@ export async function exportOrderTemplate(
 ): Promise<Blob> {
   const { templateType = 'hpi' } = options;
 
-  const { data, error } = await supabase.functions.invoke('export-order-template', {
-    body: {
-      orderId,
-      templateType,
-      options
-    },
-  });
+  try {
+    const { data, error } = await supabase.functions.invoke('export-order-template', {
+      body: {
+        orderId,
+        templateType,
+        options
+      },
+      responseType: 'blob'
+    });
 
-  if (error) {
-    console.error('Export error:', error);
-    throw new Error(error.message || 'Failed to export order template');
+    if (error) {
+      console.error('Export function error:', error);
+      throw new Error(error.message || 'Failed to export order template');
+    }
+
+    if (!data) {
+      throw new Error('No data received from export function');
+    }
+
+    if (data instanceof Blob) {
+      return data;
+    }
+
+    if (data instanceof ArrayBuffer) {
+      return new Blob([data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+    }
+
+    throw new Error('Unexpected response format from export function');
+  } catch (err: any) {
+    console.error('Export template error:', err);
+    throw new Error(err.message || 'Failed to export order template');
   }
-
-  // Convert response to Blob
-  if (data instanceof Blob) {
-    return data;
-  }
-
-  // If data is ArrayBuffer or similar, convert it
-  return new Blob([data], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  });
 }
 
 export function downloadExcelFile(blob: Blob, filename: string): void {
