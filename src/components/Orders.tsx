@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Plus,
   Search,
@@ -19,13 +19,13 @@ import {
   Globe,
   Loader2,
   AlertCircle,
-  FileDown
+  FileDown,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { getStatusColor, getStatusLabel } from '../data/mockData';
-import { mapSupabaseStatusToFrontendStatus } from '../data/mockData';
 import { Order, OrderStatus } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
 import ProtectedRoute from './ProtectedRoute';
 import CreateOrder from './CreateOrder';
 import EditOrder from './EditOrder';
@@ -33,18 +33,34 @@ import StatusUpdateModal from './StatusUpdateModal';
 import PricingUpdateModal from './PricingUpdateModal';
 import ShippingCostModal from './ShippingCostModal';
 import { exportOrderTemplate, downloadExcelFile, generateExportFilename, updateOrderStatus as updateOrderStatusService } from '../services/orderExportService';
+import { fetchOrders as fetchOrdersService, fetchStatusCounts, StatusCounts } from '../services/ordersService';
+
+const PAGE_SIZE = 25;
+const STORAGE_KEY = 'orders_status_filter';
 
 const Orders: React.FC = () => {
   const { hasPermission } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState(() => {
+    return localStorage.getItem(STORAGE_KEY) || 'approved';
+  });
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'supplier'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [searchResults, setSearchResults] = useState<{
-    orders: Order[];
-    searchType: string;
-    totalResults: number;
-  } | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [statusCounts, setStatusCounts] = useState<StatusCounts>({
+    all: 0,
+    draft: 0,
+    supplier_quoting: 0,
+    pending_customer_approval: 0,
+    approved: 0,
+    ordered: 0,
+    in_transit: 0,
+    delivered: 0,
+    cancelled: 0
+  });
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isCreateOrderOpen, setIsCreateOrderOpen] = useState(false);
   const [isEditOrderOpen, setIsEditOrderOpen] = useState(false);
@@ -62,219 +78,113 @@ const Orders: React.FC = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
 
-  // Fetch orders from Supabase
-  const fetchOrders = async () => {
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setCurrentPage(1);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Fetch orders using service layer
+  const fetchOrders = useCallback(async () => {
     setIsLoadingOrders(true);
     setError(null);
-    
+
     try {
-      const { data, error: fetchError } = await supabase
-        .from('orders')
-        .select(`
-          *,
-          supplier:suppliers(*),
-          order_parts(
-            *,
-            part:parts(*)
-          )
-        `)
-        .order('created_at', { ascending: false });
+      const result = await fetchOrdersService({
+        status: statusFilter,
+        searchTerm: debouncedSearchTerm,
+        sortBy,
+        sortOrder,
+        page: currentPage,
+        pageSize: PAGE_SIZE
+      });
 
-      if (fetchError) throw fetchError;
-
-      // Transform Supabase data to match Order interface
-      const transformedOrders: Order[] = (data || []).map(orderData => ({
-        id: orderData.id,
-        orderNumber: orderData.order_number,
-        supplier: {
-          id: orderData.supplier.id,
-          name: orderData.supplier.name,
-          contactPerson: orderData.supplier.contact_person,
-          email: orderData.supplier.email,
-          phone: orderData.supplier.phone,
-          address: orderData.supplier.address,
-          rating: orderData.supplier.rating,
-          deliveryTime: orderData.supplier.delivery_time,
-          paymentTerms: orderData.supplier.payment_terms,
-          isActive: orderData.supplier.is_active
-        },
-        parts: orderData.order_parts.map((orderPart: any) => ({
-          id: orderPart.id,
-          part: {
-            id: orderPart.part.id,
-            partNumber: orderPart.part.part_number,
-            name: orderPart.part.name,
-            description: orderPart.part.description,
-            category: orderPart.part.category,
-            specifications: orderPart.part.specifications,
-            priceHistory: [], // We'll populate this separately if needed
-            currentStock: orderPart.part.current_stock,
-            minStock: orderPart.part.min_stock,
-            preferredSuppliers: orderPart.part.preferred_suppliers
-          },
-          quantity: orderPart.quantity,
-          unitPrice: orderPart.unit_price,
-          totalPrice: orderPart.total_price
-        })),
-        status: mapSupabaseStatusToFrontendStatus(orderData.status),
-        totalAmount: orderData.total_amount,
-        orderDate: orderData.order_date,
-        expectedDelivery: orderData.expected_delivery,
-        actualDelivery: orderData.actual_delivery,
-        notes: orderData.notes,
-        createdBy: orderData.created_by || 'Unknown', // This will be the UUID from database
-        priority: orderData.priority,
-        shippingData: orderData.shipping_data,
-        attachments: orderData.attachments
-      }));
-
-      setOrdersList(transformedOrders);
+      setOrdersList(result.orders);
+      setTotalCount(result.totalCount);
+      setTotalPages(result.totalPages);
     } catch (err: any) {
       console.error('Error fetching orders:', err);
       setError(err.message || 'Failed to fetch orders');
     } finally {
       setIsLoadingOrders(false);
     }
-  };
+  }, [statusFilter, debouncedSearchTerm, sortBy, sortOrder, currentPage]);
 
-  // Fetch orders on component mount
-  React.useEffect(() => {
-    fetchOrders();
+  // Fetch status counts
+  const loadStatusCounts = useCallback(async () => {
+    try {
+      const counts = await fetchStatusCounts();
+      setStatusCounts(counts);
+    } catch (err: any) {
+      console.error('Error fetching status counts:', err);
+    }
   }, []);
 
-  // Enhanced search function
-  const performSearch = (searchValue: string) => {
-    if (!searchValue.trim()) {
-      setSearchResults(null);
-      return;
-    }
+  // Fetch orders when dependencies change
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
-    const searchLower = searchValue.toLowerCase();
-    const results: Order[] = [];
-    const searchTypes: string[] = [];
+  // Load status counts on mount and after changes
+  useEffect(() => {
+    loadStatusCounts();
+  }, [loadStatusCounts]);
 
-    ordersList.forEach(order => {
-      let matchFound = false;
-      let matchTypes: string[] = [];
+  // Save status filter to localStorage
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, statusFilter);
+  }, [statusFilter]);
 
-      // Search order number
-      if (order.orderNumber.toLowerCase().includes(searchLower)) {
-        matchFound = true;
-        matchTypes.push('Order Number');
+  // Keyboard shortcuts for status switching
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement ||
+          e.target instanceof HTMLTextAreaElement ||
+          e.target instanceof HTMLSelectElement) {
+        return;
       }
 
-      // Search supplier name
-      if (order.supplier.name.toLowerCase().includes(searchLower)) {
-        matchFound = true;
-        matchTypes.push('Supplier');
+      const statusMap: { [key: string]: string } = {
+        '1': 'all',
+        '2': 'draft',
+        '3': 'supplier_quoting',
+        '4': 'pending_customer_approval',
+        '5': 'approved',
+        '6': 'ordered',
+        '7': 'in_transit',
+        '8': 'delivered',
+        '9': 'cancelled'
+      };
+
+      if (statusMap[e.key]) {
+        e.preventDefault();
+        setStatusFilter(statusMap[e.key]);
+        setCurrentPage(1);
       }
+    };
 
-      // Search supplier contact person
-      if (order.supplier.contactPerson.toLowerCase().includes(searchLower)) {
-        matchFound = true;
-        matchTypes.push('Contact Person');
-      }
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, []);
 
-      // Search part names and part numbers
-      order.parts.forEach(orderPart => {
-        if (orderPart.part.name.toLowerCase().includes(searchLower)) {
-          matchFound = true;
-          if (!matchTypes.includes('Part Name')) {
-            matchTypes.push('Part Name');
-          }
-        }
-        if (orderPart.part.partNumber.toLowerCase().includes(searchLower)) {
-          matchFound = true;
-          if (!matchTypes.includes('Part Number')) {
-            matchTypes.push('Part Number');
-          }
-        }
-        if (orderPart.part.category.toLowerCase().includes(searchLower)) {
-          matchFound = true;
-          if (!matchTypes.includes('Category')) {
-            matchTypes.push('Category');
-          }
-        }
-      });
-
-      // Search notes
-      if (order.notes && order.notes.toLowerCase().includes(searchLower)) {
-        matchFound = true;
-        matchTypes.push('Notes');
-      }
-
-      // Search created by
-      if (order.createdBy && order.createdBy.toLowerCase().includes(searchLower)) {
-        matchFound = true;
-        matchTypes.push('Created By');
-      }
-
-      if (matchFound) {
-        results.push({ ...order, searchMatchTypes: matchTypes });
-        matchTypes.forEach(type => {
-          if (!searchTypes.includes(type)) {
-            searchTypes.push(type);
-          }
-        });
-      }
-    });
-
-    setSearchResults({
-      orders: results,
-      searchType: searchTypes.join(', '),
-      totalResults: results.length
-    });
+  // Handle status filter change
+  const handleStatusFilterChange = (newStatus: string) => {
+    setStatusFilter(newStatus);
+    setCurrentPage(1);
   };
-
-  // Sort function
-  const sortOrders = (orders: Order[]) => {
-    return [...orders].sort((a, b) => {
-      let comparison = 0;
-      
-      switch (sortBy) {
-        case 'date':
-          comparison = new Date(a.orderDate).getTime() - new Date(b.orderDate).getTime();
-          break;
-        case 'amount':
-          comparison = a.totalAmount - b.totalAmount;
-          break;
-        case 'supplier':
-          comparison = a.supplier.name.localeCompare(b.supplier.name);
-          break;
-        default:
-          comparison = 0;
-      }
-      
-      return sortOrder === 'asc' ? comparison : -comparison;
-    });
-  };
-
-  // Apply filters and sorting
-  const getDisplayOrders = () => {
-    let ordersToDisplay = searchResults ? searchResults.orders : ordersList;
-    
-    // Apply status filter
-    ordersToDisplay = ordersToDisplay.filter(order => 
-      statusFilter === 'all' || order.status === statusFilter
-    );
-    
-    // Apply sorting
-    return sortOrders(ordersToDisplay);
-  };
-
-  const displayOrders = getDisplayOrders();
 
   // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchTerm(value);
-    performSearch(value);
+    setSearchTerm(e.target.value);
   };
 
   // Clear search
   const clearSearch = () => {
     setSearchTerm('');
-    setSearchResults(null);
   };
 
   // Toggle sort order
@@ -282,31 +192,44 @@ const Orders: React.FC = () => {
     setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
   };
 
+  // Pagination handlers
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
   const statusOptions = [
-    { value: 'all', label: 'All Statuses' },
-    { value: 'draft', label: 'Draft' },
-    { value: 'supplier_quoting', label: 'Supplier Quoting' },
-    { value: 'pending_customer_approval', label: 'Pending Approval' },
-    { value: 'approved', label: 'Approved' },
-    { value: 'ordered', label: 'Ordered' },
-    { value: 'in_transit', label: 'In Transit' },
-    { value: 'delivered', label: 'Delivered' },
-    { value: 'cancelled', label: 'Cancelled' },
+    { value: 'all', label: 'All Statuses', key: '1', count: statusCounts.all },
+    { value: 'draft', label: 'Draft', key: '2', count: statusCounts.draft },
+    { value: 'supplier_quoting', label: 'Supplier Quoting', key: '3', count: statusCounts.supplier_quoting },
+    { value: 'pending_customer_approval', label: 'Pending Approval', key: '4', count: statusCounts.pending_customer_approval },
+    { value: 'approved', label: 'Approved', key: '5', count: statusCounts.approved },
+    { value: 'ordered', label: 'Ordered', key: '6', count: statusCounts.ordered },
+    { value: 'in_transit', label: 'In Transit', key: '7', count: statusCounts.in_transit },
+    { value: 'delivered', label: 'Delivered', key: '8', count: statusCounts.delivered },
+    { value: 'cancelled', label: 'Cancelled', key: '9', count: statusCounts.cancelled },
   ];
 
   const handleOrderCreated = (newOrder: Order) => {
-    // Refresh orders list after creation
     fetchOrders();
+    loadStatusCounts();
   };
 
   const handleOrderUpdated = (updatedOrder: Order) => {
-    // Refresh orders list after update
     fetchOrders();
+    loadStatusCounts();
   };
 
   const handleStatusUpdate = (orderId: string, newStatus: OrderStatus, notes?: string) => {
-    // Refresh orders list after status update
     fetchOrders();
+    loadStatusCounts();
     setIsStatusUpdateOpen(false);
     setStatusUpdateOrder(null);
   };
@@ -327,8 +250,8 @@ const Orders: React.FC = () => {
   };
 
   const handlePricingUpdate = (orderId: string, updatedParts: any[], attachments: any[]) => {
-    // Refresh orders list after pricing update
     fetchOrders();
+    loadStatusCounts();
     setIsPricingUpdateOpen(false);
     setPricingUpdateOrder(null);
   };
@@ -339,8 +262,8 @@ const Orders: React.FC = () => {
   };
 
   const handleShippingUpdate = (orderId: string, shippingData: any) => {
-    // Refresh orders list after shipping update
     fetchOrders();
+    loadStatusCounts();
     setIsShippingCostOpen(false);
     setShippingCostOrder(null);
   };
@@ -387,6 +310,7 @@ const Orders: React.FC = () => {
         }
         setSelectedOrdersForExport(new Set());
         await fetchOrders();
+        await loadStatusCounts();
       } else {
         const errorDetails = failedExports.map(f => `• ${f.orderNumber}: ${f.error}`).join('\n');
         throw new Error(`All exports failed:\n\n${errorDetails}`);
@@ -411,7 +335,7 @@ const Orders: React.FC = () => {
   };
 
   const handleSelectAll = () => {
-    const exportableOrders = displayOrders.filter(order =>
+    const exportableOrders = ordersList.filter(order =>
       ['approved', 'supplier_quoting'].includes(order.status)
     );
 
@@ -540,13 +464,14 @@ const Orders: React.FC = () => {
               <Filter className="h-4 w-4 text-gray-400" />
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                onChange={(e) => handleStatusFilterChange(e.target.value)}
                 disabled={isLoadingOrders}
+                title="Press 1-9 to quickly switch status filters"
                 className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               >
                 {statusOptions.map(option => (
                   <option key={option.value} value={option.value}>
-                    {option.label}
+                    {option.label} ({option.count}) [{option.key}]
                   </option>
                 ))}
               </select>
@@ -591,20 +516,15 @@ const Orders: React.FC = () => {
                   <span>Loading orders...</span>
                 </span>
               ) : (
-                searchResults ? (
-                  <span className="flex items-center space-x-2">
-                    <span>Found {searchResults.totalResults} result{searchResults.totalResults !== 1 ? 's' : ''}</span>
-                    <span className="text-blue-600 dark:text-blue-400">({searchResults.searchType})</span>
-                  </span>
-                ) : (
-                  <span>Showing {displayOrders.length} order{displayOrders.length !== 1 ? 's' : ''}</span>
-                )
+                <span>
+                  Showing {totalCount > 0 ? ((currentPage - 1) * PAGE_SIZE + 1) : 0}-{Math.min(currentPage * PAGE_SIZE, totalCount)} of {totalCount} order{totalCount !== 1 ? 's' : ''}
+                </span>
               )}
             </div>
           </div>
 
-          {/* Search Results Info */}
-          {searchResults && (
+          {/* Search Info */}
+          {searchTerm && (
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
@@ -620,9 +540,6 @@ const Orders: React.FC = () => {
                   Clear Search
                 </button>
               </div>
-              <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                Found {searchResults.totalResults} order{searchResults.totalResults !== 1 ? 's' : ''} matching: {searchResults.searchType}
-              </p>
             </div>
           )}
         </div>
@@ -642,8 +559,9 @@ const Orders: React.FC = () => {
 
       {/* Orders Grid */}
       {!isLoadingOrders && !error && (
-      <div className="grid grid-cols-1 gap-6">
-        {displayOrders.map((order) => (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 gap-6">
+        {ordersList.map((order) => (
           <div key={order.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
             <div className="p-6">
               {/* Header Row */}
@@ -894,23 +812,51 @@ const Orders: React.FC = () => {
             </div>
           </div>
         ))}
+        </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+            <button
+              onClick={handlePreviousPage}
+              disabled={currentPage === 1}
+              className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span>Previous</span>
+            </button>
+
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Page {currentPage} of {totalPages}
+            </div>
+
+            <button
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+              className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span>Next</span>
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        )}
       </div>
       )}
 
       {/* No Results Message */}
-      {!isLoadingOrders && !error && displayOrders.length === 0 && (
+      {!isLoadingOrders && !error && ordersList.length === 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
           <Package className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-            {searchResults ? 'No matching orders found' : 'No orders found'}
+            {searchTerm ? 'No matching orders found' : 'No orders found'}
           </h3>
           <p className="text-gray-600 dark:text-gray-400 mb-4">
-            {searchResults 
+            {searchTerm
               ? `No orders match your search criteria "${searchTerm}"`
               : 'Try adjusting your filters or create a new order'
             }
           </p>
-          {searchResults && (
+          {searchTerm && (
             <button
               onClick={clearSearch}
               className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
