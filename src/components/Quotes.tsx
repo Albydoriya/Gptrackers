@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Plus,
   Search,
@@ -26,11 +26,14 @@ import {
   Archive,
   RefreshCw as StatusUpdate,
   Ship,
-  Plane
+  Plane,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Quote, Customer, QuotePart, Part } from '../types';
 import { supabase } from '../lib/supabase';
+import { quotesService, QuoteStatusCounts } from '../services/quotesService';
 import CreateQuote from './CreateQuote';
 import EditQuote from './EditQuote';
 import QuoteDetailsModal from './QuoteDetailsModal';
@@ -42,7 +45,9 @@ import AgentFeePricingModal from './AgentFeePricingModal';
 const Quotes: React.FC = () => {
   const { hasPermission } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState(() => {
+    return localStorage.getItem('quotes_status_filter') || 'sent';
+  });
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'customer'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [isLoading, setIsLoading] = useState(true);
@@ -59,184 +64,76 @@ const Quotes: React.FC = () => {
   const [isSeaFreightPricingOpen, setIsSeaFreightPricingOpen] = useState(false);
   const [isAirFreightPricingOpen, setIsAirFreightPricingOpen] = useState(false);
   const [isAgentFeePricingOpen, setIsAgentFeePricingOpen] = useState(false);
+  const [statusCounts, setStatusCounts] = useState<QuoteStatusCounts>({
+    all: 0,
+    draft: 0,
+    sent: 0,
+    accepted: 0,
+    rejected: 0,
+    converted_to_order: 0,
+    expired: 0
+  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalQuotes, setTotalQuotes] = useState(0);
+  const pageSize = 25;
 
-  // Fetch quotes from Supabase
-  const fetchQuotes = async () => {
+  const fetchQuotes = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      // Fetch quotes with quote_parts using the proper foreign key relationship
-      const { data: quotesData, error: quotesError } = await supabase
-        .from('quotes')
-        .select(`
-          *,
-          quote_parts!quote_parts_quote_id_fkey(
-            *,
-            parts(*)
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (quotesError) throw quotesError;
-
-      if (!quotesData || quotesData.length === 0) {
-        setQuotes([]);
-        return;
-      }
-
-      // Fetch user profiles for creators
-      const creatorIds = [...new Set(quotesData.map(q => q.created_by).filter(Boolean))];
-      const { data: userProfilesData } = await supabase
-        .from('user_profiles')
-        .select('id, full_name, email')
-        .in('id', creatorIds);
-
-      const userProfilesMap = new Map(
-        userProfilesData?.map(profile => [profile.id, profile]) || []
-      );
-
-      // Get unique customer IDs
-      const customerIds = [...new Set(quotesData.map(quote => quote.customer_id).filter(Boolean))];
-
-      // Fetch customers separately
-      const { data: customersData, error: customersError } = await supabase
-        .from('customers')
-        .select('*')
-        .in('id', customerIds);
-
-      if (customersError) throw customersError;
-
-      // Create a map of customers for quick lookup
-      const customersMap = new Map();
-      (customersData || []).forEach(customer => {
-        customersMap.set(customer.id, customer);
+      const result = await quotesService.fetchQuotes({
+        status: statusFilter,
+        searchTerm,
+        sortBy,
+        sortOrder,
+        page: currentPage,
+        pageSize
       });
 
-      // Transform Supabase data to match Quote interface
-      const transformedQuotes: Quote[] = quotesData.map(quoteData => {
-        const customerData = customersMap.get(quoteData.customer_id);
-        
-        return {
-        id: quoteData.id,
-        quoteNumber: quoteData.quote_number,
-        customer: customerData ? {
-          id: customerData.id,
-          name: customerData.name,
-          contactPerson: customerData.contact_person,
-          email: customerData.email,
-          phone: customerData.phone,
-          address: customerData.address,
-          createdAt: customerData.created_at,
-          updatedAt: customerData.updated_at
-        } : {
-          id: '',
-          name: 'Unknown Customer',
-          contactPerson: 'Unknown',
-          email: 'unknown@example.com',
-          phone: 'N/A',
-          address: 'N/A',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        },
-        status: quoteData.status,
-        parts: (quoteData.quote_parts || []).map((quotePart: any) => ({
-          id: quotePart.id,
-          part: quotePart.parts ? {
-            id: quotePart.parts.id,
-            partNumber: quotePart.parts.part_number,
-            name: quotePart.parts.name,
-            description: quotePart.parts.description,
-            category: quotePart.parts.category,
-            specifications: quotePart.parts.specifications,
-            priceHistory: [],
-            currentStock: quotePart.parts.current_stock,
-            minStock: quotePart.parts.min_stock,
-            preferredSuppliers: quotePart.parts.preferred_suppliers
-          } : undefined,
-          customPartName: quotePart.custom_part_name,
-          customPartDescription: quotePart.custom_part_description,
-          quantity: quotePart.quantity,
-          unitPrice: quotePart.unit_price,
-          totalPrice: quotePart.total_price,
-          isCustomPart: quotePart.is_custom_part
-        })),
-        totalBidItemsCost: quoteData.total_bid_items_cost,
-        shippingCosts: {
-          sea: quoteData.shipping_cost_sea,
-          air: quoteData.shipping_cost_air,
-          selected: quoteData.selected_shipping_method
-        },
-        agentFees: quoteData.agent_fees,
-        localShippingFees: quoteData.local_shipping_fees,
-        subtotalAmount: quoteData.subtotal_amount,
-        gstAmount: quoteData.gst_amount,
-        grandTotalAmount: quoteData.grand_total_amount,
-        quoteDate: quoteData.quote_date,
-        expiryDate: quoteData.expiry_date,
-        notes: quoteData.notes,
-        createdBy: userProfilesMap.get(quoteData.created_by)?.full_name ||
-                   userProfilesMap.get(quoteData.created_by)?.email ||
-                   'Unknown',
-        convertedToOrderId: quoteData.converted_to_order_id,
-        seaFreightPriceListId: quoteData.sea_freight_price_list_id,
-        priceListAppliedAt: quoteData.price_list_applied_at,
-        manualPriceOverride: quoteData.manual_price_override,
-        priceListSnapshot: quoteData.price_list_snapshot
-        };
-      });
-
-      setQuotes(transformedQuotes);
+      setQuotes(result.quotes);
+      setTotalQuotes(result.total);
+      setTotalPages(result.totalPages);
     } catch (err: any) {
       console.error('Error fetching quotes:', err);
       setError(err.message || 'Failed to fetch quotes');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [statusFilter, searchTerm, sortBy, sortOrder, currentPage, pageSize]);
 
-  // Fetch quotes on component mount
-  React.useEffect(() => {
-    fetchQuotes();
+  const fetchStatusCounts = useCallback(async () => {
+    try {
+      const counts = await quotesService.fetchStatusCounts();
+      setStatusCounts(counts);
+    } catch (err: any) {
+      console.error('Error fetching status counts:', err);
+    }
   }, []);
 
-  // Sort quotes
-  const sortQuotes = (quotesToSort: Quote[]) => {
-    return [...quotesToSort].sort((a, b) => {
-      let comparison = 0;
-      
-      switch (sortBy) {
-        case 'date':
-          comparison = new Date(a.quoteDate).getTime() - new Date(b.quoteDate).getTime();
-          break;
-        case 'amount':
-          comparison = a.grandTotalAmount - b.grandTotalAmount;
-          break;
-        case 'customer':
-          comparison = a.customer.name.localeCompare(b.customer.name);
-          break;
-        default:
-          comparison = 0;
-      }
-      
-      return sortOrder === 'asc' ? comparison : -comparison;
-    });
-  };
+  useEffect(() => {
+    fetchQuotes();
+  }, [fetchQuotes]);
 
-  // Apply filters and sorting
-  const getDisplayQuotes = () => {
-    let filteredQuotes = quotes.filter(quote => {
-      const matchesSearch = quote.quoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           quote.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           quote.customer.contactPerson.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || quote.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
-    
-    return sortQuotes(filteredQuotes);
-  };
+  useEffect(() => {
+    fetchStatusCounts();
+  }, [fetchStatusCounts]);
 
-  const displayQuotes = getDisplayQuotes();
+  useEffect(() => {
+    localStorage.setItem('quotes_status_filter', statusFilter);
+    setCurrentPage(1);
+  }, [statusFilter]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCurrentPage(1);
+      fetchQuotes();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const displayQuotes = quotes;
 
   // Toggle sort order
   const toggleSortOrder = () => {
@@ -244,31 +141,57 @@ const Quotes: React.FC = () => {
   };
 
   const statusOptions = [
-    { value: 'all', label: 'All Statuses' },
-    { value: 'draft', label: 'Draft' },
-    { value: 'sent', label: 'Sent' },
-    { value: 'accepted', label: 'Accepted' },
-    { value: 'rejected', label: 'Rejected' },
-    { value: 'converted_to_order', label: 'Converted to Order' },
-    { value: 'expired', label: 'Expired' },
+    { value: 'all', label: 'All Statuses', count: statusCounts.all, shortcut: '1' },
+    { value: 'draft', label: 'Draft', count: statusCounts.draft, shortcut: '2' },
+    { value: 'sent', label: 'Sent', count: statusCounts.sent, shortcut: '3' },
+    { value: 'accepted', label: 'Accepted', count: statusCounts.accepted, shortcut: '4' },
+    { value: 'rejected', label: 'Rejected', count: statusCounts.rejected, shortcut: '5' },
+    { value: 'converted_to_order', label: 'Converted to Order', count: statusCounts.converted_to_order, shortcut: '6' },
+    { value: 'expired', label: 'Expired', count: statusCounts.expired, shortcut: '7' },
   ];
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) {
+        return;
+      }
+
+      const shortcutMap: { [key: string]: string } = {
+        '1': 'all',
+        '2': 'draft',
+        '3': 'sent',
+        '4': 'accepted',
+        '5': 'rejected',
+        '6': 'converted_to_order',
+        '7': 'expired'
+      };
+
+      if (shortcutMap[e.key]) {
+        e.preventDefault();
+        setStatusFilter(shortcutMap[e.key]);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleQuoteCreated = (newQuote: Quote) => {
-    // Refresh quotes list after creation
     fetchQuotes();
+    fetchStatusCounts();
     setIsCreateQuoteOpen(false);
   };
 
   const handleQuoteUpdated = (updatedQuote: Quote) => {
-    // Refresh quotes list after update
     fetchQuotes();
+    fetchStatusCounts();
     setIsEditQuoteOpen(false);
     setEditingQuote(null);
   };
 
   const handleQuoteStatusUpdate = (quoteId: string, newStatus: any, notes?: string) => {
-    // Refresh quotes list after status update
     fetchQuotes();
+    fetchStatusCounts();
     setIsQuoteStatusUpdateOpen(false);
     setStatusUpdateQuote(null);
   };
@@ -400,8 +323,9 @@ const Quotes: React.FC = () => {
 
       if (quoteUpdateError) throw quoteUpdateError;
 
-      // 5. Refresh quotes list
+      // 5. Refresh quotes list and status counts
       await fetchQuotes();
+      await fetchStatusCounts();
 
       alert(`Quote ${quote.quoteNumber} has been successfully converted to order ${orderObject.order_number}!`);
       
@@ -546,10 +470,11 @@ const Quotes: React.FC = () => {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 disabled={isLoading}
                 className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                title="Press number keys 1-7 for quick status switching"
               >
                 {statusOptions.map(option => (
                   <option key={option.value} value={option.value}>
-                    {option.label}
+                    {option.label} ({option.count}) [{option.shortcut}]
                   </option>
                 ))}
               </select>
@@ -594,7 +519,9 @@ const Quotes: React.FC = () => {
                   <span>Loading quotes...</span>
                 </span>
               ) : (
-                <span>Showing {displayQuotes.length} quote{displayQuotes.length !== 1 ? 's' : ''}</span>
+                <span>
+                  Showing {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, totalQuotes)} of {totalQuotes} quote{totalQuotes !== 1 ? 's' : ''}
+                </span>
               )}
             </div>
           </div>
@@ -832,6 +759,37 @@ const Quotes: React.FC = () => {
             </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {!isLoading && !error && totalPages > 1 && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span>Previous</span>
+            </button>
+
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                Page {currentPage} of {totalPages}
+              </span>
+            </div>
+
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+            >
+              <span>Next</span>
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       )}
 
