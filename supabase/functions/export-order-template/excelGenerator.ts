@@ -5,7 +5,7 @@ import { applyHPITemplate } from "./hpiTemplate.ts";
 export async function generateExcelFile(
   data: OrderExportData,
   templateType: 'hpi'
-): Promise<Buffer> {
+): Promise<Uint8Array> {
   const workbook = new ExcelJS.Workbook();
 
   workbook.creator = 'Parts Management System';
@@ -22,5 +22,5 @@ export async function generateExcelFile(
   }
 
   const buffer = await workbook.xlsx.writeBuffer();
-  return Buffer.from(buffer);
+  return new Uint8Array(buffer);
 }
