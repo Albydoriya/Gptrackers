@@ -138,6 +138,7 @@ export interface Quote {
   notes?: string;
   createdBy: string;
   convertedToOrderId?: string;
+  convertedToOrderNumber?: string;
   seaFreightPriceListId?: string;
   priceListAppliedAt?: string;
   manualPriceOverride?: boolean;

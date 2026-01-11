@@ -20,7 +20,8 @@ import {
   ShoppingCart,
   Receipt,
   Truck,
-  Globe
+  Globe,
+  ExternalLink
 } from 'lucide-react';
 import { Quote } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -445,15 +446,21 @@ const QuoteDetailsModal: React.FC<QuoteDetailsModalProps> = ({
             )}
 
             {/* Conversion Info */}
-            {quote.convertedToOrderId && (
+            {quote.convertedToOrderNumber && (
               <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
-                <div className="flex items-center space-x-2">
-                  <ShoppingCart className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                  <div>
-                    <h4 className="font-medium text-purple-900 dark:text-purple-100">Quote Converted to Order</h4>
-                    <p className="text-sm text-purple-700 dark:text-purple-300">
-                      This quote has been successfully converted to an order. You can view the order in the Orders section.
-                    </p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <ShoppingCart className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    <div>
+                      <h4 className="font-medium text-purple-900 dark:text-purple-100">Quote Converted to Order</h4>
+                      <p className="text-sm text-purple-700 dark:text-purple-300">
+                        This quote has been successfully converted to an order.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2 px-3 py-2 bg-purple-100 dark:bg-purple-900/40 rounded-lg">
+                    <span className="text-sm font-semibold text-purple-900 dark:text-purple-100">{quote.convertedToOrderNumber}</span>
+                    <ExternalLink className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                   </div>
                 </div>
               </div>

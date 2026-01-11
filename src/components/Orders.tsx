@@ -21,7 +21,9 @@ import {
   AlertCircle,
   FileDown,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  FileText,
+  ExternalLink
 } from 'lucide-react';
 import { getStatusColor, getStatusLabel } from '../data/mockData';
 import { Order, OrderStatus } from '../types';
@@ -694,6 +696,31 @@ const Orders: React.FC = () => {
               </div>
               
               {/* Content Row */}
+              {/* Quote Reference - Only show if order was converted from a quote */}
+              {order.shippingData?.convertedFromQuote && order.notes && (
+                <div className="mb-4">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        <div>
+                          <h4 className="font-medium text-blue-900 dark:text-blue-100">Converted from Quote</h4>
+                          <p className="text-sm text-blue-700 dark:text-blue-300">
+                            This order was created from a quote.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2 px-3 py-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg">
+                        <span className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                          {order.notes.match(/quote\s+(QTE-\d{4}-\d{3})/i)?.[1] || 'Quote'}
+                        </span>
+                        <ExternalLink className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Supplier Information */}
                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">

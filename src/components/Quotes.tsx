@@ -28,7 +28,8 @@ import {
   Ship,
   Plane,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ExternalLink
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Quote, Customer, QuotePart, Part } from '../types';
@@ -322,6 +323,7 @@ const Quotes: React.FC = () => {
         .update({
           status: 'converted_to_order',
           converted_to_order_id: orderData.id,
+          converted_to_order_number: orderObject.order_number,
           updated_at: new Date().toISOString()
         })
         .eq('id', quote.id);
@@ -669,9 +671,13 @@ const Quotes: React.FC = () => {
                       ${quote.grandTotalAmount.toLocaleString()}
                     </div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">Total Amount</div>
-                    {quote.convertedToOrderId && (
-                      <div className="mt-2 text-xs text-purple-600 dark:text-purple-400">
-                        Converted to Order
+                    {quote.convertedToOrderNumber && (
+                      <div className="mt-2 flex items-center space-x-1 text-xs">
+                        <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium">
+                          <ShoppingCart className="h-3 w-3" />
+                          <span>{quote.convertedToOrderNumber}</span>
+                          <ExternalLink className="h-3 w-3" />
+                        </span>
                       </div>
                     )}
                   </div>

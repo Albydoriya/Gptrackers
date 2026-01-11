@@ -199,6 +199,7 @@ export const quotesService = {
                    userProfilesMap.get(quoteData.created_by)?.email ||
                    'Unknown',
         convertedToOrderId: quoteData.converted_to_order_id,
+        convertedToOrderNumber: quoteData.converted_to_order_number,
         seaFreightPriceListId: quoteData.sea_freight_price_list_id,
         priceListAppliedAt: quoteData.price_list_applied_at,
         manualPriceOverride: quoteData.manual_price_override,
@@ -331,6 +332,7 @@ export const quotesService = {
       notes: quoteData.notes,
       createdBy: creatorProfile?.full_name || creatorProfile?.email || 'Unknown',
       convertedToOrderId: quoteData.converted_to_order_id,
+      convertedToOrderNumber: quoteData.converted_to_order_number,
       seaFreightPriceListId: quoteData.sea_freight_price_list_id,
       priceListAppliedAt: quoteData.price_list_applied_at,
       manualPriceOverride: quoteData.manual_price_override,
