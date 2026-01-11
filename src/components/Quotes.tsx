@@ -43,7 +43,7 @@ import AirFreightPricingModal from './AirFreightPricingModal';
 import AgentFeePricingModal from './AgentFeePricingModal';
 
 const Quotes: React.FC = () => {
-  const { hasPermission } = useAuth();
+  const { hasPermission, user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState(() => {
     return localStorage.getItem('quotes_status_filter') || 'sent';
@@ -212,6 +212,11 @@ const Quotes: React.FC = () => {
   };
 
   const handleConvertToOrder = async (quote: Quote) => {
+    if (!user) {
+      alert('You must be logged in to convert quotes to orders.');
+      return;
+    }
+
     if (quote.status !== 'accepted') {
       alert('Only accepted quotes can be converted to orders.');
       return;
@@ -220,7 +225,7 @@ const Quotes: React.FC = () => {
     const confirmed = window.confirm(
       `Convert quote ${quote.quoteNumber} to an order?\n\nThis will create a new order with all the quote items and mark the quote as converted.`
     );
-    
+
     if (!confirmed) return;
 
     setIsConverting(quote.id);
@@ -272,7 +277,7 @@ const Quotes: React.FC = () => {
         order_date: new Date().toISOString().split('T')[0],
         expected_delivery: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 14 days from now
         notes: `Converted from quote ${quote.quoteNumber}. Customer: ${quote.customer.name}`,
-        created_by: quote.createdBy,
+        created_by: user?.id,
         shipping_data: {
           convertedFromQuote: true,
           originalQuoteId: quote.id,
