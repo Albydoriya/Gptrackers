@@ -616,7 +616,7 @@ const Quotes: React.FC = () => {
                   
                   <div className="text-right">
                     <div className="flex items-center space-x-2 mb-2">
-                      <button 
+                      <button
                         onClick={() => handleViewQuote(quote)}
                         className="flex items-center space-x-1 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors text-sm"
                       >
@@ -624,7 +624,7 @@ const Quotes: React.FC = () => {
                         <span>View</span>
                       </button>
                       {hasPermission('quotes', 'update') && (
-                        <button 
+                        <button
                           onClick={() => handleEditQuote(quote)}
                           disabled={isCurrentQuoteConverting}
                           className="flex items-center space-x-1 px-3 py-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors text-sm"
@@ -634,7 +634,7 @@ const Quotes: React.FC = () => {
                         </button>
                       )}
                       {hasPermission('quotes', 'update') && (
-                        <button 
+                        <button
                           onClick={() => handleStatusUpdateClick(quote)}
                           disabled={isCurrentQuoteConverting}
                           className="flex items-center space-x-1 px-3 py-1 bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-900/50 transition-colors text-sm"
@@ -644,11 +644,11 @@ const Quotes: React.FC = () => {
                         </button>
                       )}
                       {hasPermission('quotes', 'convert') && quote.status === 'accepted' && (
-                        <button 
+                        <button
                           onClick={() => handleConvertToOrder(quote)}
                           disabled={isCurrentQuoteConverting}
                           className={`flex items-center space-x-1 px-3 py-1 rounded-lg text-sm transition-colors ${
-                            isCurrentQuoteConverting 
+                            isCurrentQuoteConverting
                               ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                               : 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/50'
                           }`}
@@ -671,18 +671,34 @@ const Quotes: React.FC = () => {
                       ${quote.grandTotalAmount.toLocaleString()}
                     </div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">Total Amount</div>
-                    {quote.convertedToOrderNumber && (
-                      <div className="mt-2 flex items-center space-x-1 text-xs">
-                        <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium">
-                          <ShoppingCart className="h-3 w-3" />
-                          <span>{quote.convertedToOrderNumber}</span>
-                          <ExternalLink className="h-3 w-3" />
-                        </span>
-                      </div>
-                    )}
                   </div>
                 </div>
-                
+
+                {/* Order Reference - Only show if quote was converted to order */}
+                {quote.convertedToOrderNumber && (
+                  <div className="mb-4">
+                    <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <ShoppingCart className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                          <div>
+                            <h4 className="font-medium text-purple-900 dark:text-purple-100">Converted to Order</h4>
+                            <p className="text-sm text-purple-700 dark:text-purple-300">
+                              This quote has been successfully converted to an order.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2 px-3 py-2 bg-purple-100 dark:bg-purple-900/40 rounded-lg">
+                          <span className="text-sm font-semibold text-purple-900 dark:text-purple-100">
+                            {quote.convertedToOrderNumber}
+                          </span>
+                          <ExternalLink className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Customer Information */}
                   <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
