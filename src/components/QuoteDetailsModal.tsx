@@ -21,7 +21,10 @@ import {
   Receipt,
   Truck,
   Globe,
-  ExternalLink
+  ExternalLink,
+  Weight,
+  Plane,
+  Calculator
 } from 'lucide-react';
 import { Quote } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -260,133 +263,241 @@ const QuoteDetailsModal: React.FC<QuoteDetailsModalProps> = ({
               </div>
             </div>
 
-            {/* Cost Breakdown */}
+            {/* Quote Details & Costs - Using same layout as Create Quote */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
                 <DollarSign className="h-5 w-5 mr-2 text-purple-600 dark:text-purple-400" />
-                Cost Breakdown
+                Quote Details & Costs
               </h3>
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600 dark:text-gray-400">Bid Items Total:</span>
-                      <span className="font-medium text-gray-900 dark:text-gray-100">${quote.totalBidItemsCost.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600 dark:text-gray-400">Shipping ({quote.shippingCosts.selected}):</span>
-                      <span className="font-medium text-gray-900 dark:text-gray-100">
-                        ${(quote.shippingCosts.selected === 'sea' ? quote.shippingCosts.sea : quote.shippingCosts.air).toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600 dark:text-gray-400">Agent Fees:</span>
-                      <span className="font-medium text-gray-900 dark:text-gray-100">${quote.agentFees.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600 dark:text-gray-400">Local Shipping:</span>
-                      <span className="font-medium text-gray-900 dark:text-gray-100">${quote.localShippingFees.toFixed(2)}</span>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600 dark:text-gray-400">Subtotal:</span>
-                      <span className="font-medium text-gray-900 dark:text-gray-100">${quote.subtotalAmount.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600 dark:text-gray-400">GST (10%):</span>
-                      <span className="font-medium text-gray-900 dark:text-gray-100">${quote.gstAmount.toFixed(2)}</span>
-                    </div>
-                    <div className="border-t border-gray-300 dark:border-gray-500 pt-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">Grand Total:</span>
-                        <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">${quote.grandTotalAmount.toFixed(2)}</span>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Shipping & Costs */}
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                      <Truck className="h-4 w-4 mr-2 text-orange-600 dark:text-orange-400" />
+                      Shipping Options
+                    </h4>
+
+                    {/* Price List Information */}
+                    {quote.seaFreightPriceListId && quote.priceListSnapshot && (
+                      <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <Truck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                              <h4 className="font-medium text-gray-900 dark:text-gray-100">Price List Applied</h4>
+                              {quote.manualPriceOverride && (
+                                <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-xs rounded">
+                                  Manually Adjusted
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{quote.priceListSnapshot.itemName}</p>
+                            <div className="grid grid-cols-2 gap-3 text-xs">
+                              <div>
+                                <span className="text-gray-500 dark:text-gray-400">Category:</span>
+                                <p className="font-medium text-gray-900 dark:text-gray-100">{quote.priceListSnapshot.category}</p>
+                              </div>
+                              <div>
+                                <span className="text-gray-500 dark:text-gray-400">Shipping Type:</span>
+                                <p className="font-medium text-gray-900 dark:text-gray-100">{quote.priceListSnapshot.shippingType}</p>
+                              </div>
+                              <div>
+                                <span className="text-gray-500 dark:text-gray-400">List Price:</span>
+                                <p className="font-medium text-green-600 dark:text-green-400">${quote.priceListSnapshot.customerPrice.toFixed(2)}</p>
+                              </div>
+                              <div>
+                                <span className="text-gray-500 dark:text-gray-400">Applied:</span>
+                                <p className="font-medium text-gray-900 dark:text-gray-100">
+                                  {quote.priceListAppliedAt ? new Date(quote.priceListAppliedAt).toLocaleDateString() : 'N/A'}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+                    )}
 
-            {/* Shipping Options Comparison */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-                <Truck className="h-5 w-5 mr-2 text-orange-600 dark:text-orange-400" />
-                Shipping Options
-              </h3>
-
-              {/* Price List Information */}
-              {quote.seaFreightPriceListId && quote.priceListSnapshot && (
-                <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <Ship className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                        <h4 className="font-medium text-gray-900 dark:text-gray-100">Price List Applied</h4>
-                        {quote.manualPriceOverride && (
-                          <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-xs rounded">
-                            Manually Adjusted
+                    {/* Sea Freight Section */}
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+                      <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+                        <Truck className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
+                        Sea Freight
+                      </h5>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">
+                            Cost
+                          </label>
+                          <div className="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md">
+                            <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                              ${quote.shippingCosts.sea.toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-end">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 pb-2">20-30 days delivery</p>
+                        </div>
+                      </div>
+                      {quote.shippingCosts.selected === 'sea' && (
+                        <div className="mt-2">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                            Selected for this quote
                           </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Air Freight Section */}
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+                      <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 flex items-center">
+                        <Plane className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
+                        Air Freight
+                      </h5>
+                      <div>
+                        <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">
+                          Cost
+                        </label>
+                        <div className="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md">
+                          <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                            ${quote.shippingCosts.air.toFixed(2)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                          5-7 days delivery
+                        </p>
+                        {quote.shippingCosts.selected === 'air' && (
+                          <div className="mt-2">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                              Selected for this quote
+                            </span>
+                          </div>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{quote.priceListSnapshot.itemName}</p>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                        <div>
-                          <span className="text-gray-500 dark:text-gray-400">Category:</span>
-                          <p className="font-medium text-gray-900 dark:text-gray-100">{quote.priceListSnapshot.category}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Basic Quote Information */}
+                <div className="space-y-6">
+                  {/* Additional Fees Section */}
+                  <div>
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                      <Calculator className="h-4 w-4 mr-2 text-green-600 dark:text-green-400" />
+                      Additional Fees
+                    </h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Japan Agent Fees</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">${quote.agentFees.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Local Japan Shipping Fees</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">${quote.localShippingFees.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Total Chargeable Weight Section */}
+                  {quote.parts.length > 0 && (() => {
+                    const totalWeight = quote.parts.reduce((total, quotePart) => {
+                      const weight = quotePart.part?.chargeableWeightKg || 0;
+                      return total + (weight * quotePart.quantity);
+                    }, 0);
+                    return totalWeight > 0 ? (
+                      <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                          <Weight className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
+                          Total Chargeable Weight
+                        </h4>
+                        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                              Total Weight:
+                            </span>
+                            <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                              {totalWeight.toFixed(3)} kg
+                            </span>
+                          </div>
                         </div>
-                        <div>
-                          <span className="text-gray-500 dark:text-gray-400">Shipping Type:</span>
-                          <p className="font-medium text-gray-900 dark:text-gray-100">{quote.priceListSnapshot.shippingType}</p>
+                      </div>
+                    ) : null;
+                  })()}
+
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                      <FileText className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
+                      Quote Information
+                    </h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Quote Number:</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">{quote.quoteNumber}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Quote Date:</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">
+                          {new Date(quote.quoteDate).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Expiry Date:</span>
+                        <span className={`font-medium ${
+                          isQuoteExpired() ? 'text-orange-600 dark:text-orange-400' : 'text-gray-900 dark:text-gray-100'
+                        }`}>
+                          {new Date(quote.expiryDate).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Created By:</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">{quote.createdBy}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Cost Summary */}
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Cost Summary</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Parts:</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">${quote.totalBidItemsCost.toFixed(2)}</span>
                         </div>
-                        <div>
-                          <span className="text-gray-500 dark:text-gray-400">List Price:</span>
-                          <p className="font-medium text-green-600 dark:text-green-400">${quote.priceListSnapshot.customerPrice.toFixed(2)}</p>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Shipping:</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">
+                            ${(quote.shippingCosts.selected === 'sea' ? quote.shippingCosts.sea : quote.shippingCosts.air).toFixed(2)}
+                          </span>
                         </div>
-                        <div>
-                          <span className="text-gray-500 dark:text-gray-400">Applied:</span>
-                          <p className="font-medium text-gray-900 dark:text-gray-100">
-                            {quote.priceListAppliedAt ? new Date(quote.priceListAppliedAt).toLocaleDateString() : 'N/A'}
-                          </p>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Agent Fees:</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">${quote.agentFees.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Local Shipping:</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">${quote.localShippingFees.toFixed(2)}</span>
+                        </div>
+                        <div className="border-t border-blue-200 dark:border-blue-700 pt-2 mt-2">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">Subtotal:</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">${quote.subtotalAmount.toFixed(2)}</span>
+                          </div>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">GST (10%):</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">${quote.gstAmount.toFixed(2)}</span>
+                        </div>
+                        <div className="border-t-2 border-blue-300 dark:border-blue-600 pt-2 mt-2">
+                          <div className="flex justify-between items-center">
+                            <span className="font-semibold text-gray-900 dark:text-gray-100">Grand Total:</span>
+                            <span className="text-xl font-bold text-blue-600 dark:text-blue-400">${quote.grandTotalAmount.toFixed(2)}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className={`p-4 rounded-lg border-2 ${
-                  quote.shippingCosts.selected === 'sea' 
-                    ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20' 
-                    : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700'
-                }`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100">Sea Freight</h4>
-                    {quote.shippingCosts.selected === 'sea' && (
-                      <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-2 py-1 rounded">
-                        Selected
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">${quote.shippingCosts.sea.toFixed(2)}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">20-30 days delivery</p>
-                </div>
-                <div className={`p-4 rounded-lg border-2 ${
-                  quote.shippingCosts.selected === 'air' 
-                    ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20' 
-                    : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700'
-                }`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100">Air Freight</h4>
-                    {quote.shippingCosts.selected === 'air' && (
-                      <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-2 py-1 rounded">
-                        Selected
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">${quote.shippingCosts.air.toFixed(2)}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">5-7 days delivery</p>
                 </div>
               </div>
             </div>

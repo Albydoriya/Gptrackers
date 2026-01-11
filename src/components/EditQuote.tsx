@@ -840,118 +840,86 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
           {currentStep === 3 && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Quote Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Quote Number
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.quoteNumber}
-                        onChange={(e) => setFormData(prev => ({ ...prev, quoteNumber: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Expiry Date
-                      </label>
-                      <input
-                        type="date"
-                        value={formData.expiryDate}
-                        onChange={(e) => setFormData(prev => ({ ...prev, expiryDate: e.target.value }))}
-                        min={new Date().toISOString().split('T')[0]}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      />
-                    </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Quote Details & Costs</h3>
 
-                    {/* Price List Selector */}
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Sea Freight Pricing
-                      </label>
-                      <PriceListSelector
-                        onSelect={handlePriceListSelect}
-                        onClear={handlePriceListClear}
-                        selectedItemId={formData.seaFreightPriceListId}
-                      />
-                      {formData.manualPriceOverride && (
-                        <div className="mt-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                          <div className="flex items-center space-x-2">
-                            <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                            <span className="text-sm text-amber-800 dark:text-amber-300">
-                              Manual adjustments made to price list values
-                            </span>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Shipping & Costs */}
+                  <div className="space-y-6">
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                        <Truck className="h-4 w-4 mr-2 text-orange-600 dark:text-orange-400" />
+                        Shipping Options
+                      </h4>
+
+                      {/* Price List Selector */}
+                      <div className="mb-6">
+                        <PriceListSelector
+                          onSelect={handlePriceListSelect}
+                          onClear={handlePriceListClear}
+                          selectedItemId={formData.seaFreightPriceListId}
+                        />
+                        {formData.manualPriceOverride && (
+                          <div className="mt-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                            <div className="flex items-center space-x-2">
+                              <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                              <span className="text-sm text-amber-800 dark:text-amber-300">
+                                Manual adjustments made to price list values
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Sea Freight Section */}
+                      <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+                        <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+                          <Truck className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
+                          Sea Freight
+                        </h5>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">
+                              Cost
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={formData.shippingCosts.sea || ''}
+                              onChange={(e) => {
+                                handleManualShippingChange();
+                                setFormData(prev => ({
+                                  ...prev,
+                                  shippingCosts: {
+                                    ...prev.shippingCosts,
+                                    sea: parseFloat(e.target.value) || 0
+                                  }
+                                }));
+                              }}
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                              placeholder="0.00"
+                            />
+                          </div>
+                          <div className="flex items-end">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 pb-2">20-30 days delivery</p>
                           </div>
                         </div>
-                      )}
-                    </div>
+                      </div>
 
-                    {/* Shipping Options */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Shipping Method
-                      </label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div
-                          onClick={() => setFormData(prev => ({ 
-                            ...prev, 
-                            shippingCosts: { ...prev.shippingCosts, selected: 'sea' }
-                          }))}
-                          className={`p-3 border-2 rounded-lg cursor-pointer transition-colors ${
-                            formData.shippingCosts.selected === 'sea'
-                              ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                              : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
-                          }`}
-                        >
-                          <div className="flex items-center space-x-2 mb-1">
-                            <Truck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                            <span className="font-medium text-gray-900 dark:text-gray-100">Sea Freight</span>
-                          </div>
+                      {/* Air Freight Section */}
+                      <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+                        <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 flex items-center">
+                          <Plane className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
+                          Air Freight
+                        </h5>
+                        <div>
+                          <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">
+                            Cost
+                          </label>
                           <input
                             type="number"
                             step="0.01"
-                            value={formData.shippingCosts.sea}
+                            value={formData.shippingCosts.air || ''}
                             onChange={(e) => {
-                              e.stopPropagation();
-                              handleManualShippingChange();
-                              setFormData(prev => ({
-                                ...prev,
-                                shippingCosts: {
-                                  ...prev.shippingCosts,
-                                  sea: parseFloat(e.target.value) || 0
-                                }
-                              }));
-                            }}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100"
-                            placeholder="Sea freight cost"
-                          />
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">20-30 days</p>
-                        </div>
-                        <div
-                          onClick={() => setFormData(prev => ({ 
-                            ...prev, 
-                            shippingCosts: { ...prev.shippingCosts, selected: 'air' }
-                          }))}
-                          className={`p-3 border-2 rounded-lg cursor-pointer transition-colors ${
-                            formData.shippingCosts.selected === 'air'
-                              ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                              : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
-                          }`}
-                        >
-                          <div className="flex items-center space-x-2 mb-1">
-                            <Globe className="h-4 w-4 text-green-600 dark:text-green-400" />
-                            <span className="font-medium text-gray-900 dark:text-gray-100">Air Freight</span>
-                          </div>
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={formData.shippingCosts.air}
-                            onChange={(e) => {
-                              e.stopPropagation();
                               handleManualShippingChange();
                               setFormData(prev => ({
                                 ...prev,
@@ -961,56 +929,126 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
                                 }
                               }));
                             }}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100"
-                            placeholder="Air freight cost"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            placeholder="0.00"
                           />
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">5-7 days</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                            5-7 days delivery
+                          </p>
                         </div>
-                      </div>
-                    </div>
-
-                    {/* Additional Fees */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Agent Fees
-                        </label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={formData.agentFees}
-                          onChange={(e) => setFormData(prev => ({ ...prev, agentFees: parseFloat(e.target.value) || 0 }))}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                          placeholder="0.00"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Local Shipping Fees
-                        </label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={formData.localShippingFees}
-                          onChange={(e) => setFormData(prev => ({ ...prev, localShippingFees: parseFloat(e.target.value) || 0 }))}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                          placeholder="0.00"
-                        />
                       </div>
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Notes & Special Instructions
-                    </label>
-                    <textarea
-                      value={formData.notes}
-                      onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                      rows={8}
-                      placeholder="Add any special instructions, terms, or notes for the customer..."
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                    />
+                  {/* Basic Quote Information */}
+                  <div className="space-y-6">
+                    {/* Additional Fees Section */}
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                        <Calculator className="h-4 w-4 mr-2 text-green-600 dark:text-green-400" />
+                        Additional Fees
+                      </h4>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Japan Agent Fees
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={formData.agentFees || ''}
+                            onChange={(e) => setFormData(prev => ({ ...prev, agentFees: parseFloat(e.target.value) || 0 }))}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            placeholder="0.00"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Local Japan Shipping Fees
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={formData.localShippingFees || ''}
+                            onChange={(e) => setFormData(prev => ({ ...prev, localShippingFees: parseFloat(e.target.value) || 0 }))}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            placeholder="0.00"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Total Chargeable Weight Section */}
+                    {formData.parts.length > 0 && (
+                      <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                          <Weight className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
+                          Total Chargeable Weight
+                        </h4>
+                        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                              Total Weight:
+                            </span>
+                            <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                              {calculateTotalChargeableWeight().toFixed(3)} kg
+                            </span>
+                          </div>
+                          {formData.parts.some(p => !p.part?.chargeableWeightKg) && (
+                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 flex items-center">
+                              <AlertCircle className="h-3 w-3 mr-1" />
+                              Some parts are missing weight information
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                        <FileText className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
+                        Quote Information
+                      </h4>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Quote Number
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.quoteNumber}
+                            onChange={(e) => setFormData(prev => ({ ...prev, quoteNumber: e.target.value }))}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Quote Expiry Date *
+                          </label>
+                          <input
+                            type="date"
+                            value={formData.expiryDate}
+                            onChange={(e) => setFormData(prev => ({ ...prev, expiryDate: e.target.value }))}
+                            min={new Date().toISOString().split('T')[0]}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Notes & Terms
+                          </label>
+                          <textarea
+                            value={formData.notes}
+                            onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                            rows={4}
+                            placeholder="Add any special terms, conditions, or notes for the customer..."
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
