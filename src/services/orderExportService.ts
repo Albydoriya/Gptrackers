@@ -98,13 +98,18 @@ export async function updateOrderStatus(
   orderId: string,
   newStatus: 'draft' | 'supplier_quoting' | 'pending_customer_approval' | 'approved' | 'ordered' | 'in_transit' | 'delivered' | 'cancelled'
 ): Promise<void> {
-  const { error } = await supabase
-    .from('orders')
-    .update({ status: newStatus })
-    .eq('id', orderId);
+  const { data, error } = await supabase
+    .rpc('update_order_status_rpc', {
+      p_order_id: orderId,
+      p_new_status: newStatus
+    });
 
   if (error) {
     console.error('Failed to update order status:', error);
     throw new Error('Failed to update order status');
+  }
+
+  if (!data) {
+    throw new Error('Order not found or update failed');
   }
 }
