@@ -96,7 +96,7 @@ export async function logExportHistory(
 
 export async function updateOrderStatus(
   orderId: string,
-  newStatus: string
+  newStatus: 'draft' | 'supplier_quoting' | 'pending_customer_approval' | 'approved' | 'ordered' | 'in_transit' | 'delivered' | 'cancelled'
 ): Promise<void> {
   const { error } = await supabase
     .from('orders')
