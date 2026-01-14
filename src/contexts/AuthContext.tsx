@@ -295,7 +295,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
       } catch (authChangeError) {
         console.error('Error handling auth state change:', authChangeError);
-        // Clear auth data on any auth change error
+
+        // Check if this is an authorization error (user not allowed)
+        if (authChangeError instanceof Error && authChangeError.message.includes('Access denied')) {
+          // Don't reload the page for authorization errors - let the user see the error
+          clearAuthStorage();
+          setUser(null);
+          setIsLoading(false);
+          // Store the error message for the login page to display
+          sessionStorage.setItem('auth_error', authChangeError.message);
+          return;
+        }
+
+        // For other errors, clear auth data and reload
         clearAuthStorage();
         setUser(null);
         setIsLoading(false);
@@ -310,7 +322,40 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const createUserFromSession = async (supabaseUser: SupabaseUser) => {
     try {
       console.log('Starting createUserFromSession for user:', supabaseUser.id);
-      
+
+      // Check if this is an OAuth user (Google sign-in)
+      const isOAuthUser = supabaseUser.app_metadata?.provider && supabaseUser.app_metadata.provider !== 'email';
+
+      // For OAuth users, verify they're in the allowed_users list
+      if (isOAuthUser && supabaseUser.email) {
+        console.log('OAuth user detected, verifying against allowed_users list...');
+
+        const { data: allowedUser, error: allowedError } = await supabase
+          .from('allowed_users')
+          .select('email')
+          .eq('email', supabaseUser.email)
+          .maybeSingle();
+
+        if (allowedError) {
+          console.warn('Error checking allowed_users:', allowedError);
+        }
+
+        if (!allowedUser) {
+          console.warn('User not in allowed_users list:', supabaseUser.email);
+
+          // Sign out the unauthorized user
+          clearAuthStorage();
+          await supabase.auth.signOut();
+          setUser(null);
+          setIsLoading(false);
+
+          // Throw a user-friendly error
+          throw new Error(`Access denied: Your email address (${supabaseUser.email}) is not authorized to access this system. Please contact your administrator to request access.`);
+        }
+
+        console.log('User verified in allowed_users list');
+      }
+
       // Try to get existing user profile with timeout
       console.log('Attempting to fetch user profile from database...');
       const profileResult = await Promise.race([
@@ -324,11 +369,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setTimeout(() => resolve({ type: 'timeout', data: null, error: { message: 'Network timeout while fetching user profile. Please check your connection and try again.' } }), 30000)
         )
       ]) as any;
-      
-      const { data: profile, error: profileError } = profileResult.type === 'timeout' 
+
+      const { data: profile, error: profileError } = profileResult.type === 'timeout'
         ? { data: null, error: profileResult.error }
         : profileResult;
-      
+
       console.log('Profile fetch completed. Error:', profileError, 'Data exists:', !!profile, 'Timeout:', profileResult.type === 'timeout');
 
       let userRole: UserRole;

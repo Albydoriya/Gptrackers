@@ -24,13 +24,22 @@ const LoginPage: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
     fullName: ''
   });
+
+  // Check for auth errors from OAuth flow
+  React.useEffect(() => {
+    const authError = sessionStorage.getItem('auth_error');
+    if (authError) {
+      setError(authError);
+      sessionStorage.removeItem('auth_error');
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -173,13 +182,22 @@ const LoginPage: React.FC = () => {
               </div>
 
               {error && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
-                  <AlertCircle className="h-4 w-4 text-red-600" />
-                  <span className="text-sm text-red-700">
-                    {error === 'Invalid login credentials' 
-                      ? 'Incorrect email or password. Please try again.' 
-                      : error}
-                  </span>
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-start space-x-2">
+                    <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm text-red-700 font-medium">
+                        {error === 'Invalid login credentials'
+                          ? 'Incorrect email or password. Please try again.'
+                          : error}
+                      </p>
+                      {error.includes('Access denied') && (
+                        <p className="text-xs text-red-600 mt-2">
+                          Only pre-approved users can sign in with Google. If you need access, please contact your system administrator.
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
 
