@@ -17,7 +17,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Part } from '../types';
+import { Part, PartCategory } from '../types';
+import { getAllCategories } from '../services/categoriesService';
 
 interface EditPartProps {
   isOpen: boolean;
@@ -52,11 +53,13 @@ interface PartFormData {
 
 const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, part }) => {
   const { user } = useAuth();
+  const [categories, setCategories] = useState<PartCategory[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
   const [formData, setFormData] = useState<PartFormData>({
     partNumber: '',
     name: '',
     description: '',
-    category: 'Electronics',
+    category: 'Uncategorized',
     currentStock: 0,
     minStock: 0,
     specifications: {},
@@ -78,19 +81,6 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'basic' | 'pricing' | 'history'>('basic');
 
-  const categories = [
-    'Electronics',
-    'Memory',
-    'Storage',
-    'Processors',
-    'Networking',
-    'Cables',
-    'Tools',
-    'Hardware',
-    'Software',
-    'Other'
-  ];
-
   const priceUpdateReasons = [
     'Market Price Change',
     'New Supplier Quote',
@@ -100,6 +90,24 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
     'Cost Adjustment',
     'Other'
   ];
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoadingCategories(true);
+        const fetchedCategories = await getAllCategories();
+        setCategories(fetchedCategories);
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchCategories();
+    }
+  }, [isOpen]);
 
   // Initialize form data when part changes
   useEffect(() => {
@@ -435,11 +443,16 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
                     <select
                       value={formData.category}
                       onChange={(e) => handleInputChange('category', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      disabled={loadingCategories}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-50"
                     >
-                      {categories.map(category => (
-                        <option key={category} value={category}>{category}</option>
-                      ))}
+                      {loadingCategories ? (
+                        <option>Loading categories...</option>
+                      ) : (
+                        categories.map(cat => (
+                          <option key={cat.id} value={cat.name}>{cat.name}</option>
+                        ))
+                      )}
                     </select>
                   </div>
 

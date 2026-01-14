@@ -14,6 +14,7 @@ import Analytics from './components/Analytics';
 import StatusTracker from './components/StatusTracker';
 import UserManagement from './components/UserManagement';
 import Quotes from './components/Quotes';
+import CategoryManagement from './components/CategoryManagement';
 import { ExchangeRateFooter } from './components/ExchangeRateFooter';
 
 const AppContent: React.FC = () => {
@@ -125,6 +126,12 @@ const AppContent: React.FC = () => {
         return (
           <ProtectedRoute requiredPermission={{ resource: 'parts', action: 'read' }}>
             <Parts />
+          </ProtectedRoute>
+        );
+      case 'categories':
+        return (
+          <ProtectedRoute requiredPermission={{ resource: 'parts', action: 'create' }}>
+            <CategoryManagement />
           </ProtectedRoute>
         );
       case 'suppliers':

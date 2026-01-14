@@ -308,3 +308,17 @@ export interface AgentFeeHistory {
   changeReason?: string;
   changedAt: string;
 }
+
+export interface PartCategory {
+  id: string;
+  name: string;
+  description?: string;
+  displayOrder: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CategoryWithCount extends PartCategory {
+  partCount?: number;
+}
