@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Package,
@@ -52,7 +52,7 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
     partNumber: '',
     name: '',
     description: '',
-    category: 'Electronics',
+    category: '',
     currentStock: 0,
     minStock: 0,
     specifications: {},
@@ -76,19 +76,40 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
 
-  const categories = [
-    'Electronics',
-    'Memory',
-    'Storage',
-    'Processors',
-    'Networking',
-    'Cables',
-    'Tools',
-    'Hardware',
-    'Software',
-    'Other'
-  ];
+  useEffect(() => {
+    if (isOpen) {
+      fetchCategories();
+    }
+  }, [isOpen]);
+
+  const fetchCategories = async () => {
+    setIsLoadingCategories(true);
+    try {
+      const { data, error } = await supabase
+        .from('part_categories')
+        .select('name')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+
+      const categoryNames = (data || []).map(cat => cat.name);
+      setCategories(categoryNames);
+
+      if (categoryNames.length > 0 && !formData.category) {
+        setFormData(prev => ({ ...prev, category: categoryNames[0] }));
+      }
+    } catch (err: any) {
+      console.error('Error fetching categories:', err);
+      setCategories(['Uncategorized']);
+      setFormData(prev => ({ ...prev, category: 'Uncategorized' }));
+    } finally {
+      setIsLoadingCategories(false);
+    }
+  };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -235,7 +256,7 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
         partNumber: '',
         name: '',
         description: '',
-        category: 'Electronics',
+        category: categories[0] || '',
         currentStock: 0,
         minStock: 0,
         specifications: {},

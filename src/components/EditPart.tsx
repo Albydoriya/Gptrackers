@@ -77,19 +77,35 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'basic' | 'pricing' | 'history'>('basic');
+  const [categories, setCategories] = useState<string[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
 
-  const categories = [
-    'Electronics',
-    'Memory',
-    'Storage',
-    'Processors',
-    'Networking',
-    'Cables',
-    'Tools',
-    'Hardware',
-    'Software',
-    'Other'
-  ];
+  useEffect(() => {
+    if (isOpen) {
+      fetchCategories();
+    }
+  }, [isOpen]);
+
+  const fetchCategories = async () => {
+    setIsLoadingCategories(true);
+    try {
+      const { data, error } = await supabase
+        .from('part_categories')
+        .select('name')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+
+      const categoryNames = (data || []).map(cat => cat.name);
+      setCategories(categoryNames);
+    } catch (err: any) {
+      console.error('Error fetching categories:', err);
+      setCategories(['Uncategorized']);
+    } finally {
+      setIsLoadingCategories(false);
+    }
+  };
 
   const priceUpdateReasons = [
     'Market Price Change',

@@ -12,7 +12,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  BarChart3
+  BarChart3,
+  FolderOpen
 } from 'lucide-react';
 import { Part } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -20,12 +21,17 @@ import { supabase } from '../lib/supabase';
 import { partsService, CategoryWithCount } from '../services/partsService';
 import AddPart from './AddPart';
 import EditPart from './EditPart';
+import Categories from './Categories';
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100];
 const DEFAULT_PAGE_SIZE = 50;
 
 function Parts() {
   const { hasPermission } = useAuth();
+
+  const [activeSubTab, setActiveSubTab] = useState(() => {
+    return localStorage.getItem('parts_active_sub_tab') || 'parts-list';
+  });
 
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -131,6 +137,10 @@ function Parts() {
     localStorage.setItem('parts_sort_order', sortOrder);
   }, [sortBy, sortOrder]);
 
+  useEffect(() => {
+    localStorage.setItem('parts_active_sub_tab', activeSubTab);
+  }, [activeSubTab]);
+
   const handlePartAdded = () => {
     fetchParts();
     fetchCategories();
@@ -216,8 +226,43 @@ function Parts() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900">Parts Catalog</h1>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="border-b border-gray-200">
+          <nav className="flex space-x-1 p-2">
+            <button
+              onClick={() => setActiveSubTab('parts-list')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeSubTab === 'parts-list'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
+            >
+              <Package className="h-4 w-4" />
+              <span>Parts List</span>
+            </button>
+            <button
+              onClick={() => setActiveSubTab('category-management')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeSubTab === 'category-management'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
+            >
+              <FolderOpen className="h-4 w-4" />
+              <span>Category Management</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      {activeSubTab === 'parts-list' && (
+        <>
+      <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-bold text-gray-900">Parts Catalog</h1>
+          <h2 className="text-xl font-semibold text-gray-900">Manage Parts</h2>
           <button
             onClick={() => {
               fetchParts();
@@ -750,6 +795,13 @@ function Parts() {
             </div>
           </div>
         </div>
+      )}
+
+        </>
+      )}
+
+      {activeSubTab === 'category-management' && (
+        <Categories onRefresh={fetchCategories} />
       )}
 
       <AddPart
