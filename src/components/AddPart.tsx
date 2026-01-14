@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   X,
   Package,
@@ -13,10 +13,9 @@ import {
   Weight,
   Ruler
 } from 'lucide-react';
-import { Part, PartCategory } from '../types';
+import { Part } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { getAllCategories } from '../services/categoriesService';
 
 interface AddPartProps {
   isOpen: boolean;
@@ -49,13 +48,11 @@ interface PartFormData {
 
 const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
   const { user } = useAuth();
-  const [categories, setCategories] = useState<PartCategory[]>([]);
-  const [loadingCategories, setLoadingCategories] = useState(true);
   const [formData, setFormData] = useState<PartFormData>({
     partNumber: '',
     name: '',
     description: '',
-    category: 'Uncategorized',
+    category: 'Electronics',
     currentStock: 0,
     minStock: 0,
     specifications: {},
@@ -80,23 +77,18 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        setLoadingCategories(true);
-        const fetchedCategories = await getAllCategories();
-        setCategories(fetchedCategories);
-      } catch (err) {
-        console.error('Error fetching categories:', err);
-      } finally {
-        setLoadingCategories(false);
-      }
-    };
-
-    if (isOpen) {
-      fetchCategories();
-    }
-  }, [isOpen]);
+  const categories = [
+    'Electronics',
+    'Memory',
+    'Storage',
+    'Processors',
+    'Networking',
+    'Cables',
+    'Tools',
+    'Hardware',
+    'Software',
+    'Other'
+  ];
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -243,7 +235,7 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
         partNumber: '',
         name: '',
         description: '',
-        category: 'Uncategorized',
+        category: 'Electronics',
         currentStock: 0,
         minStock: 0,
         specifications: {},
@@ -350,16 +342,11 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
                   <select
                     value={formData.category}
                     onChange={(e) => handleInputChange('category', e.target.value)}
-                    disabled={loadingCategories}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    {loadingCategories ? (
-                      <option>Loading categories...</option>
-                    ) : (
-                      categories.map(cat => (
-                        <option key={cat.id} value={cat.name}>{cat.name}</option>
-                      ))
-                    )}
+                    {categories.map(category => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
                   </select>
                 </div>
 

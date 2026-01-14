@@ -1,6 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { Part, CategoryWithCount } from '../types';
-import { getCategoriesWithCount } from './categoriesService';
+import { Part } from '../types';
 
 export interface SearchPartsOptions {
   searchTerm?: string;
@@ -16,6 +15,11 @@ export interface SearchPartsResult {
   totalCount: number;
   hasMore: boolean;
   queryTime?: number;
+}
+
+export interface CategoryWithCount {
+  category: string;
+  count: number;
 }
 
 export const partsService = {
@@ -127,7 +131,22 @@ export const partsService = {
 
   async getCategories(): Promise<CategoryWithCount[]> {
     try {
-      return await getCategoriesWithCount();
+      const { data, error } = await supabase
+        .from('parts')
+        .select('category')
+        .eq('is_archived', false);
+
+      if (error) throw error;
+
+      const categoryCounts = (data || []).reduce((acc, row) => {
+        const category = row.category || 'Uncategorized';
+        acc[category] = (acc[category] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      return Object.entries(categoryCounts)
+        .map(([category, count]) => ({ category, count }))
+        .sort((a, b) => b.count - a.count);
     } catch (error: any) {
       console.error('Error fetching categories:', error);
       throw new Error(error.message || 'Failed to fetch categories');

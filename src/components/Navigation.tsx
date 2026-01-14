@@ -1,16 +1,15 @@
 import React from 'react';
 import { useState } from 'react';
-import {
-  Home,
-  ShoppingCart,
-  Package,
+import { 
+  Home, 
+  ShoppingCart, 
+  Package, 
   Users,
-  UserCheck,
-  TrendingUp,
+  UserCheck, 
+  TrendingUp, 
   Truck,
   Bell,
-  FileText,
-  Layers
+  FileText
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import UserProfile from './UserProfile';
@@ -43,7 +42,6 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
     { id: 'quotes', label: 'Quotes', icon: FileText, permission: { resource: 'quotes', action: 'read' } },
     { id: 'orders', label: 'Orders', icon: ShoppingCart, permission: { resource: 'orders', action: 'read' } },
     { id: 'parts', label: 'Parts Catalog', icon: Package, permission: { resource: 'parts', action: 'read' } },
-    { id: 'categories', label: 'Manage Categories', icon: Layers, permission: { resource: 'parts', action: 'create' } },
     { id: 'suppliers', label: 'Suppliers', icon: UserCheck, permission: { resource: 'suppliers', action: 'read' } },
     { id: 'analytics', label: 'Analytics', icon: TrendingUp, permission: { resource: 'analytics', action: 'read' } },
     { id: 'tracking', label: 'Status Tracking', icon: Truck, permission: { resource: 'orders', action: 'read' } },
