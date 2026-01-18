@@ -450,7 +450,7 @@ const LoginPage: React.FC = () => {
                   <p className="text-xs text-gray-600 text-center">
                     By signing in, you agree to our{' '}
                     <a
-                      href="https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/terms-of-service.html"
+                      href="https://albydoriya.github.io/goparts-policies/terms-of-service.html"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:text-blue-800 underline"
@@ -459,7 +459,7 @@ const LoginPage: React.FC = () => {
                     </a>{' '}
                     and{' '}
                     <a
-                      href="https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/privacy-policy.html"
+                      href="https://albydoriya.github.io/goparts-policies/privacy-policy.html"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:text-blue-800 underline"
@@ -478,7 +478,7 @@ const LoginPage: React.FC = () => {
         <div className="max-w-6xl mx-auto px-4 flex justify-center items-center space-x-6 text-xs text-gray-600">
           <span>&copy; 2026 GoParts. All rights reserved.</span>
           <a
-            href="https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/privacy-policy.html"
+            href="https://albydoriya.github.io/goparts-policies/privacy-policy.html"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-blue-600 transition-colors"
@@ -486,7 +486,7 @@ const LoginPage: React.FC = () => {
             Privacy Policy
           </a>
           <a
-            href="https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/terms-of-service.html"
+            href="https://albydoriya.github.io/goparts-policies/terms-of-service.html"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-blue-600 transition-colors"

@@ -58,34 +58,56 @@ export const ExchangeRateFooter: React.FC = () => {
   };
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-gray-50 to-gray-100 border-t border-gray-200 px-4 py-2 shadow-lg z-50">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <span className="text-sm font-medium text-gray-700">Exchange Rates:</span>
-          {renderRate(jpyRate.rate, jpyRate.trend)}
-          <div className="h-4 w-px bg-gray-300" />
-          {renderRate(usdRate.rate, usdRate.trend)}
-          <div className="h-4 w-px bg-gray-300" />
-          <div className="flex items-center space-x-2 text-xs text-gray-500">
-            <span>
-              Updated: {jpyRate.rate ? formatDate(jpyRate.rate.fetched_at) : 'N/A'}
-            </span>
-            <span className="text-gray-400">•</span>
-            <span className="text-gray-400 italic">
-              Auto-updates daily at 9:00 AM AEST
-            </span>
+    <footer className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-gray-50 to-gray-100 border-t border-gray-200 shadow-lg z-50">
+      <div className="max-w-7xl mx-auto px-4 py-2">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-3 lg:gap-4">
+            <span className="text-sm font-medium text-gray-700">Exchange Rates:</span>
+            {renderRate(jpyRate.rate, jpyRate.trend)}
+            <div className="hidden lg:block h-4 w-px bg-gray-300" />
+            {renderRate(usdRate.rate, usdRate.trend)}
+            <div className="hidden lg:block h-4 w-px bg-gray-300" />
+            <div className="flex items-center space-x-2 text-xs text-gray-500">
+              <span>
+                Updated: {jpyRate.rate ? formatDate(jpyRate.rate.fetched_at) : 'N/A'}
+              </span>
+              <span className="text-gray-400">•</span>
+              <span className="text-gray-400 italic">
+                Auto-updates daily at 9:00 AM AEST
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                jpyRate.refetch();
+                usdRate.refetch();
+              }}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+              title="Refresh rates"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="flex items-center space-x-4 text-xs text-gray-600">
+            <span className="text-gray-500">&copy; 2026 GoParts</span>
+            <a
+              href="https://albydoriya.github.io/goparts-policies/privacy-policy.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-blue-600 transition-colors"
+            >
+              Privacy Policy
+            </a>
+            <a
+              href="https://albydoriya.github.io/goparts-policies/terms-of-service.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-blue-600 transition-colors"
+            >
+              Terms of Service
+            </a>
           </div>
         </div>
-        <button
-          onClick={() => {
-            jpyRate.refetch();
-            usdRate.refetch();
-          }}
-          className="text-gray-400 hover:text-gray-600 transition-colors"
-          title="Refresh rates"
-        >
-          <RefreshCw className="w-3.5 h-3.5" />
-        </button>
       </div>
     </footer>
   );
