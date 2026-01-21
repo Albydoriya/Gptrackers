@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { APP_VERSION, VERSION_CONFIG, isMajorVersionChange, clearOutdatedClientData } from './config/appConfig';
@@ -15,6 +16,8 @@ import StatusTracker from './components/StatusTracker';
 import UserManagement from './components/UserManagement';
 import Quotes from './components/Quotes';
 import { ExchangeRateFooter } from './components/ExchangeRateFooter';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import TermsOfService from './components/TermsOfService';
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading, user, updateUserProfile } = useAuth();
@@ -184,9 +187,20 @@ const AppContent: React.FC = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <Router>
+      <Routes>
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
+        <Route
+          path="*"
+          element={
+            <AuthProvider>
+              <AppContent />
+            </AuthProvider>
+          }
+        />
+      </Routes>
+    </Router>
   );
 }
 
