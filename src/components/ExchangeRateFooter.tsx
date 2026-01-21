@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { TrendingUp, TrendingDown, Minus, RefreshCw } from 'lucide-react';
 import { useExchangeRate } from '../hooks/useExchangeRate';
 
@@ -90,22 +91,18 @@ export const ExchangeRateFooter: React.FC = () => {
 
           <div className="flex items-center space-x-4 text-xs text-gray-600">
             <span className="text-gray-500">&copy; 2026 GoParts</span>
-            <a
-              href="https://albydoriya.github.io/goparts-policies/privacy-policy.html"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              to="/privacy-policy"
               className="hover:text-blue-600 transition-colors"
             >
               Privacy Policy
-            </a>
-            <a
-              href="https://albydoriya.github.io/goparts-policies/terms-of-service.html"
-              target="_blank"
-              rel="noopener noreferrer"
+            </Link>
+            <Link
+              to="/terms-of-service"
               className="hover:text-blue-600 transition-colors"
             >
               Terms of Service
-            </a>
+            </Link>
           </div>
         </div>
       </div>

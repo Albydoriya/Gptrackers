@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Package,
   Shield,
@@ -449,23 +450,19 @@ const LoginPage: React.FC = () => {
                 <div className="mt-4 pt-4 border-t border-gray-200">
                   <p className="text-xs text-gray-600 text-center">
                     By signing in, you agree to our{' '}
-                    <a
-                      href="https://albydoriya.github.io/goparts-policies/terms-of-service.html"
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <Link
+                      to="/terms-of-service"
                       className="text-blue-600 hover:text-blue-800 underline"
                     >
                       Terms of Service
-                    </a>{' '}
+                    </Link>{' '}
                     and{' '}
-                    <a
-                      href="https://albydoriya.github.io/goparts-policies/privacy-policy.html"
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <Link
+                      to="/privacy-policy"
                       className="text-blue-600 hover:text-blue-800 underline"
                     >
                       Privacy Policy
-                    </a>
+                    </Link>
                   </p>
                 </div>
               )}
@@ -477,22 +474,18 @@ const LoginPage: React.FC = () => {
       <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-3">
         <div className="max-w-6xl mx-auto px-4 flex justify-center items-center space-x-6 text-xs text-gray-600">
           <span>&copy; 2026 GoParts. All rights reserved.</span>
-          <a
-            href="https://albydoriya.github.io/goparts-policies/privacy-policy.html"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            to="/privacy-policy"
             className="hover:text-blue-600 transition-colors"
           >
             Privacy Policy
-          </a>
-          <a
-            href="https://albydoriya.github.io/goparts-policies/terms-of-service.html"
-            target="_blank"
-            rel="noopener noreferrer"
+          </Link>
+          <Link
+            to="/terms-of-service"
             className="hover:text-blue-600 transition-colors"
           >
             Terms of Service
-          </a>
+          </Link>
         </div>
       </footer>
     </div>
