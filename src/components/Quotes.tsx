@@ -140,6 +140,11 @@ const Quotes: React.FC = () => {
 
   const displayQuotes = quotes;
 
+  // Clear search
+  const clearSearch = () => {
+    setSearchTerm('');
+  };
+
   // Toggle sort order
   const toggleSortOrder = () => {
     setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
@@ -471,8 +476,16 @@ const Quotes: React.FC = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 disabled={isLoading}
-                className="pl-10 pr-4 py-2 w-full border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                className="pl-10 pr-10 py-2 w-full border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
               />
+              {searchTerm && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
             <div className="flex items-center space-x-2">
               <Filter className="h-4 w-4 text-gray-400" />
@@ -536,6 +549,26 @@ const Quotes: React.FC = () => {
               )}
             </div>
           </div>
+
+          {/* Search Info */}
+          {searchTerm && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Search className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
+                    Search Results for "{searchTerm}"
+                  </span>
+                </div>
+                <button
+                  onClick={clearSearch}
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium"
+                >
+                  Clear Search
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
