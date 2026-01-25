@@ -84,7 +84,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ onNavigate, onTabChange }) 
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
-    }, 300);
+    }, 600);
 
     return () => clearTimeout(timer);
   }, [searchTerm]);
