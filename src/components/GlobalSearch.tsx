@@ -103,6 +103,30 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ onNavigate, onTabChange }) 
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Handle result click
+  const handleResultClick = useCallback((result: SearchResult) => {
+    setIsOpen(false);
+    setSearchTerm('');
+    setResults([]);
+    setSelectedIndex(-1);
+
+    // Navigate to the appropriate tab and item
+    switch (result.type) {
+      case 'order':
+        onTabChange?.('orders');
+        break;
+      case 'part':
+        onTabChange?.('parts');
+        break;
+      case 'supplier':
+        onTabChange?.('suppliers');
+        break;
+    }
+
+    // Optional: trigger specific item view
+    onNavigate?.(result.type, result.id);
+  }, [onNavigate, onTabChange]);
+
   // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -365,30 +389,6 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ onNavigate, onTabChange }) 
       });
     }
   }, [selectedIndex]);
-
-  // Handle result click
-  const handleResultClick = useCallback((result: SearchResult) => {
-    setIsOpen(false);
-    setSearchTerm('');
-    setResults([]);
-    setSelectedIndex(-1);
-
-    // Navigate to the appropriate tab and item
-    switch (result.type) {
-      case 'order':
-        onTabChange?.('orders');
-        break;
-      case 'part':
-        onTabChange?.('parts');
-        break;
-      case 'supplier':
-        onTabChange?.('suppliers');
-        break;
-    }
-
-    // Optional: trigger specific item view
-    onNavigate?.(result.type, result.id);
-  }, [onNavigate, onTabChange]);
 
   // Clear search
   const clearSearch = () => {
