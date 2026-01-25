@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { 
   Search, 
   X, 
@@ -42,6 +42,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ onNavigate, onTabChange }) 
 
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const resultRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   // Fetch parts from Supabase
   useEffect(() => {
@@ -84,7 +85,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ onNavigate, onTabChange }) 
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
-    }, 600);
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [searchTerm]);
@@ -118,7 +119,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ onNavigate, onTabChange }) 
           break;
         case 'Enter':
           event.preventDefault();
-          if (selectedIndex >= 0) {
+          if (selectedIndex >= 0 && selectedIndex < results.length) {
             handleResultClick(results[selectedIndex]);
           }
           break;
@@ -132,19 +133,17 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ onNavigate, onTabChange }) 
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, results, selectedIndex]);
+  }, [isOpen, results, selectedIndex, handleResultClick]);
 
   // Perform search
-  const performSearch = async (query: string) => {
+  const performSearch = useCallback(async (query: string) => {
     if (!query.trim()) {
       setResults([]);
+      setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
-    
-    // Simulate search delay for better UX
-    await new Promise(resolve => setTimeout(resolve, 150));
 
     const searchResults: SearchResult[] = [];
     const searchLower = query.toLowerCase();
@@ -325,7 +324,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ onNavigate, onTabChange }) 
 
     setResults(searchResults);
     setIsLoading(false);
-  };
+  }, [activeFilter, parts]);
 
   // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -348,15 +347,32 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ onNavigate, onTabChange }) 
     } else {
       setResults([]);
     }
-  }, [debouncedSearchTerm, activeFilter, parts]);
+  }, [debouncedSearchTerm, performSearch]);
+
+  // Validate and adjust selectedIndex when results change
+  useEffect(() => {
+    if (selectedIndex >= results.length) {
+      setSelectedIndex(results.length > 0 ? results.length - 1 : -1);
+    }
+  }, [results.length, selectedIndex]);
+
+  // Scroll selected item into view when using keyboard navigation
+  useEffect(() => {
+    if (selectedIndex >= 0 && resultRefs.current[selectedIndex]) {
+      resultRefs.current[selectedIndex]?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest'
+      });
+    }
+  }, [selectedIndex]);
 
   // Handle result click
-  const handleResultClick = (result: SearchResult) => {
+  const handleResultClick = useCallback((result: SearchResult) => {
     setIsOpen(false);
     setSearchTerm('');
     setResults([]);
     setSelectedIndex(-1);
-    
+
     // Navigate to the appropriate tab and item
     switch (result.type) {
       case 'order':
@@ -369,10 +385,10 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ onNavigate, onTabChange }) 
         onTabChange?.('suppliers');
         break;
     }
-    
+
     // Optional: trigger specific item view
     onNavigate?.(result.type, result.id);
-  };
+  }, [onNavigate, onTabChange]);
 
   // Clear search
   const clearSearch = () => {
@@ -406,7 +422,17 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ onNavigate, onTabChange }) 
     }
   };
 
-  const filteredResults = results.slice(0, 8); // Limit to 8 results for better UX
+  // Mouse hover handlers
+  const handleMouseEnter = useCallback((index: number) => {
+    setSelectedIndex(index);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setSelectedIndex(-1);
+  }, []);
+
+  // Memoize filtered results for stable rendering
+  const filteredResults = useMemo(() => results.slice(0, 8), [results]);
 
   return (
     <div className="relative" ref={searchRef}>
@@ -492,11 +518,13 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ onNavigate, onTabChange }) 
                 </p>
               </div>
             ) : (
-              <div className="py-2">
+              <div className="py-2" onMouseLeave={handleMouseLeave}>
                 {filteredResults.map((result, index) => (
                   <button
                     key={result.id}
+                    ref={(el) => (resultRefs.current[index] = el)}
                     onClick={() => handleResultClick(result)}
+                    onMouseEnter={() => handleMouseEnter(index)}
                     className={`w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
                       selectedIndex === index ? 'bg-blue-50 dark:bg-blue-900/20' : ''
                     }`}
