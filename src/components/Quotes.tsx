@@ -46,6 +46,7 @@ import AgentFeePricingModal from './AgentFeePricingModal';
 const Quotes: React.FC = () => {
   const { hasPermission, user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState(() => {
     return localStorage.getItem('quotes_status_filter') || 'sent';
   });
@@ -86,7 +87,7 @@ const Quotes: React.FC = () => {
     try {
       const result = await quotesService.fetchQuotes({
         status: statusFilter,
-        searchTerm,
+        searchTerm: debouncedSearchTerm,
         sortBy,
         sortOrder,
         page: currentPage,
@@ -102,7 +103,7 @@ const Quotes: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [statusFilter, searchTerm, sortBy, sortOrder, currentPage, pageSize]);
+  }, [statusFilter, debouncedSearchTerm, sortBy, sortOrder, currentPage, pageSize]);
 
   const fetchStatusCounts = useCallback(async () => {
     try {
@@ -112,6 +113,17 @@ const Quotes: React.FC = () => {
       console.error('Error fetching status counts:', err);
     }
   }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm]);
 
   useEffect(() => {
     fetchQuotes();
@@ -125,14 +137,6 @@ const Quotes: React.FC = () => {
     localStorage.setItem('quotes_status_filter', statusFilter);
     setCurrentPage(1);
   }, [statusFilter]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setCurrentPage(1);
-      fetchQuotes();
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
 
   const displayQuotes = quotes;
 
