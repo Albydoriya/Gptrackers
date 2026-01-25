@@ -32,13 +32,14 @@ interface GlobalSearchProps {
 
 const GlobalSearch: React.FC<GlobalSearchProps> = ({ onNavigate, onTabChange }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [activeFilter, setActiveFilter] = useState<'all' | 'orders' | 'parts' | 'suppliers'>('all');
   const [parts, setParts] = useState<Part[]>([]);
-  
+
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -78,6 +79,15 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ onNavigate, onTabChange }) 
 
     fetchParts();
   }, []);
+
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Close search when clicking outside
   useEffect(() => {
@@ -322,15 +332,23 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ onNavigate, onTabChange }) 
     const value = e.target.value;
     setSearchTerm(value);
     setSelectedIndex(-1);
-    
+
     if (value.trim()) {
       setIsOpen(true);
-      performSearch(value);
     } else {
       setResults([]);
       setIsOpen(false);
     }
   };
+
+  // Trigger search when debounced term changes
+  useEffect(() => {
+    if (debouncedSearchTerm.trim()) {
+      performSearch(debouncedSearchTerm);
+    } else {
+      setResults([]);
+    }
+  }, [debouncedSearchTerm, activeFilter, parts]);
 
   // Handle result click
   const handleResultClick = (result: SearchResult) => {
@@ -401,7 +419,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ onNavigate, onTabChange }) 
           placeholder="Search parts, orders, suppliers..."
           value={searchTerm}
           onChange={handleSearchChange}
-          onFocus={() => searchTerm && setIsOpen(true)}
+          onFocus={() => (searchTerm.trim() || results.length > 0) && setIsOpen(true)}
           className="pl-10 pr-10 py-2 w-64 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200"
         />
         {searchTerm && (
@@ -439,7 +457,6 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ onNavigate, onTabChange }) 
                     key={filter.key}
                     onClick={() => {
                       setActiveFilter(filter.key as any);
-                      if (searchTerm) performSearch(searchTerm);
                     }}
                     className={`px-2 py-1 text-xs rounded transition-colors ${
                       activeFilter === filter.key
