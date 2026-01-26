@@ -22,6 +22,7 @@ import { partsService, CategoryWithCount } from '../services/partsService';
 import AddPart from './AddPart';
 import EditPart from './EditPart';
 import Categories from './Categories';
+import PartCard from './PartCard';
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100];
 const DEFAULT_PAGE_SIZE = 50;
@@ -202,20 +203,6 @@ function Parts() {
     setSearchTerm('');
     setCategoryFilter('all');
     setCurrentPage(1);
-  };
-
-  const getStockStatus = (part: Part) => {
-    if (part.currentStock <= part.minStock) {
-      return { status: 'low', color: 'text-red-600 bg-red-50', label: 'Low Stock' };
-    } else if (part.currentStock <= part.minStock * 1.5) {
-      return { status: 'medium', color: 'text-yellow-600 bg-yellow-50', label: 'Medium Stock' };
-    }
-    return { status: 'good', color: 'text-green-600 bg-green-50', label: 'Good Stock' };
-  };
-
-  const getCurrentPrice = (part: Part) => {
-    if (part.priceHistory && part.priceHistory.length === 0) return 0;
-    return part.retailPrice || 0;
   };
 
   const activeFiltersCount = (searchTerm ? 1 : 0) + (categoryFilter !== 'all' ? 1 : 0);
@@ -459,105 +446,18 @@ function Parts() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {parts.map((part) => {
-                    const stockStatus = getStockStatus(part);
-                    const currentPrice = getCurrentPrice(part);
-
-                    return (
-                      <div key={part.id} className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-                        <div className="p-6">
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex items-center space-x-3 flex-1">
-                              <div className="p-2 bg-blue-100 rounded-lg">
-                                <Package className="h-5 w-5 text-blue-600" />
-                              </div>
-                              <div>
-                                <h3 className="font-semibold text-gray-900">{part.name}</h3>
-                                <p className="text-sm text-gray-600">{part.partNumber}</p>
-                              </div>
-                            </div>
-
-                            <div className="relative group">
-                              <button className="flex items-center space-x-1 px-3 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
-                                <span className="text-sm font-medium">Actions</span>
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
-                              </button>
-
-                              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                                <div className="py-2">
-                                  <button
-                                    onClick={() => handleViewDetails(part)}
-                                    className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                                  >
-                                    <BarChart3 className="h-4 w-4 text-blue-600" />
-                                    <span>View Details</span>
-                                  </button>
-
-                                  {hasPermission('parts', 'update') && (
-                                    <button
-                                      onClick={() => handleEditPart(part)}
-                                      className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                                    >
-                                      <Edit className="h-4 w-4 text-green-600" />
-                                      <span>Edit Part</span>
-                                    </button>
-                                  )}
-
-                                  {hasPermission('parts', 'delete') && (
-                                    <>
-                                      <div className="border-t border-gray-100 my-1"></div>
-                                      <button
-                                        onClick={() => handleArchivePart(part.id, part.name)}
-                                        className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                                      >
-                                        <Archive className="h-4 w-4" />
-                                        <span>Archive Part</span>
-                                      </button>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          <p className="text-sm text-gray-600 mb-4 line-clamp-2">{part.description}</p>
-
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-gray-600">Category</span>
-                              <span className="text-sm font-medium text-gray-900">{part.category}</span>
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-gray-600">Retail Price</span>
-                              <span className="text-sm font-medium text-gray-900">${currentPrice.toFixed(2)}</span>
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-gray-600">Stock Level</span>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm font-medium text-gray-900">
-                                  {part.currentStock} / {part.minStock}
-                                </span>
-                                {stockStatus.status === 'low' && (
-                                  <AlertTriangle className="h-3 w-3 text-red-500" />
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="pt-2">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${stockStatus.color}`}>
-                                {stockStatus.label}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {parts.map((part) => (
+                    <PartCard
+                      key={part.id}
+                      part={part}
+                      onViewDetails={handleViewDetails}
+                      onEditPart={handleEditPart}
+                      onArchivePart={handleArchivePart}
+                      canEdit={hasPermission('parts', 'update')}
+                      canDelete={hasPermission('parts', 'delete')}
+                    />
+                  ))}
                 </div>
 
                 {totalPages > 1 && (

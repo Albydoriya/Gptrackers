@@ -36,72 +36,64 @@ export const partsService = {
     } = options;
 
     try {
-      let query = supabase
-        .from('parts')
-        .select('*', { count: 'exact' })
-        .eq('is_archived', false);
-
-      if (searchTerm.trim()) {
-        const term = searchTerm.trim();
-        query = query.or(`part_number.ilike.%${term}%,name.ilike.%${term}%`);
-      }
-
-      if (category && category !== 'all') {
-        query = query.eq('category', category);
-      }
-
-      const orderColumn = sortBy === 'price' ? 'part_number' : sortBy;
-      query = query.order(orderColumn, { ascending: sortOrder === 'asc' });
-
       const offset = (page - 1) * pageSize;
-      query = query.range(offset, offset + pageSize - 1);
 
-      const { data, error, count } = await query;
+      const { data, error } = await supabase.rpc('get_parts_with_latest_pricing', {
+        p_search_term: searchTerm.trim(),
+        p_category: category,
+        p_limit: pageSize,
+        p_offset: offset,
+        p_sort_by: sortBy,
+        p_sort_order: sortOrder
+      });
 
       if (error) throw error;
 
-      const transformedParts: Part[] = await Promise.all(
-        (data || []).map(async (partData) => {
-          const latestPrice = await this.getLatestPrice(partData.id);
-          const currentPrice = latestPrice?.unit_price || 0;
+      const transformedParts: Part[] = (data || []).map((partData: any) => {
+        const currentPrice = parseFloat(partData.latest_price) || 0;
 
-          return {
-            id: partData.id,
-            partNumber: partData.part_number,
-            name: partData.name,
-            description: partData.description,
-            category: partData.category,
-            specifications: partData.specifications || {},
-            priceHistory: [],
-            currentStock: partData.current_stock,
-            minStock: partData.min_stock,
-            preferredSuppliers: partData.preferred_suppliers || [],
-            internalUsageMarkupPercentage: partData.internal_usage_markup_percentage || 10,
-            wholesaleMarkupPercentage: partData.wholesale_markup_percentage || 20,
-            tradeMarkupPercentage: partData.trade_markup_percentage || 30,
-            retailMarkupPercentage: partData.retail_markup_percentage || 50,
-            internalUsagePrice: currentPrice * (1 + (partData.internal_usage_markup_percentage || 10) / 100) * 1.1,
-            wholesalePrice: currentPrice * (1 + (partData.wholesale_markup_percentage || 20) / 100) * 1.1,
-            tradePrice: currentPrice * (1 + (partData.trade_markup_percentage || 30) / 100) * 1.1,
-            retailPrice: currentPrice * (1 + (partData.retail_markup_percentage || 50) / 100) * 1.1,
-            actualWeightKg: partData.actual_weight_kg ? parseFloat(partData.actual_weight_kg) : undefined,
-            lengthCm: partData.length_cm ? parseFloat(partData.length_cm) : undefined,
-            widthCm: partData.width_cm ? parseFloat(partData.width_cm) : undefined,
-            heightCm: partData.height_cm ? parseFloat(partData.height_cm) : undefined,
-            dimFactor: partData.dim_factor ? parseFloat(partData.dim_factor) : undefined,
-            volumetricWeightKg: partData.volumetric_weight_kg ? parseFloat(partData.volumetric_weight_kg) : undefined,
-            chargeableWeightKg: partData.chargeable_weight_kg ? parseFloat(partData.chargeable_weight_kg) : undefined,
-          };
-        })
-      );
+        return {
+          id: partData.id,
+          partNumber: partData.part_number,
+          name: partData.name,
+          description: partData.description,
+          category: partData.category,
+          specifications: partData.specifications || {},
+          priceHistory: currentPrice > 0 ? [{
+            date: partData.latest_price_date,
+            price: currentPrice,
+            supplier: 'Latest',
+            quantity: 1
+          }] : [],
+          currentStock: partData.current_stock,
+          minStock: partData.min_stock,
+          preferredSuppliers: partData.preferred_suppliers || [],
+          internalUsageMarkupPercentage: partData.internal_usage_markup_percentage || 10,
+          wholesaleMarkupPercentage: partData.wholesale_markup_percentage || 20,
+          tradeMarkupPercentage: partData.trade_markup_percentage || 30,
+          retailMarkupPercentage: partData.retail_markup_percentage || 50,
+          internalUsagePrice: currentPrice * (1 + (partData.internal_usage_markup_percentage || 10) / 100) * 1.1,
+          wholesalePrice: currentPrice * (1 + (partData.wholesale_markup_percentage || 20) / 100) * 1.1,
+          tradePrice: currentPrice * (1 + (partData.trade_markup_percentage || 30) / 100) * 1.1,
+          retailPrice: currentPrice * (1 + (partData.retail_markup_percentage || 50) / 100) * 1.1,
+          actualWeightKg: partData.actual_weight_kg ? parseFloat(partData.actual_weight_kg) : undefined,
+          lengthCm: partData.length_cm ? parseFloat(partData.length_cm) : undefined,
+          widthCm: partData.width_cm ? parseFloat(partData.width_cm) : undefined,
+          heightCm: partData.height_cm ? parseFloat(partData.height_cm) : undefined,
+          dimFactor: partData.dim_factor ? parseFloat(partData.dim_factor) : undefined,
+          volumetricWeightKg: partData.volumetric_weight_kg ? parseFloat(partData.volumetric_weight_kg) : undefined,
+          chargeableWeightKg: partData.chargeable_weight_kg ? parseFloat(partData.chargeable_weight_kg) : undefined,
+        };
+      });
 
+      const totalCount = (data && data.length > 0) ? parseInt(data[0].total_count) : 0;
       const endTime = performance.now();
       const queryTime = endTime - startTime;
 
       return {
         parts: transformedParts,
-        totalCount: count || 0,
-        hasMore: (offset + pageSize) < (count || 0),
+        totalCount,
+        hasMore: (offset + pageSize) < totalCount,
         queryTime,
       };
     } catch (error: any) {
