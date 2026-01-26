@@ -209,6 +209,8 @@ const Quotes: React.FC = () => {
   const handleEditQuote = (quote: Quote) => {
     setEditingQuote(quote);
     setIsEditQuoteOpen(true);
+    setIsQuoteDetailsOpen(false);
+    setViewingQuote(null);
   };
 
   const handleViewQuote = (quote: Quote) => {
