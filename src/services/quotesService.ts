@@ -105,36 +105,7 @@ export const quotesService = {
       customersMap.set(customer.id, customer);
     });
 
-    if (searchTerm) {
-      const matchingCustomerIds = Array.from(customersMap.values())
-        .filter(customer =>
-          customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          customer.contact_person.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-        .map(c => c.id);
-
-      if (matchingCustomerIds.length > 0) {
-        const { data: customerQuotes } = await supabase
-          .from('quotes')
-          .select(`
-            *,
-            quote_parts!quote_parts_quote_id_fkey(
-              *,
-              parts(*)
-            )
-          `)
-          .in('customer_id', matchingCustomerIds)
-          .eq('status', status !== 'all' ? status : undefined);
-
-        if (customerQuotes) {
-          quotesData.push(...customerQuotes.filter(q =>
-            !quotesData.some(existing => existing.id === q.id)
-          ));
-        }
-      }
-    }
-
-    const transformedQuotes: Quote[] = quotesData.map(quoteData => {
+    let transformedQuotes: Quote[] = quotesData.map(quoteData => {
       const customerData = customersMap.get(quoteData.customer_id);
 
       return {
@@ -207,12 +178,28 @@ export const quotesService = {
       };
     });
 
+    // Apply client-side filtering for customer name and contact person
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+      transformedQuotes = transformedQuotes.filter(quote => {
+        const customerNameMatch = quote.customer.name.toLowerCase().includes(searchLower);
+        const contactPersonMatch = quote.customer.contactPerson.toLowerCase().includes(searchLower);
+        const quoteNumberMatch = quote.quoteNumber.toLowerCase().includes(searchLower);
+
+        return customerNameMatch || contactPersonMatch || quoteNumberMatch;
+      });
+    }
+
+    // Update count and pagination based on filtered results
+    const filteredCount = transformedQuotes.length;
+    const totalCount = searchTerm.trim() ? filteredCount : (count || 0);
+
     return {
       quotes: transformedQuotes,
-      total: count || 0,
+      total: totalCount,
       page,
       pageSize,
-      totalPages: Math.ceil((count || 0) / pageSize)
+      totalPages: Math.ceil(totalCount / pageSize)
     };
   },
 
