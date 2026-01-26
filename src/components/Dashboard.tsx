@@ -230,8 +230,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onTabChange }) => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
-        <div className="text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Dashboard Overview</h1>
+        <div className="text-sm text-gray-500 dark:text-gray-400">
           Last updated: {new Date().toLocaleString()}
         </div>
       </div>
@@ -241,11 +241,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onTabChange }) => {
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <div key={index} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+            <div key={index} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">{stat.value}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{stat.title}</p>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">{stat.value}</p>
                 </div>
                 <div className={`p-3 rounded-lg ${stat.bgColor}`}>
                   <Icon className={`h-6 w-6 ${stat.color}`} />
@@ -258,10 +258,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onTabChange }) => {
 
       {/* Loading and Error States */}
       {(isLoadingOrders || isLoadingParts) && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
           <div className="flex items-center space-x-2">
-            <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
-            <span className="text-blue-800">
+            <Loader2 className="h-5 w-5 animate-spin text-blue-600 dark:text-blue-400" />
+            <span className="text-blue-800 dark:text-blue-300">
               Loading dashboard data...
               {isLoadingOrders && !isLoadingParts && ' (orders)'}
               {!isLoadingOrders && isLoadingParts && ' (parts)'}
@@ -271,19 +271,19 @@ const Dashboard: React.FC<DashboardProps> = ({ onTabChange }) => {
       )}
 
       {(ordersError || partsError) && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4">
           <div className="flex items-center space-x-2">
-            <AlertTriangle className="h-5 w-5 text-red-600" />
+            <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
             <div>
-              <h3 className="text-sm font-medium text-red-800">Error loading dashboard data</h3>
-              {ordersError && <p className="text-sm text-red-700 mt-1">Orders: {ordersError}</p>}
-              {partsError && <p className="text-sm text-red-700 mt-1">Parts: {partsError}</p>}
+              <h3 className="text-sm font-medium text-red-800 dark:text-red-300">Error loading dashboard data</h3>
+              {ordersError && <p className="text-sm text-red-700 dark:text-red-400 mt-1">Orders: {ordersError}</p>}
+              {partsError && <p className="text-sm text-red-700 dark:text-red-400 mt-1">Parts: {partsError}</p>}
               <button
                 onClick={() => {
                   if (ordersError) fetchOrdersData();
                   if (partsError) fetchPartsData();
                 }}
-                className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
+                className="mt-2 text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 underline"
               >
                 Try again
               </button>
@@ -294,11 +294,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onTabChange }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Orders */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">Recent Orders</h2>
-              <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Orders</h2>
+              <button className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium">
                 View All
               </button>
             </div>
@@ -306,36 +306,36 @@ const Dashboard: React.FC<DashboardProps> = ({ onTabChange }) => {
           <div className="p-6 space-y-4">
             {isLoadingOrders ? (
               <div className="text-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-blue-600 mx-auto mb-2" />
-                <p className="text-gray-600">Loading recent orders...</p>
+                <Loader2 className="h-6 w-6 animate-spin text-blue-600 dark:text-blue-400 mx-auto mb-2" />
+                <p className="text-gray-600 dark:text-gray-400">Loading recent orders...</p>
               </div>
             ) : ordersError ? (
-              <div className="text-center py-8 text-red-600">
+              <div className="text-center py-8 text-red-600 dark:text-red-400">
                 <AlertTriangle className="h-6 w-6 mx-auto mb-2" />
                 <p>Failed to load orders</p>
               </div>
             ) : recentOrders.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <ShoppingCart className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <ShoppingCart className="h-8 w-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
                 <p>No orders found</p>
               </div>
             ) : (
               recentOrders.map((order) => (
-              <div key={order.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+              <div key={order.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                 <div className="flex items-center space-x-4">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <ShoppingCart className="h-4 w-4 text-blue-600" />
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
+                    <ShoppingCart className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">{order.orderNumber}</p>
-                    <p className="text-sm text-gray-600">{order.supplier.name}</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{order.orderNumber}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{order.supplier.name}</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                     {getStatusLabel(order.status)}
                   </span>
-                  <p className="text-sm text-gray-600 mt-1">${order.totalAmount.toLocaleString()}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">${order.totalAmount.toLocaleString()}</p>
                 </div>
               </div>
               ))
@@ -344,50 +344,50 @@ const Dashboard: React.FC<DashboardProps> = ({ onTabChange }) => {
         </div>
 
         {/* Low Stock Alert */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-2">
-              <AlertTriangle className="h-5 w-5 text-red-600" />
-              <h2 className="text-lg font-semibold text-gray-900">Low Stock Alerts</h2>
+              <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Low Stock Alerts</h2>
             </div>
           </div>
           <div className="p-6 space-y-4">
             {isLoadingParts ? (
               <div className="text-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-blue-600 mx-auto mb-2" />
-                <p className="text-gray-600">Loading stock alerts...</p>
+                <Loader2 className="h-6 w-6 animate-spin text-blue-600 dark:text-blue-400 mx-auto mb-2" />
+                <p className="text-gray-600 dark:text-gray-400">Loading stock alerts...</p>
               </div>
             ) : partsError ? (
-              <div className="text-center py-8 text-red-600">
+              <div className="text-center py-8 text-red-600 dark:text-red-400">
                 <AlertTriangle className="h-6 w-6 mx-auto mb-2" />
                 <p>Failed to load parts</p>
               </div>
             ) : parts
               .filter(p => p.currentStock <= p.minStock)
               .length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <CheckCircle className="h-12 w-12 text-green-500 dark:text-green-400 mx-auto mb-4" />
                 <p>All parts are adequately stocked!</p>
               </div>
             ) : (
               parts
               .filter(p => p.currentStock <= p.minStock)
               .map((part) => (
-                <div key={part.id} className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200">
+                <div key={part.id} className="flex items-center justify-between p-4 bg-red-50 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-800">
                   <div className="flex items-center space-x-4">
-                    <div className="p-2 bg-red-100 rounded-lg">
-                      <Package className="h-4 w-4 text-red-600" />
+                    <div className="p-2 bg-red-100 dark:bg-red-900/50 rounded-lg">
+                      <Package className="h-4 w-4 text-red-600 dark:text-red-400" />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">{part.name}</p>
-                      <p className="text-sm text-gray-600">{part.partNumber}</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{part.name}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{part.partNumber}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium text-red-600">
+                    <p className="text-sm font-medium text-red-600 dark:text-red-400">
                       {part.currentStock} / {part.minStock}
                     </p>
-                    <p className="text-xs text-gray-500">Stock Level</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Stock Level</p>
                   </div>
                 </div>
               ))
@@ -397,66 +397,66 @@ const Dashboard: React.FC<DashboardProps> = ({ onTabChange }) => {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {hasPermission('orders', 'create') ? (
-            <button 
+            <button
               onClick={() => setIsCreateOrderOpen(true)}
-              className="flex items-center space-x-3 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors group"
+              className="flex items-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-colors group"
             >
-              <ShoppingCart className="h-5 w-5 text-blue-600 group-hover:scale-110 transition-transform" />
-              <span className="font-medium text-blue-700">Create Order</span>
+              <ShoppingCart className="h-5 w-5 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform" />
+              <span className="font-medium text-blue-700 dark:text-blue-300">Create Order</span>
             </button>
           ) : (
-            <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg opacity-50 cursor-not-allowed">
+            <div className="flex items-center space-x-3 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg opacity-50 cursor-not-allowed">
               <ShoppingCart className="h-5 w-5 text-gray-400" />
-              <span className="font-medium text-gray-500">Create Order</span>
+              <span className="font-medium text-gray-500 dark:text-gray-400">Create Order</span>
             </div>
           )}
-          
+
           {hasPermission('parts', 'create') ? (
-            <button 
+            <button
               onClick={() => setIsAddPartOpen(true)}
-              className="flex items-center space-x-3 p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors group"
+              className="flex items-center space-x-3 p-4 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-lg transition-colors group"
             >
-              <Package className="h-5 w-5 text-green-600 group-hover:scale-110 transition-transform" />
-              <span className="font-medium text-green-700">Add Part</span>
+              <Package className="h-5 w-5 text-green-600 dark:text-green-400 group-hover:scale-110 transition-transform" />
+              <span className="font-medium text-green-700 dark:text-green-300">Add Part</span>
             </button>
           ) : (
-            <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg opacity-50 cursor-not-allowed">
+            <div className="flex items-center space-x-3 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg opacity-50 cursor-not-allowed">
               <Package className="h-5 w-5 text-gray-400" />
-              <span className="font-medium text-gray-500">Add Part</span>
+              <span className="font-medium text-gray-500 dark:text-gray-400">Add Part</span>
             </div>
           )}
-          
+
           {hasPermission('analytics', 'read') ? (
-            <button 
+            <button
               onClick={() => onTabChange?.('analytics')}
-              className="flex items-center space-x-3 p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors group"
+              className="flex items-center space-x-3 p-4 bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 rounded-lg transition-colors group"
             >
-              <TrendingUp className="h-5 w-5 text-purple-600 group-hover:scale-110 transition-transform" />
-              <span className="font-medium text-purple-700">View Analytics</span>
+              <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform" />
+              <span className="font-medium text-purple-700 dark:text-purple-300">View Analytics</span>
             </button>
           ) : (
-            <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg opacity-50 cursor-not-allowed">
+            <div className="flex items-center space-x-3 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg opacity-50 cursor-not-allowed">
               <TrendingUp className="h-5 w-5 text-gray-400" />
-              <span className="font-medium text-gray-500">View Analytics</span>
+              <span className="font-medium text-gray-500 dark:text-gray-400">View Analytics</span>
             </div>
           )}
-          
+
           {hasPermission('orders', 'read') ? (
-            <button 
+            <button
               onClick={() => onTabChange?.('tracking')}
-              className="flex items-center space-x-3 p-4 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors group"
+              className="flex items-center space-x-3 p-4 bg-orange-50 dark:bg-orange-900/30 hover:bg-orange-100 dark:hover:bg-orange-900/50 rounded-lg transition-colors group"
             >
-              <Truck className="h-5 w-5 text-orange-600 group-hover:scale-110 transition-transform" />
-              <span className="font-medium text-orange-700">Track Orders</span>
+              <Truck className="h-5 w-5 text-orange-600 dark:text-orange-400 group-hover:scale-110 transition-transform" />
+              <span className="font-medium text-orange-700 dark:text-orange-300">Track Orders</span>
             </button>
           ) : (
-            <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg opacity-50 cursor-not-allowed">
+            <div className="flex items-center space-x-3 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg opacity-50 cursor-not-allowed">
               <Truck className="h-5 w-5 text-gray-400" />
-              <span className="font-medium text-gray-500">Track Orders</span>
+              <span className="font-medium text-gray-500 dark:text-gray-400">Track Orders</span>
             </div>
           )}
         </div>

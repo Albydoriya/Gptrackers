@@ -56,15 +56,15 @@ function AddCategory({ isOpen, onClose, onCategoryAdded }: AddCategoryProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-md w-full">
-        <div className="p-6 border-b border-gray-200">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Add New Category</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Add New Category</h3>
             <button
               onClick={handleClose}
               disabled={isSubmitting}
-              className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
             >
               <X className="h-5 w-5" />
             </button>
@@ -73,20 +73,20 @@ function AddCategory({ isOpen, onClose, onCategoryAdded }: AddCategoryProps) {
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
               <div className="flex items-center space-x-2">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
+                <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
                 <div>
-                  <h4 className="text-sm font-medium text-red-800">Error</h4>
-                  <p className="text-sm text-red-700 mt-1">{error}</p>
+                  <h4 className="text-sm font-medium text-red-800 dark:text-red-300">Error</h4>
+                  <p className="text-sm text-red-700 dark:text-red-300 mt-1">{error}</p>
                 </div>
               </div>
             </div>
           )}
 
           <div>
-            <label htmlFor="category-name" className="block text-sm font-medium text-gray-700 mb-1">
-              Category Name <span className="text-red-600">*</span>
+            <label htmlFor="category-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Category Name <span className="text-red-600 dark:text-red-400">*</span>
             </label>
             <input
               id="category-name"
@@ -96,12 +96,12 @@ function AddCategory({ isOpen, onClose, onCategoryAdded }: AddCategoryProps) {
               placeholder="e.g., Engine Components"
               required
               disabled={isSubmitting}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 disabled:bg-gray-100 dark:disabled:bg-gray-600 disabled:cursor-not-allowed"
             />
           </div>
 
           <div>
-            <label htmlFor="category-description" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="category-description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Description
             </label>
             <textarea
@@ -111,12 +111,12 @@ function AddCategory({ isOpen, onClose, onCategoryAdded }: AddCategoryProps) {
               placeholder="Brief description of this category..."
               rows={3}
               disabled={isSubmitting}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed resize-none"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 disabled:bg-gray-100 dark:disabled:bg-gray-600 disabled:cursor-not-allowed resize-none"
             />
           </div>
 
           <div>
-            <label htmlFor="display-order" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="display-order" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Display Order
             </label>
             <input
@@ -127,20 +127,20 @@ function AddCategory({ isOpen, onClose, onCategoryAdded }: AddCategoryProps) {
               placeholder="Leave empty to add at end"
               min="1"
               disabled={isSubmitting}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 disabled:bg-gray-100 dark:disabled:bg-gray-600 disabled:cursor-not-allowed"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Optional. If not specified, the category will be added at the end of the list.
             </p>
           </div>
         </form>
 
-        <div className="p-6 border-t border-gray-200 flex items-center justify-end space-x-3">
+        <div className="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-end space-x-3">
           <button
             type="button"
             onClick={handleClose}
             disabled={isSubmitting}
-            className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
@@ -148,7 +148,7 @@ function AddCategory({ isOpen, onClose, onCategoryAdded }: AddCategoryProps) {
             type="submit"
             onClick={handleSubmit}
             disabled={isSubmitting || !name.trim()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            className="px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
           >
             {isSubmitting ? (
               <>

@@ -194,23 +194,23 @@ const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplier
   if (!isOpen || !supplier) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[95vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[95vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Building className="h-6 w-6 text-blue-600" />
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                <Building className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Edit Supplier</h2>
-                <p className="text-sm text-gray-600">{supplier.name}</p>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Edit Supplier</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{supplier.name}</p>
               </div>
             </div>
-            <button 
+            <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
@@ -232,26 +232,26 @@ const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplier
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Company Information */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                <Building className="h-5 w-5 mr-2 text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center">
+                <Building className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
                 Company Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Company Name *
                   </label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                      errors.name ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 ${
+                      errors.name ? 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20' : 'border-gray-300 dark:border-gray-600'
                     }`}
                     placeholder="e.g., TechParts Inc."
                   />
                   {errors.name && (
-                    <p className="mt-2 text-sm text-red-600 flex items-center">
+                    <p className="mt-2 text-sm text-red-600 dark:text-red-400 flex items-center">
                       <AlertCircle className="h-4 w-4 mr-1" />
                       {errors.name}
                     </p>
@@ -259,26 +259,26 @@ const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplier
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Website (Optional)
                   </label>
                   <input
                     type="url"
                     value={formData.website}
                     onChange={(e) => handleInputChange('website', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                     placeholder="https://www.company.com"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Status
                   </label>
                   <select
                     value={formData.isActive ? 'active' : 'inactive'}
                     onChange={(e) => handleInputChange('isActive', e.target.value === 'active')}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   >
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
@@ -289,26 +289,26 @@ const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplier
 
             {/* Contact Information */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                <User className="h-5 w-5 mr-2 text-green-600" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center">
+                <User className="h-5 w-5 mr-2 text-green-600 dark:text-green-400" />
                 Contact Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Contact Person *
                   </label>
                   <input
                     type="text"
                     value={formData.contactPerson}
                     onChange={(e) => handleInputChange('contactPerson', e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                      errors.contactPerson ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 ${
+                      errors.contactPerson ? 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20' : 'border-gray-300 dark:border-gray-600'
                     }`}
                     placeholder="e.g., John Smith"
                   />
                   {errors.contactPerson && (
-                    <p className="mt-2 text-sm text-red-600 flex items-center">
+                    <p className="mt-2 text-sm text-red-600 dark:text-red-400 flex items-center">
                       <AlertCircle className="h-4 w-4 mr-1" />
                       {errors.contactPerson}
                     </p>
@@ -316,20 +316,20 @@ const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplier
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Email Address *
                   </label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                      errors.email ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 ${
+                      errors.email ? 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20' : 'border-gray-300 dark:border-gray-600'
                     }`}
                     placeholder="john.smith@company.com"
                   />
                   {errors.email && (
-                    <p className="mt-2 text-sm text-red-600 flex items-center">
+                    <p className="mt-2 text-sm text-red-600 dark:text-red-400 flex items-center">
                       <AlertCircle className="h-4 w-4 mr-1" />
                       {errors.email}
                     </p>
@@ -337,20 +337,20 @@ const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplier
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Phone Number *
                   </label>
                   <input
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                      errors.phone ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 ${
+                      errors.phone ? 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20' : 'border-gray-300 dark:border-gray-600'
                     }`}
                     placeholder="+1 555 0123"
                   />
                   {errors.phone && (
-                    <p className="mt-2 text-sm text-red-600 flex items-center">
+                    <p className="mt-2 text-sm text-red-600 dark:text-red-400 flex items-center">
                       <AlertCircle className="h-4 w-4 mr-1" />
                       {errors.phone}
                     </p>
@@ -358,20 +358,20 @@ const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplier
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Address *
                   </label>
                   <input
                     type="text"
                     value={formData.address}
                     onChange={(e) => handleInputChange('address', e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                      errors.address ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 ${
+                      errors.address ? 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20' : 'border-gray-300 dark:border-gray-600'
                     }`}
                     placeholder="123 Business St, City, State 12345"
                   />
                   {errors.address && (
-                    <p className="mt-2 text-sm text-red-600 flex items-center">
+                    <p className="mt-2 text-sm text-red-600 dark:text-red-400 flex items-center">
                       <AlertCircle className="h-4 w-4 mr-1" />
                       {errors.address}
                     </p>
@@ -382,19 +382,19 @@ const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplier
 
             {/* Business Terms */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                <DollarSign className="h-5 w-5 mr-2 text-purple-600" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center">
+                <DollarSign className="h-5 w-5 mr-2 text-purple-600 dark:text-purple-400" />
                 Business Terms
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Payment Terms
                   </label>
                   <select
                     value={formData.paymentTerms}
                     onChange={(e) => handleInputChange('paymentTerms', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   >
                     {paymentTermsOptions.map(term => (
                       <option key={term} value={term}>{term}</option>
@@ -403,7 +403,7 @@ const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplier
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Delivery Time (Days) *
                   </label>
                   <input
@@ -411,13 +411,13 @@ const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplier
                     min="1"
                     value={formData.deliveryTime || ''}
                     onChange={(e) => handleInputChange('deliveryTime', parseInt(e.target.value) || 0)}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                      errors.deliveryTime ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 ${
+                      errors.deliveryTime ? 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20' : 'border-gray-300 dark:border-gray-600'
                     }`}
                     placeholder="5"
                   />
                   {errors.deliveryTime && (
-                    <p className="mt-2 text-sm text-red-600 flex items-center">
+                    <p className="mt-2 text-sm text-red-600 dark:text-red-400 flex items-center">
                       <AlertCircle className="h-4 w-4 mr-1" />
                       {errors.deliveryTime}
                     </p>
@@ -425,7 +425,7 @@ const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplier
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Rating (1-5) *
                   </label>
                   <input
@@ -435,13 +435,13 @@ const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplier
                     step="0.1"
                     value={formData.rating || ''}
                     onChange={(e) => handleInputChange('rating', parseFloat(e.target.value) || 0)}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                      errors.rating ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 ${
+                      errors.rating ? 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20' : 'border-gray-300 dark:border-gray-600'
                     }`}
                     placeholder="5.0"
                   />
                   {errors.rating && (
-                    <p className="mt-2 text-sm text-red-600 flex items-center">
+                    <p className="mt-2 text-sm text-red-600 dark:text-red-400 flex items-center">
                       <AlertCircle className="h-4 w-4 mr-1" />
                       {errors.rating}
                     </p>
@@ -453,11 +453,11 @@ const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplier
                         className={`h-4 w-4 ${
                           i < Math.floor(formData.rating)
                             ? 'text-yellow-400 fill-current'
-                            : 'text-gray-300'
+                            : 'text-gray-300 dark:text-gray-600'
                         }`}
                       />
                     ))}
-                    <span className="text-sm text-gray-500 ml-2">
+                    <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">
                       {formData.rating.toFixed(1)}
                     </span>
                   </div>
@@ -467,19 +467,19 @@ const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplier
 
             {/* Additional Notes */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                <Settings className="h-5 w-5 mr-2 text-orange-600" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center">
+                <Settings className="h-5 w-5 mr-2 text-orange-600 dark:text-orange-400" />
                 Additional Information
               </h3>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Notes & Comments (Optional)
                 </label>
                 <textarea
                   value={formData.notes}
                   onChange={(e) => handleInputChange('notes', e.target.value)}
                   rows={4}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                   placeholder="Any additional information about this supplier, special requirements, certifications, etc."
                 />
               </div>
@@ -488,12 +488,12 @@ const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplier
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-200 bg-gray-50">
+        <div className="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <div className="flex items-center justify-end space-x-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors"
+              className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium transition-colors"
             >
               Cancel
             </button>
@@ -502,8 +502,8 @@ const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplier
               disabled={isSubmitting}
               className={`flex items-center space-x-2 px-8 py-3 rounded-lg font-medium transition-colors ${
                 isSubmitting
-                  ? 'bg-gray-400 text-white cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                  ? 'bg-gray-400 dark:bg-gray-600 text-white cursor-not-allowed'
+                  : 'bg-blue-600 dark:bg-blue-700 text-white hover:bg-blue-700 dark:hover:bg-blue-600'
               }`}
             >
               {isSubmitting ? (

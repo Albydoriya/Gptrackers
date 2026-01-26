@@ -54,7 +54,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
 
   return (
     <>
-      <nav className="bg-white shadow-sm border-b border-gray-200">
+      <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-12">
@@ -67,7 +67,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
                     alt="GoParts Logo"
                     className="h-10 w-auto object-contain rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
                   />
-                  
+
                   {/* System Title */}
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-tight">GoParts</span>
@@ -77,11 +77,11 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
                   </div>
                 </div>
               </div>
-              
+
               {/* Vertical Separator */}
-              <div className="hidden lg:block h-8 w-px"></div>
+              <div className="hidden lg:block h-8 w-px bg-gray-200 dark:bg-gray-700"></div>
             </div>
-            
+
             <div className="hidden md:flex space-x-1">
               {visibleNavItems.map((item) => {
                 const Icon = item.icon;
@@ -91,8 +91,8 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
                     onClick={() => onTabChange(item.id)}
                     className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                       activeTab === item.id
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                        ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
+                        : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50'
                     }`}
                   >
                     <Icon className="h-4 w-4" />
@@ -105,8 +105,8 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
 
           <div className="flex items-center space-x-4">
             <GlobalSearch onTabChange={onTabChange} />
-            
-            <button 
+
+            <button
               onClick={() => setIsNotificationOpen(!isNotificationOpen)}
               className="relative p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors"
             >
@@ -124,7 +124,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
       </div>
 
       {/* Mobile Navigation */}
-      <div className="md:hidden border-t border-gray-200">
+      <div className="md:hidden border-t border-gray-200 dark:border-gray-700">
         <div className="px-2 py-3 space-y-1">
           {visibleNavItems.map((item) => {
             const Icon = item.icon;
@@ -134,8 +134,8 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
                 onClick={() => onTabChange(item.id)}
                 className={`flex items-center space-x-3 w-full px-3 py-2 rounded-md text-base font-medium ${
                   activeTab === item.id
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50'
                 }`}
               >
                 <Icon className="h-5 w-5" />

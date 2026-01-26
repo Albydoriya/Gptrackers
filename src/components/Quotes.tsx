@@ -398,7 +398,7 @@ const Quotes: React.FC = () => {
           <button
             onClick={fetchQuotes}
             disabled={isLoading}
-            className="flex items-center space-x-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors disabled:opacity-50"
+            className="flex items-center space-x-2 px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors disabled:opacity-50"
             title="Refresh quotes"
           >
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -471,7 +471,7 @@ const Quotes: React.FC = () => {
           {/* Search and Basic Filters */}
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
               <input
                 type="text"
                 placeholder="Search quotes by number, customer name..."
@@ -483,14 +483,14 @@ const Quotes: React.FC = () => {
               {searchTerm && (
                 <button
                   onClick={clearSearch}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                 >
                   <X className="h-4 w-4" />
                 </button>
               )}
             </div>
             <div className="flex items-center space-x-2">
-              <Filter className="h-4 w-4 text-gray-400" />
+              <Filter className="h-4 w-4 text-gray-400 dark:text-gray-500" />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
@@ -525,7 +525,7 @@ const Quotes: React.FC = () => {
                 <button
                   onClick={toggleSortOrder}
                   disabled={isLoading}
-                  className="p-1 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800"
+                  className="p-1 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                   title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
                 >
                   {sortOrder === 'asc' ? (
@@ -536,7 +536,7 @@ const Quotes: React.FC = () => {
                 </button>
               </div>
             </div>
-            
+
             {/* Results Summary */}
             <div className="text-sm text-gray-600 dark:text-gray-400">
               {isLoading ? (
@@ -577,7 +577,7 @@ const Quotes: React.FC = () => {
       {/* Loading State */}
       {isLoading && !error && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12">
-          <div className="flex-1 relative">
+          <div className="flex-1 relative text-center">
             <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Loading Quotes</h3>
             <p className="text-gray-600 dark:text-gray-400">Fetching the latest quotes data from the database...</p>
@@ -598,9 +598,9 @@ const Quotes: React.FC = () => {
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               Create professional quotes for customers with detailed cost calculations including shipping options, agent fees, and GST.
             </p>
-            
+
             {hasPermission('quotes', 'create') ? (
-              <button 
+              <button
                 onClick={() => setIsCreateQuoteOpen(true)}
                 className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors mx-auto"
               >
@@ -622,7 +622,7 @@ const Quotes: React.FC = () => {
             
             return (
             <div key={quote.id} className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border hover:shadow-md transition-shadow ${
-              isExpired ? 'border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20' : 'border-gray-200 dark:border-gray-700'
+              isExpired ? 'border-orange-200 dark:border-orange-800' : 'border-gray-200 dark:border-gray-700'
             }`}>
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
@@ -645,7 +645,7 @@ const Quotes: React.FC = () => {
                         )}
                       </div>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        Created: {new Date(quote.quoteDate).toLocaleDateString()} • 
+                        Created: {new Date(quote.quoteDate).toLocaleDateString()} •
                         Expires: <span className={isExpired ? 'text-orange-600 dark:text-orange-400 font-medium' : ''}>
                           {new Date(quote.expiryDate).toLocaleDateString()}
                         </span>
@@ -654,7 +654,7 @@ const Quotes: React.FC = () => {
                   </div>
                   
                   <div className="text-right">
-                    <div className="flex items-center space-x-2 mb-2">
+                    <div className="flex items-center space-x-2 mb-2 justify-end">
                       <button
                         onClick={() => handleViewQuote(quote)}
                         className="flex items-center space-x-1 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors text-sm"
@@ -666,7 +666,7 @@ const Quotes: React.FC = () => {
                         <button
                           onClick={() => handleEditQuote(quote)}
                           disabled={isCurrentQuoteConverting}
-                          className="flex items-center space-x-1 px-3 py-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors text-sm"
+                          className="flex items-center space-x-1 px-3 py-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <Edit className="h-3 w-3" />
                           <span>Edit</span>
@@ -676,7 +676,7 @@ const Quotes: React.FC = () => {
                         <button
                           onClick={() => handleStatusUpdateClick(quote)}
                           disabled={isCurrentQuoteConverting}
-                          className="flex items-center space-x-1 px-3 py-1 bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-900/50 transition-colors text-sm"
+                          className="flex items-center space-x-1 px-3 py-1 bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-900/50 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <StatusUpdate className="h-3 w-3" />
                           <span>Status</span>
@@ -752,10 +752,10 @@ const Quotes: React.FC = () => {
                     <div className="space-y-1">
                       <p className="font-medium text-gray-900 dark:text-gray-100">{quote.customer.name}</p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">{quote.customer.contactPerson}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{quote.customer.email}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{quote.customer.email}</p>
                     </div>
                   </div>
-                  
+
                   {/* Items Summary */}
                   <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
                     <div className="flex items-center space-x-3 mb-3">
@@ -777,7 +777,7 @@ const Quotes: React.FC = () => {
                             <span className="text-gray-700 dark:text-gray-300 truncate max-w-32">
                               {quotePart.isCustomPart ? quotePart.customPartName : quotePart.part?.name}
                             </span>
-                            <span className="text-gray-500 dark:text-gray-400">×{quotePart.quantity}</span>
+                            <span className="text-gray-600 dark:text-gray-400">×{quotePart.quantity}</span>
                           </div>
                         ))}
                         {quote.parts.length > 3 && (
@@ -788,7 +788,7 @@ const Quotes: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Cost Breakdown */}
                   <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
                     <div className="flex items-center space-x-3 mb-3">
@@ -814,7 +814,7 @@ const Quotes: React.FC = () => {
                         <span className="text-gray-600 dark:text-gray-400">Fees:</span>
                         <span className="text-gray-900 dark:text-gray-100">${(quote.agentFees + quote.localShippingFees).toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between border-t border-gray-300 dark:border-gray-500 pt-1">
+                      <div className="flex justify-between border-t border-gray-300 dark:border-gray-600 pt-1">
                         <span className="text-gray-600 dark:text-gray-400">GST:</span>
                         <span className="text-gray-900 dark:text-gray-100">${quote.gstAmount.toFixed(2)}</span>
                       </div>
@@ -835,7 +835,7 @@ const Quotes: React.FC = () => {
             <button
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
             >
               <ChevronLeft className="h-4 w-4" />
               <span>Previous</span>
@@ -850,7 +850,7 @@ const Quotes: React.FC = () => {
             <button
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
-              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
             >
               <span>Next</span>
               <ChevronRight className="h-4 w-4" />
@@ -872,7 +872,7 @@ const Quotes: React.FC = () => {
               setSearchTerm('');
               setStatusFilter('all');
             }}
-            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium text-center"
           >
             Clear filters and show all quotes
           </button>

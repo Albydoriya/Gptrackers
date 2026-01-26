@@ -146,7 +146,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
         className="absolute top-16 right-4 w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 max-h-[80vh] flex flex-col"
       >
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Bell className="h-5 w-5 text-gray-600 dark:text-gray-400" />
@@ -236,12 +236,12 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
               <p className="text-gray-600 dark:text-gray-400">You're all caught up! New notifications will appear here.</p>
             </div>
           ) : !isLoading && !error && (
-            <div className="divide-y divide-gray-100 dark:divide-gray-700">
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
               {sortedNotifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-4 hover:bg-gray-50 transition-colors ${
-                    !notification.isRead ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-l-blue-500 dark:border-l-blue-400' : 'dark:hover:bg-gray-700'
+                  className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                    !notification.isRead ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-l-blue-500 dark:border-l-blue-400' : ''
                   }`}
                 >
                   <div className="flex items-start space-x-3">
@@ -306,7 +306,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
 
         {/* Footer */}
         {notifications.length > 0 && (
-          <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+          <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
             <div className="text-center">
               <button className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium transition-colors">
                 View all notifications

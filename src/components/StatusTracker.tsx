@@ -161,18 +161,18 @@ const StatusTracker: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Order Status Tracking</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Order Status Tracking</h1>
         <div className="flex items-center space-x-4">
           <button
             onClick={fetchOrders}
             disabled={isLoading}
-            className="flex items-center space-x-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors disabled:opacity-50"
+            className="flex items-center space-x-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg transition-colors disabled:opacity-50 dark:bg-gray-700"
             title="Refresh orders"
           >
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </button>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-gray-500 dark:text-gray-400">
             Real-time order status updates
           </div>
         </div>
@@ -198,26 +198,26 @@ const StatusTracker: React.FC = () => {
       )}
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
             <input
               type="text"
               placeholder="Search orders..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               disabled={isLoading}
-              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="pl-10 pr-4 py-2 w-full border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
           <div className="flex items-center space-x-2">
-            <Filter className="h-4 w-4 text-gray-400" />
+            <Filter className="h-4 w-4 text-gray-400 dark:text-gray-500" />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               disabled={isLoading}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               {statusOptions.map(option => (
                 <option key={option.value} value={option.value}>
@@ -241,27 +241,27 @@ const StatusTracker: React.FC = () => {
               onClick={() => setStatusFilter(status.value)}
               disabled={isLoading}
               className={`p-4 rounded-lg border transition-all duration-200 transform hover:scale-105 ${
-                isActive 
-                  ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/30 shadow-lg ring-2 ring-blue-200 dark:ring-blue-800' 
-                  : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none'
+                isActive
+                  ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/30 shadow-lg ring-2 ring-blue-200 dark:ring-blue-800'
+                  : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:border-gray-300 dark:hover:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none'
               }`}
             >
               <div className="text-center">
                 <div className={`mx-auto mb-2 p-2 rounded-lg w-fit transition-colors ${
-                  isActive 
-                    ? 'bg-blue-100 dark:bg-blue-800/50 text-blue-600 dark:text-blue-300' 
+                  isActive
+                    ? 'bg-blue-100 dark:bg-blue-800/50 text-blue-600 dark:text-blue-300'
                     : getStatusColor(status.value as OrderStatus).replace('bg-', 'bg-').replace('text-', 'text-')
                 }`}>
                   {getStatusIcon(status.value as OrderStatus)}
                 </div>
                 <p className={`text-2xl font-bold transition-colors ${
-                  isActive 
-                    ? 'text-blue-600 dark:text-blue-300' 
+                  isActive
+                    ? 'text-blue-600 dark:text-blue-300'
                     : 'text-gray-900 dark:text-gray-100'
                 }`}>{isLoading ? '...' : count}</p>
                 <p className={`text-xs transition-colors ${
-                  isActive 
-                    ? 'text-blue-600 dark:text-blue-400' 
+                  isActive
+                    ? 'text-blue-600 dark:text-blue-400'
                     : 'text-gray-600 dark:text-gray-400'
                 }`}>{status.label}</p>
               </div>
@@ -292,7 +292,7 @@ const StatusTracker: React.FC = () => {
           return (
             <div key={order.id} className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border p-6 ${
               overdue ? 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20' : 'border-gray-200 dark:border-gray-700'
-            }`}>
+            } transition-colors`}>
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
@@ -361,7 +361,7 @@ const StatusTracker: React.FC = () => {
               </div>
 
               {order.notes && (
-                <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
                   <p className="text-sm text-gray-700 dark:text-gray-300">
                     <strong>Notes:</strong> {order.notes}
                   </p>
@@ -387,7 +387,7 @@ const StatusTracker: React.FC = () => {
             {ordersList.length === 0 ? 'No orders found' : 'No matching orders found'}
           </h3>
           <p className="text-gray-600 dark:text-gray-400">
-            {ordersList.length === 0 
+            {ordersList.length === 0
               ? 'No orders have been created yet'
               : 'Try adjusting your search criteria or status filter'
             }

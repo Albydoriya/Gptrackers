@@ -188,20 +188,20 @@ const AddSupplier: React.FC<AddSupplierProps> = ({ isOpen, onClose, onSupplierAd
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[95vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[95vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Building className="h-6 w-6 text-blue-600" />
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                <Building className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">Add New Supplier</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Add New Supplier</h2>
             </div>
-            <button 
+            <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-lg"
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
             >
               <X className="h-5 w-5" />
             </button>
@@ -223,8 +223,8 @@ const AddSupplier: React.FC<AddSupplierProps> = ({ isOpen, onClose, onSupplierAd
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Company Information */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Building className="h-5 w-5 mr-2 text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                <Building className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
                 Company Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -280,8 +280,8 @@ const AddSupplier: React.FC<AddSupplierProps> = ({ isOpen, onClose, onSupplierAd
 
             {/* Contact Information */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <User className="h-5 w-5 mr-2 text-green-600" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                <User className="h-5 w-5 mr-2 text-green-600 dark:text-green-400" />
                 Contact Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -373,8 +373,8 @@ const AddSupplier: React.FC<AddSupplierProps> = ({ isOpen, onClose, onSupplierAd
 
             {/* Business Terms */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <DollarSign className="h-5 w-5 mr-2 text-purple-600" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                <DollarSign className="h-5 w-5 mr-2 text-purple-600 dark:text-purple-400" />
                 Business Terms
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -458,8 +458,8 @@ const AddSupplier: React.FC<AddSupplierProps> = ({ isOpen, onClose, onSupplierAd
 
             {/* Additional Notes */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <AlertCircle className="h-5 w-5 mr-2 text-orange-600" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                <AlertCircle className="h-5 w-5 mr-2 text-orange-600 dark:text-orange-400" />
                 Additional Information
               </h3>
               <div>
@@ -470,7 +470,7 @@ const AddSupplier: React.FC<AddSupplierProps> = ({ isOpen, onClose, onSupplierAd
                   value={formData.notes}
                   onChange={(e) => handleInputChange('notes', e.target.value)}
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400"
                   placeholder="Any additional information about this supplier, special requirements, certifications, etc."
                 />
               </div>
@@ -479,12 +479,12 @@ const AddSupplier: React.FC<AddSupplierProps> = ({ isOpen, onClose, onSupplierAd
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-200 bg-gray-50">
+        <div className="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <div className="flex items-center justify-end space-x-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
             >
               Cancel
             </button>
@@ -494,7 +494,7 @@ const AddSupplier: React.FC<AddSupplierProps> = ({ isOpen, onClose, onSupplierAd
               className={`flex items-center space-x-2 px-6 py-2 rounded-md ${
                 isSubmitting
                   ? 'bg-gray-400 text-white cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-blue-600 dark:bg-blue-700 text-white hover:bg-blue-700 dark:hover:bg-blue-600'
               }`}
             >
               {isSubmitting ? (

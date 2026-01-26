@@ -356,11 +356,11 @@ const Orders: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-bold text-gray-900">Orders Management</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Orders Management</h1>
           <button
             onClick={fetchOrders}
             disabled={isLoadingOrders}
-            className="flex items-center space-x-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors disabled:opacity-50"
+            className="flex items-center space-x-2 px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors disabled:opacity-50"
             title="Refresh orders"
           >
             <RefreshCw className={`h-4 w-4 ${isLoadingOrders ? 'animate-spin' : ''}`} />
@@ -444,7 +444,7 @@ const Orders: React.FC = () => {
           {/* Search and Basic Filters */}
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
               <input
                 type="text"
                 placeholder="Search orders, suppliers, parts, part numbers..."
@@ -456,14 +456,14 @@ const Orders: React.FC = () => {
               {searchTerm && (
                 <button
                   onClick={clearSearch}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400"
                 >
                   <X className="h-4 w-4" />
                 </button>
               )}
             </div>
             <div className="flex items-center space-x-2">
-              <Filter className="h-4 w-4 text-gray-400" />
+              <Filter className="h-4 w-4 text-gray-400 dark:text-gray-500" />
               <select
                 value={statusFilter}
                 onChange={(e) => handleStatusFilterChange(e.target.value)}
@@ -498,7 +498,7 @@ const Orders: React.FC = () => {
                 <button
                   onClick={toggleSortOrder}
                   disabled={isLoadingOrders}
-                  className="p-1 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800"
+                  className="p-1 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800"
                   title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
                 >
                   {sortOrder === 'asc' ? (
@@ -574,12 +574,12 @@ const Orders: React.FC = () => {
                       type="checkbox"
                       checked={selectedOrdersForExport.has(order.id)}
                       onChange={() => handleSelectOrder(order.id)}
-                      className="h-5 w-5 text-green-600 border-gray-300 rounded focus:ring-green-500 cursor-pointer"
+                      className="h-5 w-5 text-green-600 border-gray-300 dark:border-gray-600 rounded focus:ring-green-500 cursor-pointer"
                       title="Select for export"
                     />
                   )}
-                  <div className="p-3 bg-blue-100 rounded-lg">
-                    <Package className="h-6 w-6 text-blue-600" />
+                  <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    <Package className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
                     <div className="flex items-center space-x-3">
@@ -597,7 +597,7 @@ const Orders: React.FC = () => {
                         {(order as any).searchMatchTypes.map((type: string, index: number) => (
                           <span
                             key={index}
-                            className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800"
+                            className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200"
                           >
                             {type}
                           </span>
@@ -668,7 +668,7 @@ const Orders: React.FC = () => {
                             </button>
                           )}
                           
-                          <div className="border-t border-gray-100 my-1"></div>
+                          <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
                           
                           {hasPermission('orders', 'update') && (
                             <button 
@@ -735,7 +735,7 @@ const Orders: React.FC = () => {
                   <div className="space-y-1">
                     <p className="font-medium text-gray-900 dark:text-gray-100">{order.supplier.name}</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">{order.supplier.contactPerson}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{order.supplier.email}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{order.supplier.email}</p>
                     <div className="flex items-center space-x-2 mt-2">
                       <div className="flex items-center">
                         {[...Array(5)].map((_, i) => (
@@ -744,7 +744,7 @@ const Orders: React.FC = () => {
                             className={`w-3 h-3 ${
                               i < Math.floor(order.supplier.rating)
                                 ? 'text-yellow-400 fill-current'
-                                : 'text-gray-300'
+                                : 'text-gray-300 dark:text-gray-600'
                             }`}
                             viewBox="0 0 20 20"
                           >
@@ -752,7 +752,7 @@ const Orders: React.FC = () => {
                           </svg>
                         ))}
                       </div>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">{order.supplier.rating}/5</span>
+                      <span className="text-xs text-gray-600 dark:text-gray-400">{order.supplier.rating}/5</span>
                     </div>
                   </div>
                 </div>
@@ -816,7 +816,7 @@ const Orders: React.FC = () => {
                            order.status === 'pending_customer_approval' ? '20%' : '10%'}
                         </span>
                       </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                         <div 
                           className={`h-2 rounded-full transition-all duration-300 ${
                             order.status === 'delivered' ? 'bg-green-500 w-full' :
@@ -829,7 +829,7 @@ const Orders: React.FC = () => {
                       </div>
                     </div>
                     {order.notes && (
-                      <div className="mt-2 p-2 bg-white dark:bg-gray-600 rounded text-xs text-gray-600 dark:text-gray-300">
+                      <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-700 rounded text-xs text-gray-700 dark:text-gray-300">
                         <strong>Notes:</strong> {order.notes.length > 60 ? `${order.notes.substring(0, 60)}...` : order.notes}
                       </div>
                     )}
@@ -904,9 +904,9 @@ const Orders: React.FC = () => {
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   Order Details - {selectedOrder.orderNumber}
                 </h3>
-                <button 
+                <button
                   onClick={() => setSelectedOrder(null)}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400"
                 >
                   ✕
                 </button>

@@ -152,11 +152,11 @@ const Suppliers: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-bold text-gray-900">Suppliers Management</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Suppliers Management</h1>
           <button
             onClick={fetchSuppliers}
             disabled={isLoading}
-            className="flex items-center space-x-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors disabled:opacity-50"
+            className="flex items-center space-x-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors disabled:opacity-50"
             title="Refresh suppliers"
           >
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -194,27 +194,27 @@ const Suppliers: React.FC = () => {
       )}
 
       {/* Search */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
           <input
             type="text"
             placeholder="Search suppliers..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             disabled={isLoading}
-            className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="pl-10 pr-4 py-2 w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
       </div>
 
       {/* Loading State */}
       {isLoading && !error && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Loading Suppliers</h3>
-            <p className="text-gray-600">Fetching the latest supplier data from the database...</p>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Loading Suppliers</h3>
+            <p className="text-gray-600 dark:text-gray-400">Fetching the latest supplier data from the database...</p>
           </div>
         </div>
       )}
@@ -226,12 +226,12 @@ const Suppliers: React.FC = () => {
             const stats = getSupplierStats(supplier.id);
             
             return (
-              <div key={supplier.id} className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+              <div key={supplier.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
-                        <h3 className="font-semibold text-gray-900">{supplier.name}</h3>
+                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">{supplier.name}</h3>
                         {supplier.isActive ? (
                           <CheckCircle className="h-4 w-4 text-green-500" />
                         ) : (
@@ -245,35 +245,35 @@ const Suppliers: React.FC = () => {
                             className={`h-4 w-4 ${
                               i < Math.floor(supplier.rating)
                                 ? 'text-yellow-400 fill-current'
-                                : 'text-gray-300'
+                                : 'text-gray-300 dark:text-gray-600'
                             }`}
                           />
                         ))}
-                        <span className="text-sm text-gray-600 ml-1">
+                        <span className="text-sm text-gray-600 dark:text-gray-400 ml-1">
                           {supplier.rating.toFixed(1)}
                         </span>
                       </div>
                     </div>
                     <div className="flex space-x-1">
-                      <button 
+                      <button
                         onClick={() => setSelectedSupplier(supplier)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
                         title="View Details"
                       >
                         <Search className="h-4 w-4" />
                       </button>
                       {hasPermission('suppliers', 'update') && (
-                        <button 
+                        <button
                           onClick={() => handleEditSupplier(supplier)}
-                          className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                          className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors"
                           title="Edit Supplier"
                         >
                           <Edit className="h-4 w-4" />
                         </button>
                       )}
                       {hasPermission('suppliers', 'delete') && (
-                        <button 
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        <button
+                          className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                           title="Delete Supplier"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -283,35 +283,35 @@ const Suppliers: React.FC = () => {
                   </div>
 
                   <div className="space-y-3 mb-4">
-                    <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
                       <Mail className="h-4 w-4" />
                       <span>{supplier.email}</span>
                     </div>
-                    <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
                       <Phone className="h-4 w-4" />
                       <span>{supplier.phone}</span>
                     </div>
-                    <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
                       <Clock className="h-4 w-4" />
                       <span>{supplier.deliveryTime} days delivery</span>
                     </div>
-                    <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
                       <DollarSign className="h-4 w-4" />
                       <span>{supplier.paymentTerms}</span>
                     </div>
                   </div>
 
-                  <div className="border-t border-gray-200 pt-4">
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
                     <div className="grid grid-cols-2 gap-4 text-center">
                       <div>
                         <p className="text-2xl font-bold text-blue-600">{stats.totalOrders}</p>
-                        <p className="text-xs text-gray-600">Total Orders</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Total Orders</p>
                       </div>
                       <div>
                         <p className="text-2xl font-bold text-green-600">
                           {stats.onTimeRate.toFixed(0)}%
                         </p>
-                        <p className="text-xs text-gray-600">On-Time Rate</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">On-Time Rate</p>
                       </div>
                     </div>
                   </div>
@@ -324,13 +324,13 @@ const Suppliers: React.FC = () => {
 
       {/* No Results Message */}
       {!isLoading && !error && filteredSuppliers.length === 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-          <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
+          <Search className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
             {suppliers.length === 0 ? 'No suppliers found' : 'No matching suppliers found'}
           </h3>
-          <p className="text-gray-600 mb-4">
-            {suppliers.length === 0 
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            {suppliers.length === 0
               ? 'No suppliers have been added yet'
               : `No suppliers match your search criteria "${searchTerm}"`
             }
@@ -338,7 +338,7 @@ const Suppliers: React.FC = () => {
           {hasPermission('suppliers', 'create') && suppliers.length === 0 && (
             <button
               onClick={() => setIsAddSupplierOpen(true)}
-              className="text-blue-600 hover:text-blue-800 font-medium"
+              className="text-blue-600 hover:text-blue-800 dark:hover:text-blue-400 font-medium"
             >
               Add your first supplier
             </button>
@@ -349,15 +349,15 @@ const Suppliers: React.FC = () => {
       {/* Supplier Details Modal */}
       {selectedSupplier && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   {selectedSupplier.name} - Details
                 </h3>
-                <button 
+                <button
                   onClick={() => setSelectedSupplier(null)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400"
                 >
                   ✕
                 </button>
@@ -367,40 +367,40 @@ const Suppliers: React.FC = () => {
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Contact Information</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Contact Information</h4>
                   <div className="space-y-3">
                     <div className="flex items-center space-x-3">
-                      <Mail className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-900">{selectedSupplier.email}</span>
+                      <Mail className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                      <span className="text-gray-900 dark:text-gray-100">{selectedSupplier.email}</span>
                     </div>
                     <div className="flex items-center space-x-3">
-                      <Phone className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-900">{selectedSupplier.phone}</span>
+                      <Phone className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                      <span className="text-gray-900 dark:text-gray-100">{selectedSupplier.phone}</span>
                     </div>
                     <div className="flex items-start space-x-3">
-                      <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
-                      <span className="text-gray-900">{selectedSupplier.address}</span>
+                      <MapPin className="h-4 w-4 text-gray-400 dark:text-gray-500 mt-0.5" />
+                      <span className="text-gray-900 dark:text-gray-100">{selectedSupplier.address}</span>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Business Terms</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Business Terms</h4>
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Contact Person:</span>
-                      <span className="font-medium">{selectedSupplier.contactPerson}</span>
+                      <span className="text-gray-600 dark:text-gray-400">Contact Person:</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{selectedSupplier.contactPerson}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Delivery Time:</span>
-                      <span className="font-medium">{selectedSupplier.deliveryTime} days</span>
+                      <span className="text-gray-600 dark:text-gray-400">Delivery Time:</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{selectedSupplier.deliveryTime} days</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Payment Terms:</span>
-                      <span className="font-medium">{selectedSupplier.paymentTerms}</span>
+                      <span className="text-gray-600 dark:text-gray-400">Payment Terms:</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{selectedSupplier.paymentTerms}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Rating:</span>
+                      <span className="text-gray-600 dark:text-gray-400">Rating:</span>
                       <div className="flex items-center space-x-1">
                         {[...Array(5)].map((_, i) => (
                           <Star
@@ -408,11 +408,11 @@ const Suppliers: React.FC = () => {
                             className={`h-4 w-4 ${
                               i < Math.floor(selectedSupplier.rating)
                                 ? 'text-yellow-400 fill-current'
-                                : 'text-gray-300'
+                                : 'text-gray-300 dark:text-gray-600'
                             }`}
                           />
                         ))}
-                        <span className="text-sm text-gray-600 ml-1">
+                        <span className="text-sm text-gray-600 dark:text-gray-400 ml-1">
                           {selectedSupplier.rating.toFixed(1)}
                         </span>
                       </div>
@@ -422,32 +422,32 @@ const Suppliers: React.FC = () => {
               </div>
 
               <div>
-                <h4 className="font-medium text-gray-900 mb-3">Performance Metrics</h4>
+                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Performance Metrics</h4>
                 {(() => {
                   const stats = getSupplierStats(selectedSupplier.id);
                   return (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="text-center p-4 bg-blue-50 rounded-lg">
+                      <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                         <p className="text-2xl font-bold text-blue-600">{stats.totalOrders}</p>
-                        <p className="text-sm text-gray-600">Total Orders</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Total Orders</p>
                       </div>
-                      <div className="text-center p-4 bg-green-50 rounded-lg">
+                      <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
                         <p className="text-2xl font-bold text-green-600">
                           ${stats.totalValue.toLocaleString()}
                         </p>
-                        <p className="text-sm text-gray-600">Total Value</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Total Value</p>
                       </div>
-                      <div className="text-center p-4 bg-purple-50 rounded-lg">
+                      <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
                         <p className="text-2xl font-bold text-purple-600">
                           {stats.deliveryRate.toFixed(0)}%
                         </p>
-                        <p className="text-sm text-gray-600">Delivery Rate</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Delivery Rate</p>
                       </div>
-                      <div className="text-center p-4 bg-orange-50 rounded-lg">
+                      <div className="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
                         <p className="text-2xl font-bold text-orange-600">
                           {stats.onTimeRate.toFixed(0)}%
                         </p>
-                        <p className="text-sm text-gray-600">On-Time Rate</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">On-Time Rate</p>
                       </div>
                     </div>
                   );
@@ -455,27 +455,27 @@ const Suppliers: React.FC = () => {
               </div>
 
               <div>
-                <h4 className="font-medium text-gray-900 mb-3">Recent Orders</h4>
+                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Recent Orders</h4>
                 <div className="space-y-2">
                   {orders
                     .filter(order => order.supplier.id === selectedSupplier.id)
                     .slice(0, 5)
                     .map((order) => (
-                      <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                         <div>
-                          <p className="font-medium text-gray-900">{order.orderNumber}</p>
-                          <p className="text-sm text-gray-600">
+                          <p className="font-medium text-gray-900 dark:text-gray-100">{order.orderNumber}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
                             {new Date(order.orderDate).toLocaleDateString()}
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-medium text-gray-900">
+                          <p className="font-medium text-gray-900 dark:text-gray-100">
                             ${order.totalAmount.toLocaleString()}
                           </p>
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                            order.status === 'delivered' 
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-yellow-100 text-yellow-800'
+                            order.status === 'delivered'
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                              : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
                           }`}>
                             {order.status}
                           </span>

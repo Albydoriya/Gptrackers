@@ -295,20 +295,20 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[95vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[95vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Package className="h-6 w-6 text-blue-600" />
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                <Package className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">Add New Part</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Add New Part</h2>
             </div>
-            <button 
+            <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-lg"
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
             >
               <X className="h-5 w-5" />
             </button>
@@ -319,10 +319,10 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
         <div className="flex-1 overflow-y-auto p-6">
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
               <div className="flex items-center space-x-2">
-                <AlertCircle className="h-4 w-4 text-red-600" />
-                <span className="text-sm text-red-800">{error}</span>
+                <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                <span className="text-sm text-red-800 dark:text-red-300">{error}</span>
               </div>
             </div>
           )}
@@ -330,26 +330,26 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Basic Information */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <FileText className="h-5 w-5 mr-2 text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                <FileText className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
                 Basic Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Part Number *
                   </label>
                   <input
                     type="text"
                     value={formData.partNumber}
                     onChange={(e) => handleInputChange('partNumber', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      errors.partNumber ? 'border-red-300' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 ${
+                      errors.partNumber ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
                     }`}
                     placeholder="e.g., CPU-001"
                   />
                   {errors.partNumber && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
                       <AlertCircle className="h-3 w-3 mr-1" />
                       {errors.partNumber}
                     </p>
@@ -357,13 +357,13 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Category *
                   </label>
                   <select
                     value={formData.category}
                     onChange={(e) => handleInputChange('category', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   >
                     {categories.map(category => (
                       <option key={category} value={category}>{category}</option>
@@ -417,8 +417,8 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
 
             {/* Pricing Information */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <DollarSign className="h-5 w-5 mr-2 text-green-600" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                <DollarSign className="h-5 w-5 mr-2 text-green-600 dark:text-green-400" />
                 Pricing Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -470,8 +470,8 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
 
             {/* Stock Information */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Package className="h-5 w-5 mr-2 text-purple-600" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                <Package className="h-5 w-5 mr-2 text-purple-600 dark:text-purple-400" />
                 Stock Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -523,8 +523,8 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
 
             {/* Weight & Dimensions Section */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Weight className="h-5 w-5 mr-2 text-orange-600" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                <Weight className="h-5 w-5 mr-2 text-orange-600 dark:text-orange-400" />
                 Weight & Dimensions (for Freight Calculation)
               </h3>
               <div className="space-y-4">
@@ -644,8 +644,8 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
 
             {/* Pricing Tiers Section */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <DollarSign className="h-5 w-5 mr-2 text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                <DollarSign className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
                 Pricing Tiers Markups (%)
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -713,8 +713,8 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
               
               {/* Live Preview of Calculated Prices */}
               {formData.initialPrice > 0 && (
-                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                  <h5 className="text-sm font-medium text-gray-900 mb-3">Calculated Pricing Preview (With GST)</h5>
+                <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <h5 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Calculated Pricing Preview (With GST)</h5>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div className="text-center">
                       <p className="text-gray-600">Internal Usage</p>
@@ -747,13 +747,13 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
 
             {/* Specifications */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Settings className="h-5 w-5 mr-2 text-orange-600" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                <Settings className="h-5 w-5 mr-2 text-orange-600 dark:text-orange-400" />
                 Specifications
               </h3>
-              
+
               {/* Add Specification */}
-              <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+              <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                   <input
                     type="text"
@@ -789,10 +789,10 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
               {Object.keys(formData.specifications).length > 0 && (
                 <div className="space-y-2">
                   {Object.entries(formData.specifications).map(([key, value]) => (
-                    <div key={key} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
+                    <div key={key} className="flex items-center justify-between p-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
                       <div>
-                        <span className="font-medium text-gray-900">{key}:</span>
-                        <span className="ml-2 text-gray-600">{value}</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">{key}:</span>
+                        <span className="ml-2 text-gray-600 dark:text-gray-400">{value}</span>
                       </div>
                       <button
                         type="button"
@@ -810,12 +810,12 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-200 bg-gray-50">
+        <div className="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <div className="flex items-center justify-end space-x-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
             >
               Cancel
             </button>
@@ -825,7 +825,7 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
               className={`flex items-center space-x-2 px-6 py-2 rounded-md ${
                 isSubmitting
                   ? 'bg-gray-400 text-white cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-blue-600 dark:bg-blue-700 text-white hover:bg-blue-700 dark:hover:bg-blue-600'
               }`}
             >
               {isSubmitting ? (

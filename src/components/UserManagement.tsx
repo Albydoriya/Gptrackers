@@ -395,7 +395,7 @@ const UserManagement: React.FC = () => {
                   <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{count}</p>
                 </div>
                 <div className={`p-3 rounded-lg ${role.color.replace('text-', 'text-').replace('bg-', 'bg-').replace('border-', '')}`}>
-                  <Users className="h-6 w-6" />
+                  <Users className="h-6 w-6 text-current" />
                 </div>
               </div>
             </div>

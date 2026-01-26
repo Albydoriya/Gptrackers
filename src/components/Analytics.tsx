@@ -329,19 +329,19 @@ const Analytics: React.FC = () => {
               fetchPartsData();
             }}
             disabled={isLoadingOrders || isLoadingSuppliers || isLoadingParts}
-            className="flex items-center space-x-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors disabled:opacity-50"
+            className="flex items-center space-x-2 px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors disabled:opacity-50"
             title="Refresh analytics data"
           >
             <RefreshCw className={`h-4 w-4 ${(isLoadingOrders || isLoadingSuppliers || isLoadingParts) ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </button>
           <div className="flex items-center space-x-2">
-          <Calendar className="h-4 w-4 text-gray-400" />
+          <Calendar className="h-4 w-4 text-gray-400 dark:text-gray-500" />
           <select
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}
             disabled={isLoadingOrders || isLoadingSuppliers || isLoadingParts}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 shadow-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 shadow-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
           >
             <option value="7">Last 7 days</option>
             <option value="30">Last 30 days</option>
@@ -530,7 +530,7 @@ const Analytics: React.FC = () => {
                 supplierSpending.map((supplier, index) => {
                 const percentage = (supplier.amount / totalSpent) * 100;
                 return (
-                  <div key={supplier.name} className="flex items-center justify-between">
+                  <div key={supplier.name} className="flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 p-2 rounded transition-colors">
                     <div className="flex items-center space-x-3">
                       <div className={`w-3 h-3 rounded-full ${
                         index === 0 ? 'bg-blue-500' :
@@ -578,13 +578,13 @@ const Analytics: React.FC = () => {
                 categoryData.map((category, index) => {
                 const percentage = (category.amount / totalSpent) * 100;
                 return (
-                  <div key={category.category} className="space-y-2">
+                  <div key={category.category} className="space-y-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 p-2 rounded transition-colors">
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-gray-900 dark:text-gray-100">{category.category}</span>
                       <span className="font-medium text-gray-900 dark:text-gray-100">${category.amount.toLocaleString()}</span>
                     </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                      <div 
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div
                         className={`h-2 rounded-full ${
                           index === 0 ? 'bg-blue-500' :
                           index === 1 ? 'bg-green-500' :
@@ -625,7 +625,7 @@ const Analytics: React.FC = () => {
               </div>
             ) : (
               partPriceTrends.map((trend, index) => (
-              <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-700/50">
+              <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 <div className="flex items-start justify-between mb-2">
                   <div>
                     <p className="font-medium text-gray-900 dark:text-gray-100">{trend!.part}</p>

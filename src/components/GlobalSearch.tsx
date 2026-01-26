@@ -462,7 +462,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ onNavigate, onTabChange }) 
       {isOpen && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50 max-h-96 overflow-hidden">
           {/* Search Header */}
-          <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Search className="h-4 w-4 text-gray-500 dark:text-gray-400" />
@@ -579,7 +579,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ onNavigate, onTabChange }) 
                 ))}
                 
                 {results.length > 8 && (
-                  <div className="px-4 py-2 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                  <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
                     <p className="text-xs text-center text-gray-600 dark:text-gray-400">
                       Showing first 8 of {results.length} results
                     </p>
@@ -591,7 +591,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ onNavigate, onTabChange }) 
 
           {/* Search Tips */}
           {!searchTerm && (
-            <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
               <div className="grid grid-cols-3 gap-4 text-xs">
                 <div className="text-center">
                   <ShoppingCart className="h-4 w-4 text-blue-600 dark:text-blue-400 mx-auto mb-1" />

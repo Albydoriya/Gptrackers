@@ -214,14 +214,14 @@ function Parts() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-bold text-gray-900">Parts Catalog</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Parts Catalog</h1>
           <button
             onClick={() => {
               fetchParts();
               fetchCategories();
             }}
             disabled={isLoading || isSearching}
-            className="flex items-center space-x-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors disabled:opacity-50"
+            className="flex items-center space-x-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors disabled:opacity-50"
             title="Refresh parts"
           >
             <RefreshCw className={`h-4 w-4 ${isLoading || isSearching ? 'animate-spin' : ''}`} />
@@ -239,15 +239,15 @@ function Parts() {
         )}
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="border-b border-gray-200 dark:border-gray-700">
           <nav className="flex space-x-1 p-2">
             <button
               onClick={() => setActiveSubTab('parts-list')}
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 activeSubTab === 'parts-list'
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-100'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50'
               }`}
             >
               <Package className="h-4 w-4" />
@@ -257,8 +257,8 @@ function Parts() {
               onClick={() => setActiveSubTab('category-management')}
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 activeSubTab === 'category-management'
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-100'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50'
               }`}
             >
               <FolderOpen className="h-4 w-4" />
@@ -271,12 +271,12 @@ function Parts() {
           <div className="p-6 space-y-6">
 
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
                 <div className="flex items-center space-x-2">
-                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                  <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-500" />
                   <div>
-                    <h3 className="text-sm font-medium text-red-800">Error</h3>
-                    <p className="text-sm text-red-700 mt-1">{error}</p>
+                    <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Error</h3>
+                    <p className="text-sm text-red-700 dark:text-red-300 mt-1">{error}</p>
                     <button
                       onClick={fetchParts}
                       className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
@@ -291,13 +291,13 @@ function Parts() {
             <div className="space-y-4">
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
                   <input
                     type="text"
                     placeholder="Search by part number or name..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="pl-10 pr-4 py-2 w-full border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   {isSearching && (
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -307,14 +307,14 @@ function Parts() {
                 </div>
 
                 <div className="flex items-center space-x-2">
-                  <Filter className="h-4 w-4 text-gray-400" />
+                  <Filter className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                   <select
                     value={categoryFilter}
                     onChange={(e) => {
                       setCategoryFilter(e.target.value);
                       setCurrentPage(1);
                     }}
-                    className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="all">All Categories</option>
                     {categories.map(({ category, count }) => (
@@ -333,7 +333,7 @@ function Parts() {
                     setSortOrder(newSortOrder);
                     setCurrentPage(1);
                   }}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="name-asc">Name A-Z</option>
                   <option value="name-desc">Name Z-A</option>
@@ -349,7 +349,7 @@ function Parts() {
                     setPageSize(parseInt(e.target.value));
                     setCurrentPage(1);
                   }}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   {PAGE_SIZE_OPTIONS.map(size => (
                     <option key={size} value={size}>
@@ -361,7 +361,7 @@ function Parts() {
 
               {activeFiltersCount > 0 && (
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm text-gray-600">Active filters:</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Active filters:</span>
                   {searchTerm && (
                     <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
                       Search: "{searchTerm}"
@@ -393,12 +393,12 @@ function Parts() {
                 </div>
               )}
 
-              <div className="flex items-center justify-between text-sm text-gray-600">
+              <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
                 <div>
                   {totalCount > 0 ? (
                     <>
                       Showing {startIndex}-{endIndex} of {totalCount} parts
-                      {queryTime && <span className="ml-2 text-gray-400">({queryTime.toFixed(0)}ms)</span>}
+                      {queryTime && <span className="ml-2 text-gray-400 dark:text-gray-500">({queryTime.toFixed(0)}ms)</span>}
                     </>
                   ) : (
                     'No parts found'
@@ -410,26 +410,26 @@ function Parts() {
             {isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {Array.from({ length: pageSize > 25 ? 12 : 6 }).map((_, i) => (
-                  <div key={i} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 animate-pulse">
+                  <div key={i} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 animate-pulse">
                     <div className="flex items-start space-x-3 mb-4">
-                      <div className="p-2 bg-gray-200 rounded-lg w-12 h-12"></div>
+                      <div className="p-2 bg-gray-200 dark:bg-gray-700 rounded-lg w-12 h-12"></div>
                       <div className="flex-1 space-y-2">
-                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
                       </div>
                     </div>
                     <div className="space-y-3">
-                      <div className="h-3 bg-gray-200 rounded"></div>
-                      <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : parts.length === 0 ? (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-                <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No parts found</h3>
-                <p className="text-gray-600 mb-4">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
+                <Package className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No parts found</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
                   {activeFiltersCount > 0
                     ? 'No parts match your current search criteria'
                     : 'No parts have been added to the catalog yet'
@@ -461,8 +461,8 @@ function Parts() {
                 </div>
 
                 {totalPages > 1 && (
-                  <div className="flex items-center justify-between bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                    <div className="text-sm text-gray-600">
+                  <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
                       Page {currentPage} of {totalPages}
                     </div>
 
@@ -470,7 +470,7 @@ function Parts() {
                       <button
                         onClick={() => setCurrentPage(1)}
                         disabled={currentPage === 1}
-                        className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700/50 disabled:opacity-50 disabled:cursor-not-allowed bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       >
                         First
                       </button>
@@ -478,7 +478,7 @@ function Parts() {
                       <button
                         onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                         disabled={currentPage === 1}
-                        className="p-2 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="p-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700/50 disabled:opacity-50 disabled:cursor-not-allowed bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </button>
@@ -503,7 +503,7 @@ function Parts() {
                               className={`px-3 py-2 text-sm border rounded-md ${
                                 currentPage === pageNum
                                   ? 'bg-blue-600 text-white border-blue-600'
-                                  : 'border-gray-300 hover:bg-gray-50'
+                                  : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
                               }`}
                             >
                               {pageNum}
@@ -515,7 +515,7 @@ function Parts() {
                       <button
                         onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                         disabled={currentPage === totalPages}
-                        className="p-2 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="p-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700/50 disabled:opacity-50 disabled:cursor-not-allowed bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       >
                         <ChevronRight className="h-4 w-4" />
                       </button>
@@ -523,7 +523,7 @@ function Parts() {
                       <button
                         onClick={() => setCurrentPage(totalPages)}
                         disabled={currentPage === totalPages}
-                        className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700/50 disabled:opacity-50 disabled:cursor-not-allowed bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       >
                         Last
                       </button>
@@ -544,15 +544,15 @@ function Parts() {
 
       {selectedPart && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   {selectedPart.name} - Details
                 </h3>
                 <button
                   onClick={() => setSelectedPart(null)}
-                  className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
                   ✕
                 </button>
@@ -562,34 +562,34 @@ function Parts() {
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Part Information</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Part Information</h4>
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Part Number:</span>
-                      <span className="font-medium text-gray-900">{selectedPart.partNumber}</span>
+                      <span className="text-gray-600 dark:text-gray-400">Part Number:</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{selectedPart.partNumber}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Category:</span>
-                      <span className="font-medium text-gray-900">{selectedPart.category}</span>
+                      <span className="text-gray-600 dark:text-gray-400">Category:</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{selectedPart.category}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Current Stock:</span>
-                      <span className="font-medium text-gray-900">{selectedPart.currentStock}</span>
+                      <span className="text-gray-600 dark:text-gray-400">Current Stock:</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{selectedPart.currentStock}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Minimum Stock:</span>
-                      <span className="font-medium text-gray-900">{selectedPart.minStock}</span>
+                      <span className="text-gray-600 dark:text-gray-400">Minimum Stock:</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{selectedPart.minStock}</span>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Specifications</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Specifications</h4>
                   <div className="space-y-2">
                     {Object.entries(selectedPart.specifications).map(([key, value]) => (
                       <div key={key} className="flex justify-between">
-                        <span className="text-gray-600">{key}:</span>
-                        <span className="font-medium text-gray-900">{value}</span>
+                        <span className="text-gray-600 dark:text-gray-400">{key}:</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">{value}</span>
                       </div>
                     ))}
                   </div>
@@ -597,29 +597,29 @@ function Parts() {
               </div>
 
               <div>
-                <h4 className="font-medium text-gray-900 mb-3">Pricing Tiers (With GST)</h4>
+                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Pricing Tiers (With GST)</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Internal Usage:</span>
-                    <span className="font-medium text-gray-900">
+                    <span className="text-gray-600 dark:text-gray-400">Internal Usage:</span>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">
                       ${selectedPart.internalUsagePrice?.toFixed(2)} ({selectedPart.internalUsageMarkupPercentage?.toFixed()}%)
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Wholesale:</span>
-                    <span className="font-medium text-gray-900">
+                    <span className="text-gray-600 dark:text-gray-400">Wholesale:</span>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">
                       ${selectedPart.wholesalePrice?.toFixed(2)} ({selectedPart.wholesaleMarkupPercentage?.toFixed(1)}%)
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Trade:</span>
-                    <span className="font-medium text-gray-900">
+                    <span className="text-gray-600 dark:text-gray-400">Trade:</span>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">
                       ${selectedPart.tradePrice?.toFixed(2)} ({selectedPart.tradeMarkupPercentage?.toFixed(1)}%)
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Retail:</span>
-                    <span className="font-medium text-gray-900">
+                    <span className="text-gray-600 dark:text-gray-400">Retail:</span>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">
                       ${selectedPart.retailPrice?.toFixed(2)} ({selectedPart.retailMarkupPercentage?.toFixed(1)}%)
                     </span>
                   </div>
@@ -628,30 +628,30 @@ function Parts() {
 
               {(selectedPart.actualWeightKg || selectedPart.lengthCm || selectedPart.widthCm || selectedPart.heightCm) && (
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Weight & Dimensions</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Weight & Dimensions</h4>
                   <div className="grid grid-cols-2 gap-4">
                     {selectedPart.actualWeightKg && (
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Actual Weight:</span>
-                        <span className="font-medium text-gray-900">{selectedPart.actualWeightKg.toFixed(3)} kg</span>
+                        <span className="text-gray-600 dark:text-gray-400">Actual Weight:</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">{selectedPart.actualWeightKg.toFixed(3)} kg</span>
                       </div>
                     )}
                     {selectedPart.volumetricWeightKg && (
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Volumetric Weight:</span>
-                        <span className="font-medium text-gray-900">{selectedPart.volumetricWeightKg.toFixed(3)} kg</span>
+                        <span className="text-gray-600 dark:text-gray-400">Volumetric Weight:</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">{selectedPart.volumetricWeightKg.toFixed(3)} kg</span>
                       </div>
                     )}
                     {selectedPart.chargeableWeightKg && (
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Chargeable Weight:</span>
-                        <span className="font-semibold text-green-600">{selectedPart.chargeableWeightKg.toFixed(3)} kg</span>
+                        <span className="text-gray-600 dark:text-gray-400">Chargeable Weight:</span>
+                        <span className="font-semibold text-green-600 dark:text-green-400">{selectedPart.chargeableWeightKg.toFixed(3)} kg</span>
                       </div>
                     )}
                     {(selectedPart.lengthCm && selectedPart.widthCm && selectedPart.heightCm) && (
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Dimensions (L×W×H):</span>
-                        <span className="font-medium text-gray-900">
+                        <span className="text-gray-600 dark:text-gray-400">Dimensions (L×W×H):</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">
                           {selectedPart.lengthCm} × {selectedPart.widthCm} × {selectedPart.heightCm} cm
                         </span>
                       </div>
@@ -662,30 +662,30 @@ function Parts() {
 
               {selectedPart.priceHistory && selectedPart.priceHistory.length > 0 && (
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Price History</h4>
-                  <div className="overflow-x-auto bg-white rounded-lg border border-gray-200">
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Price History</h4>
+                  <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                     <table className="min-w-full">
-                      <thead className="bg-gray-50">
+                      <thead className="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Supplier</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Price</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Supplier</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Quantity</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-200 bg-white">
+                      <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
                         {selectedPart.priceHistory.map((history, index) => (
-                          <tr key={index} className="hover:bg-gray-50">
-                            <td className="px-4 py-2 text-sm text-gray-900">
+                          <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                            <td className="px-4 py-2 text-sm text-gray-900 dark:text-gray-100">
                               {new Date(history.date).toLocaleDateString()}
                             </td>
-                            <td className="px-4 py-2 text-sm font-medium text-gray-900">
+                            <td className="px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-100">
                               ${history.price.toFixed(2)}
                             </td>
-                            <td className="px-4 py-2 text-sm text-gray-600">
+                            <td className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400">
                               {history.supplier}
                             </td>
-                            <td className="px-4 py-2 text-sm text-gray-600">
+                            <td className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400">
                               {history.quantity}
                             </td>
                           </tr>

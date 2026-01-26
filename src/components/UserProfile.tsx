@@ -63,7 +63,7 @@ const UserProfile: React.FC = () => {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-600"
+        className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-600"
       >
         {user.avatar ? (
           <img
@@ -88,7 +88,7 @@ const UserProfile: React.FC = () => {
       {isOpen && (
         <div className="absolute right-0 mt-2 w-96 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
           {/* User Info Header */}
-          <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border-b border-gray-100 dark:border-gray-700">
+          <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-4">
               {user.avatar ? (
                 <img
@@ -124,7 +124,7 @@ const UserProfile: React.FC = () => {
             <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4 uppercase tracking-wide">Account Details</h4>
             <div className="grid grid-cols-1 gap-4">
               {user.department && (
-                <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center space-x-3">
                     <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
                       <Building className="h-4 w-4 text-purple-600 dark:text-purple-400" />
@@ -137,8 +137,8 @@ const UserProfile: React.FC = () => {
                   <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{user.department}</span>
                 </div>
               )}
-              
-              <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+
+              <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
                     <Clock className="h-4 w-4 text-green-600 dark:text-green-400" />
@@ -168,7 +168,7 @@ const UserProfile: React.FC = () => {
           {/* Permissions List */}
           <div className="px-6 pb-4">
             <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 uppercase tracking-wide">Your Permissions</h4>
-            <div className="max-h-40 overflow-y-auto space-y-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+            <div className="max-h-40 overflow-y-auto space-y-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
               {user.permissions.map((permission) => (
                 <div key={permission.id} className="flex items-center justify-between py-1">
                   <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{permission.name}</span>
@@ -179,13 +179,13 @@ const UserProfile: React.FC = () => {
           </div>
 
           {/* Actions */}
-          <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+          <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
             <button
               onClick={() => {
                 setIsAccountSettingsOpen(true);
                 setIsOpen(false);
               }}
-              className="w-full flex items-center space-x-3 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-600 hover:shadow-sm rounded-lg transition-all duration-200 mb-2"
+              className="w-full flex items-center space-x-3 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm rounded-lg transition-all duration-200 mb-2"
             >
               <div className="p-1 bg-gray-200 dark:bg-gray-600 rounded">
                 <Settings className="h-4 w-4" />

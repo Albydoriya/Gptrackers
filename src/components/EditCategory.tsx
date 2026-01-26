@@ -62,15 +62,15 @@ function EditCategory({ isOpen, onClose, onCategoryUpdated, category }: EditCate
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-md w-full">
-        <div className="p-6 border-b border-gray-200">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Edit Category</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Edit Category</h3>
             <button
               onClick={handleClose}
               disabled={isSubmitting}
-              className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
             >
               <X className="h-5 w-5" />
             </button>
@@ -79,24 +79,24 @@ function EditCategory({ isOpen, onClose, onCategoryUpdated, category }: EditCate
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
               <div className="flex items-center space-x-2">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
+                <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
                 <div>
-                  <h4 className="text-sm font-medium text-red-800">Error</h4>
-                  <p className="text-sm text-red-700 mt-1">{error}</p>
+                  <h4 className="text-sm font-medium text-red-800 dark:text-red-300">Error</h4>
+                  <p className="text-sm text-red-700 dark:text-red-400 mt-1">{error}</p>
                 </div>
               </div>
             </div>
           )}
 
           {!isActive && category.part_count > 0 && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
               <div className="flex items-center space-x-2">
-                <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                 <div>
-                  <h4 className="text-sm font-medium text-yellow-800">Warning</h4>
-                  <p className="text-sm text-yellow-700 mt-1">
+                  <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-300">Warning</h4>
+                  <p className="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
                     This category has {category.part_count} parts. Deactivating it will hide it from active lists,
                     but parts will still reference this category.
                   </p>
@@ -106,8 +106,8 @@ function EditCategory({ isOpen, onClose, onCategoryUpdated, category }: EditCate
           )}
 
           <div>
-            <label htmlFor="edit-category-name" className="block text-sm font-medium text-gray-700 mb-1">
-              Category Name <span className="text-red-600">*</span>
+            <label htmlFor="edit-category-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Category Name <span className="text-red-600 dark:text-red-400">*</span>
             </label>
             <input
               id="edit-category-name"
@@ -116,12 +116,12 @@ function EditCategory({ isOpen, onClose, onCategoryUpdated, category }: EditCate
               onChange={(e) => setName(e.target.value)}
               required
               disabled={isSubmitting}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-not-allowed bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
             />
           </div>
 
           <div>
-            <label htmlFor="edit-category-description" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="edit-category-description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Description
             </label>
             <textarea
@@ -130,13 +130,13 @@ function EditCategory({ isOpen, onClose, onCategoryUpdated, category }: EditCate
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               disabled={isSubmitting}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed resize-none"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-not-allowed resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
             />
           </div>
 
           <div>
-            <label htmlFor="edit-display-order" className="block text-sm font-medium text-gray-700 mb-1">
-              Display Order <span className="text-red-600">*</span>
+            <label htmlFor="edit-display-order" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Display Order <span className="text-red-600 dark:text-red-400">*</span>
             </label>
             <input
               id="edit-display-order"
@@ -146,7 +146,7 @@ function EditCategory({ isOpen, onClose, onCategoryUpdated, category }: EditCate
               required
               min="1"
               disabled={isSubmitting}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-not-allowed bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
             />
           </div>
 
@@ -157,32 +157,32 @@ function EditCategory({ isOpen, onClose, onCategoryUpdated, category }: EditCate
               checked={isActive}
               onChange={(e) => setIsActive(e.target.checked)}
               disabled={isSubmitting}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            <label htmlFor="edit-is-active" className="text-sm text-gray-700">
+            <label htmlFor="edit-is-active" className="text-sm text-gray-700 dark:text-gray-300">
               Active
             </label>
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-            <p className="text-sm text-gray-600">
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-2">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               <strong>Parts in category:</strong> {category.part_count}
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               <strong>Total inventory value:</strong> ${category.total_inventory_value.toFixed(2)}
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               <strong>Low stock items:</strong> {category.low_stock_count}
             </p>
           </div>
         </form>
 
-        <div className="p-6 border-t border-gray-200 flex items-center justify-end space-x-3">
+        <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end space-x-3">
           <button
             type="button"
             onClick={handleClose}
             disabled={isSubmitting}
-            className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
@@ -190,7 +190,7 @@ function EditCategory({ isOpen, onClose, onCategoryUpdated, category }: EditCate
             type="submit"
             onClick={handleSubmit}
             disabled={isSubmitting || !name.trim()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            className="px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
           >
             {isSubmitting ? (
               <>
