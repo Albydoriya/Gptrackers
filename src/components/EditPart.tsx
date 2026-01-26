@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X,
   Package,
@@ -13,11 +13,13 @@ import {
   TrendingDown,
   History,
   Weight,
-  Ruler
+  Ruler,
+  ChevronDown,
+  Search
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Part } from '../types';
+import { Part, Supplier } from '../types';
 
 interface EditPartProps {
   isOpen: boolean;
@@ -80,9 +82,17 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
   const [categories, setCategories] = useState<string[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
 
+  // Supplier dropdown state
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [isLoadingSuppliers, setIsLoadingSuppliers] = useState(false);
+  const [isSupplierDropdownOpen, setIsSupplierDropdownOpen] = useState(false);
+  const [supplierSearchTerm, setSupplierSearchTerm] = useState('');
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (isOpen) {
       fetchCategories();
+      fetchSuppliers();
     }
   }, [isOpen]);
 
@@ -104,6 +114,26 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
       setCategories(['Uncategorized']);
     } finally {
       setIsLoadingCategories(false);
+    }
+  };
+
+  const fetchSuppliers = async () => {
+    setIsLoadingSuppliers(true);
+    try {
+      const { data, error } = await supabase
+        .from('suppliers')
+        .select('*')
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+
+      setSuppliers(data || []);
+    } catch (err: any) {
+      console.error('Error fetching suppliers:', err);
+      setSuppliers([]);
+    } finally {
+      setIsLoadingSuppliers(false);
     }
   };
 
@@ -325,15 +355,56 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
 
   const getPriceTrend = () => {
     if (!part || part.priceHistory.length < 2) return { trend: 'stable', percentage: 0 };
-    
+
     const latest = part.priceHistory[part.priceHistory.length - 1].price;
     const previous = part.priceHistory[part.priceHistory.length - 2].price;
     const percentage = ((latest - previous) / previous) * 100;
-    
+
     if (percentage > 2) return { trend: 'up', percentage };
     if (percentage < -2) return { trend: 'down', percentage };
     return { trend: 'stable', percentage };
   };
+
+  // Supplier dropdown handlers
+  const toggleSupplierDropdown = () => {
+    setIsSupplierDropdownOpen(!isSupplierDropdownOpen);
+    if (!isSupplierDropdownOpen) {
+      setSupplierSearchTerm('');
+    }
+  };
+
+  const selectSupplier = (supplier: Supplier) => {
+    setFormData(prev => ({ ...prev, newSupplier: supplier.name }));
+    setIsSupplierDropdownOpen(false);
+    setSupplierSearchTerm('');
+
+    // Clear error when valid supplier selected
+    if (errors.newSupplier) {
+      setErrors(prev => ({ ...prev, newSupplier: '' }));
+    }
+  };
+
+  const filteredSuppliers = suppliers.filter(supplier =>
+    supplier.name.toLowerCase().includes(supplierSearchTerm.toLowerCase())
+  );
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsSupplierDropdownOpen(false);
+        setSupplierSearchTerm('');
+      }
+    };
+
+    if (isSupplierDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSupplierDropdownOpen]);
 
   if (!isOpen || !part) return null;
 
@@ -921,15 +992,78 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Supplier
                     </label>
-                    <input
-                      type="text"
-                      value={formData.newSupplier || ''}
-                      onChange={(e) => handleInputChange('newSupplier', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                        errors.newSupplier ? 'border-red-300 bg-red-50 dark:bg-red-900/20' : 'border-gray-300 dark:border-gray-600'
-                      } bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400`}
-                      placeholder="Supplier name"
-                    />
+                    <div className="relative" ref={dropdownRef}>
+                      <button
+                        type="button"
+                        onClick={toggleSupplierDropdown}
+                        disabled={isLoadingSuppliers}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${
+                          errors.newSupplier ? 'border-red-300 bg-red-50 dark:bg-red-900/20' : 'border-gray-300 dark:border-gray-600'
+                        } bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 ${
+                          isLoadingSuppliers ? 'cursor-wait' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600'
+                        }`}
+                      >
+                        <span className={formData.newSupplier ? '' : 'text-gray-500 dark:text-gray-400'}>
+                          {isLoadingSuppliers ? 'Loading suppliers...' : formData.newSupplier || 'Select supplier...'}
+                        </span>
+                        <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform ${isSupplierDropdownOpen ? 'transform rotate-180' : ''}`} />
+                      </button>
+
+                      {isSupplierDropdownOpen && !isLoadingSuppliers && (
+                        <div className="absolute z-50 w-full mt-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-80 overflow-hidden flex flex-col">
+                          {/* Search Input */}
+                          <div className="p-3 border-b border-gray-200 dark:border-gray-600">
+                            <div className="relative">
+                              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                              <input
+                                type="text"
+                                value={supplierSearchTerm}
+                                onChange={(e) => setSupplierSearchTerm(e.target.value)}
+                                placeholder="Search suppliers..."
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Suppliers List */}
+                          <div className="overflow-y-auto">
+                            {filteredSuppliers.length > 0 ? (
+                              filteredSuppliers.map((supplier) => (
+                                <button
+                                  key={supplier.id}
+                                  type="button"
+                                  onClick={() => selectSupplier(supplier)}
+                                  className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors border-b border-gray-100 dark:border-gray-600 last:border-b-0"
+                                >
+                                  <div className="font-medium text-gray-900 dark:text-gray-100">
+                                    {supplier.name}
+                                  </div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    {supplier.contactPerson} • {supplier.email}
+                                  </div>
+                                </button>
+                              ))
+                            ) : (
+                              <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                {suppliers.length === 0 ? (
+                                  <>
+                                    <Package className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                                    <p className="text-sm">No active suppliers found</p>
+                                    <p className="text-xs mt-1">Add suppliers in the Suppliers tab</p>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Search className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                                    <p className="text-sm">No suppliers match your search</p>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                     {errors.newSupplier && (
                       <p className="mt-2 text-sm text-red-600 dark:text-red-400 flex items-center">
                         <AlertCircle className="h-4 w-4 mr-1" />
