@@ -89,16 +89,56 @@ export const fetchOrders = async (params: OrdersQueryParams = {}): Promise<Order
   } = params;
 
   try {
+    let matchingSupplierIds: string[] = [];
+    let matchingPartIds: string[] = [];
+    let matchingOrderIdsFromParts: string[] = [];
+    let matchingUserIds: string[] = [];
+
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+
+      const suppliersResult = await supabase
+        .from('suppliers')
+        .select('id')
+        .or(`name.ilike.%${searchLower}%,contact_person.ilike.%${searchLower}%`);
+
+      if (suppliersResult.data) {
+        matchingSupplierIds = suppliersResult.data.map((s: any) => s.id);
+      }
+
+      const partsResult = await supabase
+        .from('parts')
+        .select('id')
+        .or(`name.ilike.%${searchLower}%,part_number.ilike.%${searchLower}%,category.ilike.%${searchLower}%`);
+
+      if (partsResult.data) {
+        matchingPartIds = partsResult.data.map((p: any) => p.id);
+      }
+
+      if (matchingPartIds.length > 0) {
+        const orderPartsResult = await supabase
+          .from('order_parts')
+          .select('order_id')
+          .in('part_id', matchingPartIds);
+
+        if (orderPartsResult.data) {
+          matchingOrderIdsFromParts = orderPartsResult.data.map((op: any) => op.order_id);
+        }
+      }
+
+      const userProfilesResult = await supabase
+        .from('user_profiles')
+        .select('id')
+        .or(`full_name.ilike.%${searchLower}%,email.ilike.%${searchLower}%`);
+
+      if (userProfilesResult.data) {
+        matchingUserIds = userProfilesResult.data.map((u: any) => u.id);
+      }
+    }
+
     let query = supabase
       .from('orders')
-      .select(`
-        *,
-        supplier:suppliers(*),
-        order_parts(
-          *,
-          part:parts(*)
-        )
-      `, { count: 'exact' });
+      .select('id, supplier_id, created_by', { count: 'exact' });
 
     if (status !== 'all') {
       query = query.eq('status', status);
@@ -106,11 +146,26 @@ export const fetchOrders = async (params: OrdersQueryParams = {}): Promise<Order
 
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase();
+      const orConditions: string[] = [];
 
-      query = query.or(
-        `order_number.ilike.%${searchLower}%,` +
-        `notes.ilike.%${searchLower}%`
-      );
+      orConditions.push(`order_number.ilike.%${searchLower}%`);
+      orConditions.push(`notes.ilike.%${searchLower}%`);
+
+      if (matchingSupplierIds.length > 0) {
+        orConditions.push(`supplier_id.in.(${matchingSupplierIds.join(',')})`);
+      }
+
+      if (matchingOrderIdsFromParts.length > 0) {
+        orConditions.push(`id.in.(${matchingOrderIdsFromParts.join(',')})`);
+      }
+
+      if (matchingUserIds.length > 0) {
+        orConditions.push(`created_by.in.(${matchingUserIds.join(',')})`);
+      }
+
+      if (orConditions.length > 0) {
+        query = query.or(orConditions.join(','));
+      }
     }
 
     switch (sortBy) {
@@ -119,8 +174,6 @@ export const fetchOrders = async (params: OrdersQueryParams = {}): Promise<Order
         break;
       case 'amount':
         query = query.order('total_amount', { ascending: sortOrder === 'asc' });
-        break;
-      case 'supplier':
         break;
       default:
         query = query.order('order_date', { ascending: sortOrder === 'asc' });
@@ -132,29 +185,51 @@ export const fetchOrders = async (params: OrdersQueryParams = {}): Promise<Order
     const to = from + pageSize - 1;
     query = query.range(from, to);
 
-    const { data, error, count } = await query;
+    const { data: orderIds, error: idsError, count } = await query;
 
-    if (error) throw error;
+    if (idsError) throw idsError;
 
-    let orders = (data || []).map(transformOrderData);
-
-    if (searchTerm.trim()) {
-      const searchLower = searchTerm.toLowerCase();
-      orders = orders.filter(order => {
-        const supplierMatch = order.supplier.name.toLowerCase().includes(searchLower) ||
-                             order.supplier.contactPerson.toLowerCase().includes(searchLower);
-
-        const partsMatch = order.parts.some(orderPart =>
-          orderPart.part.name.toLowerCase().includes(searchLower) ||
-          orderPart.part.partNumber.toLowerCase().includes(searchLower) ||
-          orderPart.part.category.toLowerCase().includes(searchLower)
-        );
-
-        const createdByMatch = order.createdBy && order.createdBy.toLowerCase().includes(searchLower);
-
-        return supplierMatch || partsMatch || createdByMatch;
-      });
+    if (!orderIds || orderIds.length === 0) {
+      return {
+        orders: [],
+        totalCount: count || 0,
+        currentPage: page,
+        totalPages: Math.ceil((count || 0) / pageSize)
+      };
     }
+
+    const ids = orderIds.map((o: any) => o.id);
+
+    let fullQuery = supabase
+      .from('orders')
+      .select(`
+        *,
+        supplier:suppliers(*),
+        order_parts(
+          *,
+          part:parts(*)
+        )
+      `)
+      .in('id', ids);
+
+    switch (sortBy) {
+      case 'date':
+        fullQuery = fullQuery.order('order_date', { ascending: sortOrder === 'asc' });
+        break;
+      case 'amount':
+        fullQuery = fullQuery.order('total_amount', { ascending: sortOrder === 'asc' });
+        break;
+      default:
+        fullQuery = fullQuery.order('order_date', { ascending: sortOrder === 'asc' });
+    }
+
+    fullQuery = fullQuery.order('created_at', { ascending: false });
+
+    const { data: fullData, error: fullError } = await fullQuery;
+
+    if (fullError) throw fullError;
+
+    let orders = (fullData || []).map(transformOrderData);
 
     if (sortBy === 'supplier') {
       orders.sort((a, b) => {
