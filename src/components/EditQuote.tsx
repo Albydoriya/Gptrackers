@@ -168,7 +168,12 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
             price: parseFloat(ph.price),
             supplier: ph.supplier_name,
             quantity: ph.quantity || 1
-          }))
+          })),
+          internalUsageMarkupPercentage: part.internal_usage_markup_percentage || 10,
+          wholesaleMarkupPercentage: part.wholesale_markup_percentage || 20,
+          tradeMarkupPercentage: part.trade_markup_percentage || 30,
+          retailMarkupPercentage: part.retail_markup_percentage || 50,
+          chargeableWeightKg: part.chargeable_weight_kg
         }));
 
         setAvailableParts(transformedParts);
@@ -222,24 +227,40 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
     return matchesSearch && matchesCategory;
   });
 
-  const addPartToQuote = (part: Part) => {
+  const addPartToQuote = (part: Part, pricingTier: 'wholesale' | 'trade' | 'retail' = 'wholesale') => {
+    // Calculate price based on pricing tier
+    const latestPrice = part.priceHistory.length > 0
+      ? part.priceHistory[part.priceHistory.length - 1].price
+      : 0;
+
+    let unitPrice = 0;
+    switch (pricingTier) {
+      case 'wholesale':
+        unitPrice = latestPrice * (1 + (part.wholesaleMarkupPercentage || 20) / 100);
+        break;
+      case 'trade':
+        unitPrice = latestPrice * (1 + (part.tradeMarkupPercentage || 30) / 100);
+        break;
+      case 'retail':
+        unitPrice = latestPrice * (1 + (part.retailMarkupPercentage || 50) / 100);
+        break;
+    }
+
     const existingPart = formData.parts.find(p => !p.isCustomPart && p.part?.id === part.id);
     if (existingPart) {
-      updatePartQuantity(existingPart.id, existingPart.quantity + 1);
+      // Update the existing part's price to the new tier price
+      updatePartPrice(existingPart.id, unitPrice);
     } else {
-      const latestPrice = part.priceHistory.length > 0 
-        ? part.priceHistory[part.priceHistory.length - 1].price 
-        : 0;
-      
+      // Add new part with the selected tier pricing
       const newQuotePart: QuotePart = {
         id: crypto.randomUUID(),
         part,
         quantity: 1,
-        unitPrice: latestPrice,
-        totalPrice: latestPrice,
+        unitPrice: unitPrice,
+        totalPrice: unitPrice,
         isCustomPart: false
       };
-      
+
       setFormData(prev => ({
         ...prev,
         parts: [...prev.parts, newQuotePart]
@@ -678,10 +699,10 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
                     
                     <div className="border border-gray-200 dark:border-gray-700 rounded-lg max-h-96 overflow-y-auto bg-white dark:bg-gray-700">
                       {filteredParts.map((part) => {
-                        const latestPrice = part.priceHistory.length > 0 
-                          ? part.priceHistory[part.priceHistory.length - 1].price 
+                        const latestPrice = part.priceHistory.length > 0
+                          ? part.priceHistory[part.priceHistory.length - 1].price
                           : 0;
-                        
+
                         return (
                           <div key={part.id} className="p-4 border-b border-gray-100 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600">
                             <div className="flex items-center justify-between">
@@ -689,15 +710,44 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
                                 <h5 className="font-medium text-gray-900 dark:text-gray-100">{part.name}</h5>
                                 <p className="text-sm text-gray-600 dark:text-gray-400">{part.partNumber}</p>
                                 <p className="text-sm text-gray-500 dark:text-gray-400">{part.category}</p>
-                                <p className="text-sm font-medium text-green-600 dark:text-green-400">${latestPrice.toFixed(2)}</p>
+                                <div className="flex items-center space-x-4 mt-2 text-xs">
+                                  <span className="text-blue-600 dark:text-blue-400">
+                                    Internal: ${(latestPrice * (1 + (part.internalUsageMarkupPercentage || 10) / 100)).toFixed(2)}
+                                  </span>
+                                  <span className="text-green-600 dark:text-green-400">
+                                    Wholesale: ${(latestPrice * (1 + (part.wholesaleMarkupPercentage || 20) / 100)).toFixed(2)}
+                                  </span>
+                                  <span className="text-purple-600 dark:text-purple-400">
+                                    Trade: ${(latestPrice * (1 + (part.tradeMarkupPercentage || 30) / 100)).toFixed(2)}
+                                  </span>
+                                  <span className="text-orange-600 dark:text-orange-400">
+                                    Retail: ${(latestPrice * (1 + (part.retailMarkupPercentage || 50) / 100)).toFixed(2)}
+                                  </span>
+                                </div>
                               </div>
-                              <button
-                                onClick={() => addPartToQuote(part)}
-                                className="flex items-center space-x-1 bg-blue-600 dark:bg-blue-700 text-white px-3 py-1 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
-                              >
-                                <Plus className="h-3 w-3" />
-                                <span>Add</span>
-                              </button>
+                              <div className="flex flex-col space-y-1">
+                                <button
+                                  onClick={() => addPartToQuote(part, 'wholesale')}
+                                  className="flex items-center space-x-1 bg-green-600 dark:bg-green-700 text-white px-3 py-1 rounded-md hover:bg-green-700 dark:hover:bg-green-600 transition-colors text-sm"
+                                >
+                                  <Plus className="h-3 w-3" />
+                                  <span>Wholesale</span>
+                                </button>
+                                <div className="flex space-x-1">
+                                  <button
+                                    onClick={() => addPartToQuote(part, 'trade')}
+                                    className="flex items-center space-x-1 bg-purple-600 dark:bg-purple-700 text-white px-2 py-0.5 rounded text-xs hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors"
+                                  >
+                                    <span>Trade</span>
+                                  </button>
+                                  <button
+                                    onClick={() => addPartToQuote(part, 'retail')}
+                                    className="flex items-center space-x-1 bg-orange-600 dark:bg-orange-700 text-white px-2 py-0.5 rounded text-xs hover:bg-orange-700 dark:hover:bg-orange-600 transition-colors"
+                                  >
+                                    <span>Retail</span>
+                                  </button>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         );
