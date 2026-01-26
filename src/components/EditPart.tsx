@@ -87,7 +87,10 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
   const [isLoadingSuppliers, setIsLoadingSuppliers] = useState(false);
   const [isSupplierDropdownOpen, setIsSupplierDropdownOpen] = useState(false);
   const [supplierSearchTerm, setSupplierSearchTerm] = useState('');
+  const [dropdownPosition, setDropdownPosition] = useState<'down' | 'up'>('down');
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -367,8 +370,24 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
 
   // Supplier dropdown handlers
   const toggleSupplierDropdown = () => {
-    setIsSupplierDropdownOpen(!isSupplierDropdownOpen);
-    if (!isSupplierDropdownOpen) {
+    const newOpenState = !isSupplierDropdownOpen;
+    setIsSupplierDropdownOpen(newOpenState);
+
+    if (newOpenState) {
+      // Calculate position when opening
+      if (buttonRef.current) {
+        const buttonRect = buttonRef.current.getBoundingClientRect();
+        const dropdownHeight = 270; // Approximate height: 240px max-h + padding + search + borders
+        const spaceBelow = window.innerHeight - buttonRect.bottom;
+        const spaceAbove = buttonRect.top;
+
+        // Render upward if insufficient space below and more space above
+        if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+          setDropdownPosition('up');
+        } else {
+          setDropdownPosition('down');
+        }
+      }
       setSupplierSearchTerm('');
     }
   };
@@ -404,6 +423,16 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
+  }, [isSupplierDropdownOpen]);
+
+  // Auto-focus search input when dropdown opens
+  useEffect(() => {
+    if (isSupplierDropdownOpen && searchInputRef.current) {
+      // Use setTimeout to ensure DOM is ready
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 50);
+    }
   }, [isSupplierDropdownOpen]);
 
   if (!isOpen || !part) return null;
@@ -994,6 +1023,7 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
                     </label>
                     <div className="relative" ref={dropdownRef}>
                       <button
+                        ref={buttonRef}
                         type="button"
                         onClick={toggleSupplierDropdown}
                         disabled={isLoadingSuppliers}
@@ -1003,19 +1033,35 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
                           isLoadingSuppliers ? 'cursor-wait' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600'
                         }`}
                       >
-                        <span className={formData.newSupplier ? '' : 'text-gray-500 dark:text-gray-400'}>
-                          {isLoadingSuppliers ? 'Loading suppliers...' : formData.newSupplier || 'Select supplier...'}
-                        </span>
-                        <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform ${isSupplierDropdownOpen ? 'transform rotate-180' : ''}`} />
+                        <div className="flex items-center space-x-2 flex-1 min-w-0">
+                          <Search className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                          <span className={`truncate ${formData.newSupplier ? '' : 'text-gray-500 dark:text-gray-400'}`}>
+                            {isLoadingSuppliers ? 'Loading suppliers...' : formData.newSupplier || 'Search or select supplier...'}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2 flex-shrink-0">
+                          {!isLoadingSuppliers && suppliers.length > 0 && (
+                            <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full">
+                              {suppliers.length}
+                            </span>
+                          )}
+                          <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform ${
+                            isSupplierDropdownOpen && dropdownPosition === 'up' ? 'transform rotate-0' :
+                            isSupplierDropdownOpen && dropdownPosition === 'down' ? 'transform rotate-180' : ''
+                          }`} />
+                        </div>
                       </button>
 
                       {isSupplierDropdownOpen && !isLoadingSuppliers && (
-                        <div className="absolute z-50 w-full mt-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-80 overflow-hidden flex flex-col">
+                        <div className={`absolute z-50 w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-hidden flex flex-col ${
+                          dropdownPosition === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'
+                        }`}>
                           {/* Search Input */}
-                          <div className="p-3 border-b border-gray-200 dark:border-gray-600">
+                          <div className="p-2.5 border-b border-gray-200 dark:border-gray-600">
                             <div className="relative">
                               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                               <input
+                                ref={searchInputRef}
                                 type="text"
                                 value={supplierSearchTerm}
                                 onChange={(e) => setSupplierSearchTerm(e.target.value)}
@@ -1034,7 +1080,7 @@ const EditPart: React.FC<EditPartProps> = ({ isOpen, onClose, onPartUpdated, par
                                   key={supplier.id}
                                   type="button"
                                   onClick={() => selectSupplier(supplier)}
-                                  className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors border-b border-gray-100 dark:border-gray-600 last:border-b-0"
+                                  className="w-full px-4 py-2.5 text-left hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors border-b border-gray-100 dark:border-gray-600 last:border-b-0"
                                 >
                                   <div className="font-medium text-gray-900 dark:text-gray-100">
                                     {supplier.name}
