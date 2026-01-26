@@ -177,7 +177,7 @@ export const partsService = {
         priceHistory: (data.price_history || [])
           .map((history: any) => ({
             date: history.effective_date,
-            price: parseFloat(history.unit_price) || 0,
+            price: parseFloat(history.price) || 0,
             supplier: history.supplier_name || 'Unknown',
             quantity: history.quantity || 0
           }))
@@ -191,25 +191,25 @@ export const partsService = {
         retailMarkupPercentage: data.retail_markup_percentage || 50,
         internalUsagePrice: (() => {
           const currentPrice = (data.price_history && data.price_history.length > 0)
-            ? parseFloat(data.price_history[data.price_history.length - 1].unit_price)
+            ? parseFloat(data.price_history[data.price_history.length - 1].price)
             : 0;
           return currentPrice * (1 + (data.internal_usage_markup_percentage || 10) / 100) * 1.1;
         })(),
         wholesalePrice: (() => {
           const currentPrice = (data.price_history && data.price_history.length > 0)
-            ? parseFloat(data.price_history[data.price_history.length - 1].unit_price)
+            ? parseFloat(data.price_history[data.price_history.length - 1].price)
             : 0;
           return currentPrice * (1 + (data.wholesale_markup_percentage || 20) / 100) * 1.1;
         })(),
         tradePrice: (() => {
           const currentPrice = (data.price_history && data.price_history.length > 0)
-            ? parseFloat(data.price_history[data.price_history.length - 1].unit_price)
+            ? parseFloat(data.price_history[data.price_history.length - 1].price)
             : 0;
           return currentPrice * (1 + (data.trade_markup_percentage || 30) / 100) * 1.1;
         })(),
         retailPrice: (() => {
           const currentPrice = (data.price_history && data.price_history.length > 0)
-            ? parseFloat(data.price_history[data.price_history.length - 1].unit_price)
+            ? parseFloat(data.price_history[data.price_history.length - 1].price)
             : 0;
           return currentPrice * (1 + (data.retail_markup_percentage || 50) / 100) * 1.1;
         })(),
