@@ -286,7 +286,7 @@ const Orders: React.FC = () => {
 
         try {
           const filename = generateExportFilename(order.supplier.name, order.orderNumber);
-          const blob = await exportOrderTemplate(orderId, { templateType: 'hpi' });
+          const blob = await exportOrderTemplate(orderId);
           await downloadExcelFile(blob, filename);
 
           if (order.status === 'approved') {

@@ -1,6 +1,6 @@
 export interface ExportRequest {
   orderId: string;
-  templateType: 'hpi';
+  templateType?: string;
   options?: {
     includeImages?: boolean;
     includeTerms?: boolean;
@@ -26,6 +26,8 @@ export interface OrderExportData {
     address: string;
     payment_terms: string;
     logo_url: string | null;
+    export_template_type: string | null;
+    template_config: Record<string, any> | null;
   };
   parts: Array<{
     id: string;

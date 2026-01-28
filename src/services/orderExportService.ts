@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabase';
 
 export interface ExportOptions {
-  templateType?: 'hpi';
+  templateType?: string;
   includeImages?: boolean;
   includeTerms?: boolean;
 }
@@ -10,7 +10,7 @@ export async function exportOrderTemplate(
   orderId: string,
   options: ExportOptions = {}
 ): Promise<Blob> {
-  const { templateType = 'hpi' } = options;
+  const { templateType } = options;
 
   try {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;

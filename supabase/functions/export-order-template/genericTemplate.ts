@@ -2,14 +2,14 @@ import type ExcelJS from "npm:exceljs@4.4.0";
 import type { OrderExportData } from "./types.ts";
 import { formatDateForExcel, formatSpecifications, getQuoteDeadline } from "./utils.ts";
 
-export const HPI_COLORS = {
+export const GENERIC_COLORS = {
   headerBg: 'E8F4F8',
   altRowBg: 'F9F9F9',
   borderColor: 'D0D0D0',
   totalBg: 'FFF9E6',
 };
 
-export const COLUMN_WIDTHS = {
+export const GENERIC_COLUMN_WIDTHS = {
   itemNo: 8,
   partNumber: 18,
   description: 45,
@@ -21,39 +21,46 @@ export const COLUMN_WIDTHS = {
   notes: 20,
 };
 
-export function applyHPITemplate(
+export function applyGenericTemplate(
   worksheet: ExcelJS.Worksheet,
   data: OrderExportData,
   config?: any
 ): void {
+  const colors = config?.colors || GENERIC_COLORS;
+  const columnWidths = config?.columnWidths || GENERIC_COLUMN_WIDTHS;
+
   worksheet.columns = [
-    { width: COLUMN_WIDTHS.itemNo },
-    { width: COLUMN_WIDTHS.partNumber },
-    { width: COLUMN_WIDTHS.description },
-    { width: COLUMN_WIDTHS.specifications },
-    { width: COLUMN_WIDTHS.quantity },
-    { width: COLUMN_WIDTHS.unitPrice },
-    { width: COLUMN_WIDTHS.total },
-    { width: COLUMN_WIDTHS.leadTime },
-    { width: COLUMN_WIDTHS.notes },
+    { width: columnWidths.itemNo },
+    { width: columnWidths.partNumber },
+    { width: columnWidths.description },
+    { width: columnWidths.specifications },
+    { width: columnWidths.quantity },
+    { width: columnWidths.unitPrice },
+    { width: columnWidths.total },
+    { width: columnWidths.leadTime },
+    { width: columnWidths.notes },
   ];
 
-  addHeaderSection(worksheet, data);
-  const lastPartRow = addPartsTable(worksheet, data);
-  addFooterSection(worksheet, data, lastPartRow);
+  addHeaderSection(worksheet, data, colors);
+  const lastPartRow = addPartsTable(worksheet, data, colors);
+  addFooterSection(worksheet, data, lastPartRow, colors);
   configurePageSetup(worksheet, lastPartRow);
 }
 
-function addHeaderSection(worksheet: ExcelJS.Worksheet, data: OrderExportData): void {
+function addHeaderSection(
+  worksheet: ExcelJS.Worksheet,
+  data: OrderExportData,
+  colors: any
+): void {
   worksheet.mergeCells('A1:B2');
-  worksheet.getCell('A1').value = 'LOGO PLACEHOLDER';
+  worksheet.getCell('A1').value = 'LOGO';
   worksheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'center' };
   worksheet.getCell('A1').font = { size: 9, color: { argb: '999999' } };
   worksheet.getCell('A1').border = {
-    top: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },
-    left: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },
-    bottom: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },
-    right: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },
+    top: { style: 'thin', color: { argb: colors.borderColor } },
+    left: { style: 'thin', color: { argb: colors.borderColor } },
+    bottom: { style: 'thin', color: { argb: colors.borderColor } },
+    right: { style: 'thin', color: { argb: colors.borderColor } },
   };
 
   worksheet.mergeCells('C1:F2');
@@ -108,7 +115,11 @@ function addHeaderSection(worksheet: ExcelJS.Worksheet, data: OrderExportData): 
   worksheet.getRow(11).height = 10;
 }
 
-function addPartsTable(worksheet: ExcelJS.Worksheet, data: OrderExportData): number {
+function addPartsTable(
+  worksheet: ExcelJS.Worksheet,
+  data: OrderExportData,
+  colors: any
+): number {
   let currentRow = 12;
 
   const headers = [
@@ -131,13 +142,13 @@ function addPartsTable(worksheet: ExcelJS.Worksheet, data: OrderExportData): num
     cell.fill = {
       type: 'pattern',
       pattern: 'solid',
-      fgColor: { argb: HPI_COLORS.headerBg },
+      fgColor: { argb: colors.headerBg },
     };
     cell.border = {
-      top: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },
-      left: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },
-      bottom: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },
-      right: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },
+      top: { style: 'thin', color: { argb: colors.borderColor } },
+      left: { style: 'thin', color: { argb: colors.borderColor } },
+      bottom: { style: 'thin', color: { argb: colors.borderColor } },
+      right: { style: 'thin', color: { argb: colors.borderColor } },
     };
   });
 
@@ -179,17 +190,17 @@ function addPartsTable(worksheet: ExcelJS.Worksheet, data: OrderExportData): num
         row.getCell(col).fill = {
           type: 'pattern',
           pattern: 'solid',
-          fgColor: { argb: HPI_COLORS.altRowBg },
+          fgColor: { argb: colors.altRowBg },
         };
       }
     }
 
     for (let col = 1; col <= 9; col++) {
       row.getCell(col).border = {
-        top: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },
-        left: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },
-        bottom: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },
-        right: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },
+        top: { style: 'thin', color: { argb: colors.borderColor } },
+        left: { style: 'thin', color: { argb: colors.borderColor } },
+        bottom: { style: 'thin', color: { argb: colors.borderColor } },
+        right: { style: 'thin', color: { argb: colors.borderColor } },
       };
     }
 
@@ -208,7 +219,8 @@ function addPartsTable(worksheet: ExcelJS.Worksheet, data: OrderExportData): num
 function addFooterSection(
   worksheet: ExcelJS.Worksheet,
   data: OrderExportData,
-  lastPartRow: number
+  lastPartRow: number,
+  colors: any
 ): void {
   let currentRow = lastPartRow + 2;
   const firstPartRow = 13;
@@ -251,7 +263,7 @@ function addFooterSection(
   worksheet.getCell(currentRow, 7).fill = {
     type: 'pattern',
     pattern: 'solid',
-    fgColor: { argb: HPI_COLORS.totalBg },
+    fgColor: { argb: colors.totalBg },
   };
   worksheet.getCell(currentRow, 7).border = {
     top: { style: 'double' },

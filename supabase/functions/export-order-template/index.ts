@@ -56,7 +56,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const requestBody: ExportRequest = await req.json();
-    const { orderId, templateType = 'hpi' } = requestBody;
+    const { orderId, templateType: requestedTemplateType } = requestBody;
 
     if (!orderId) {
       return new Response(JSON.stringify({ error: 'Order ID is required' }), {
@@ -83,7 +83,9 @@ Deno.serve(async (req: Request) => {
           phone,
           address,
           payment_terms,
-          logo_url
+          logo_url,
+          export_template_type,
+          template_config
         ),
         order_parts(
           id,
@@ -142,6 +144,8 @@ Deno.serve(async (req: Request) => {
         address: orderData.supplier.address,
         payment_terms: orderData.supplier.payment_terms,
         logo_url: orderData.supplier.logo_url,
+        export_template_type: orderData.supplier.export_template_type,
+        template_config: orderData.supplier.template_config,
       },
       parts: orderData.order_parts.map((op: any) => ({
         id: op.id,
@@ -154,7 +158,9 @@ Deno.serve(async (req: Request) => {
       })),
     };
 
-    console.log('Generating Excel file for order:', orderId);
+    const templateType = exportData.supplier.export_template_type || requestedTemplateType || 'generic';
+    console.log('Generating Excel file for order:', orderId, 'using template:', templateType);
+
     const excelBuffer = await generateExcelFile(exportData, templateType);
     const fileName = generateFileName(exportData.supplier.name, exportData.order.order_number);
 

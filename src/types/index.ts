@@ -65,6 +65,8 @@ export interface Supplier {
   deliveryTime: number; // days
   paymentTerms: string;
   isActive: boolean;
+  exportTemplateType?: string;
+  templateConfig?: Record<string, any>;
 }
 
 export interface PriceHistory {
