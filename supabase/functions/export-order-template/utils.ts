@@ -37,3 +37,22 @@ export function generateFileName(supplierName: string, orderNumber: string): str
   const sanitizedSupplier = supplierName.replace(/[^a-zA-Z0-9]/g, '_');
   return `PO_Request_${sanitizedSupplier}_${orderNumber}_${date}.xlsx`;
 }
+
+export function generateMultiOrderFileName(
+  supplierName: string,
+  orderNumbers: string[],
+  orderDates: string[]
+): string {
+  const sanitizedSupplier = supplierName.replace(/[^a-zA-Z0-9]/g, '_');
+  const earliestDate = orderDates
+    .map(d => new Date(d))
+    .sort((a, b) => a.getTime() - b.getTime())[0];
+  const dateStr = earliestDate.toISOString().split('T')[0];
+
+  if (orderNumbers.length <= 3) {
+    const orderNumbersStr = orderNumbers.join('_');
+    return `PO_Request_${sanitizedSupplier}_${orderNumbersStr}_${dateStr}.xlsx`;
+  } else {
+    return `PO_Request_${sanitizedSupplier}_Combined_${orderNumbers.length}_Orders_${dateStr}.xlsx`;
+  }
+}

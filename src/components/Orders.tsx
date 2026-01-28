@@ -34,7 +34,14 @@ import EditOrder from './EditOrder';
 import StatusUpdateModal from './StatusUpdateModal';
 import PricingUpdateModal from './PricingUpdateModal';
 import ShippingCostModal from './ShippingCostModal';
-import { exportOrderTemplate, downloadExcelFile, generateExportFilename, updateOrderStatus as updateOrderStatusService } from '../services/orderExportService';
+import {
+  exportOrderTemplate,
+  exportMultipleOrders,
+  downloadExcelFile,
+  generateExportFilename,
+  generateMultiOrderFilename,
+  updateOrderStatus as updateOrderStatusService
+} from '../services/orderExportService';
 import { fetchOrders as fetchOrdersService, fetchStatusCounts, StatusCounts } from '../services/ordersService';
 
 const PAGE_SIZE = 25;
@@ -270,51 +277,103 @@ const Orders: React.FC = () => {
     setShippingCostOrder(null);
   };
 
-  // Export handler
+  // Export handler with smart supplier grouping
   const handleExportSelectedOrders = async () => {
     if (selectedOrdersForExport.size === 0) return;
 
     setIsExporting(true);
     setExportError(null);
-    let successCount = 0;
-    const failedExports: Array<{ orderNumber: string; error: string }> = [];
 
     try {
-      for (const orderId of selectedOrdersForExport) {
-        const order = ordersList.find(o => o.id === orderId);
-        if (!order) continue;
+      const selectedOrders = ordersList.filter(o => selectedOrdersForExport.has(o.id));
+
+      const supplierGroups = new Map<string, Order[]>();
+      selectedOrders.forEach(order => {
+        if (!supplierGroups.has(order.supplierId)) {
+          supplierGroups.set(order.supplierId, []);
+        }
+        supplierGroups.get(order.supplierId)!.push(order);
+      });
+
+      const supplierGroupsWithTooManyOrders = Array.from(supplierGroups.entries())
+        .filter(([_, orders]) => orders.length > 10);
+
+      if (supplierGroupsWithTooManyOrders.length > 0) {
+        const supplierNames = supplierGroupsWithTooManyOrders
+          .map(([_, orders]) => `${orders[0].supplier.name} (${orders.length} orders)`)
+          .join(', ');
+        setExportError(`Maximum 10 orders per supplier. Please reduce selection for: ${supplierNames}`);
+        setIsExporting(false);
+        return;
+      }
+
+      let totalSuccessCount = 0;
+      const failedSuppliers: Array<{ supplierName: string; error: string }> = [];
+      const successfulSuppliers: Array<{ supplierName: string; orderCount: number }> = [];
+
+      for (const [supplierId, orders] of supplierGroups) {
+        const supplierName = orders[0].supplier.name;
 
         try {
-          const filename = generateExportFilename(order.supplier.name, order.orderNumber);
-          const blob = await exportOrderTemplate(orderId);
-          await downloadExcelFile(blob, filename);
-
-          if (order.status === 'approved') {
-            await updateOrderStatusService(orderId, 'supplier_quoting');
+          if (orders.length === 1) {
+            const order = orders[0];
+            const filename = generateExportFilename(order.supplier.name, order.orderNumber);
+            const blob = await exportOrderTemplate(order.id);
+            downloadExcelFile(blob, filename);
+          } else {
+            const orderIds = orders.map(o => o.id);
+            const orderNumbers = orders.map(o => o.orderNumber);
+            const filename = generateMultiOrderFilename(supplierName, orderNumbers);
+            const blob = await exportMultipleOrders(orderIds);
+            downloadExcelFile(blob, filename);
           }
 
-          successCount++;
+          for (const order of orders) {
+            if (order.status === 'approved') {
+              try {
+                await updateOrderStatusService(order.id, 'supplier_quoting');
+              } catch (statusError) {
+                console.error(`Failed to update status for order ${order.orderNumber}:`, statusError);
+              }
+            }
+          }
+
+          totalSuccessCount += orders.length;
+          successfulSuppliers.push({ supplierName, orderCount: orders.length });
         } catch (error: any) {
-          console.error(`Failed to export order ${order.orderNumber}:`, error);
-          failedExports.push({
-            orderNumber: order.orderNumber,
+          console.error(`Failed to export orders for ${supplierName}:`, error);
+          failedSuppliers.push({
+            supplierName,
             error: error.message || 'Unknown error'
           });
         }
       }
 
-      if (successCount > 0) {
-        if (failedExports.length > 0) {
-          const failedDetails = failedExports.map(f => `${f.orderNumber}: ${f.error}`).join('\n');
-          alert(`Successfully exported ${successCount} order(s)\n\nFailed exports:\n${failedDetails}`);
+      if (totalSuccessCount > 0) {
+        const supplierSummary = successfulSuppliers
+          .map(s => `${s.supplierName} (${s.orderCount} order${s.orderCount > 1 ? 's' : ''})`)
+          .join(', ');
+
+        if (failedSuppliers.length > 0) {
+          const failedDetails = failedSuppliers
+            .map(f => `${f.supplierName}: ${f.error}`)
+            .join('\n');
+          alert(
+            `Successfully exported ${totalSuccessCount} order(s) for: ${supplierSummary}\n\n` +
+            `Failed exports:\n${failedDetails}`
+          );
         } else {
-          alert(`Successfully exported ${successCount} order(s)`);
+          const fileCount = supplierGroups.size;
+          alert(
+            `Successfully exported ${totalSuccessCount} order(s) in ${fileCount} file${fileCount > 1 ? 's' : ''}: ${supplierSummary}`
+          );
         }
+
         setSelectedOrdersForExport(new Set());
         await fetchOrders();
         await loadStatusCounts();
       } else {
-        const errorDetails = failedExports.map(f => `• ${f.orderNumber}: ${f.error}`).join('\n');
+        const errorDetails = failedSuppliers.map(f => `• ${f.supplierName}: ${f.error}`).join('\n');
         throw new Error(`All exports failed:\n\n${errorDetails}`);
       }
     } catch (error: any) {
@@ -352,6 +411,20 @@ const Orders: React.FC = () => {
     return ['approved', 'supplier_quoting'].includes(order.status);
   };
 
+  const getExportButtonText = () => {
+    if (selectedOrdersForExport.size === 0) return 'Export for Quote';
+
+    const selectedOrders = ordersList.filter(o => selectedOrdersForExport.has(o.id));
+    const uniqueSuppliers = new Set(selectedOrders.map(o => o.supplierId));
+    const supplierCount = uniqueSuppliers.size;
+
+    if (supplierCount === 1) {
+      return `Export for Quote (${selectedOrdersForExport.size} order${selectedOrdersForExport.size > 1 ? 's' : ''})`;
+    }
+
+    return `Export for Quote (${selectedOrdersForExport.size} orders, ${supplierCount} suppliers)`;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -382,7 +455,7 @@ const Orders: React.FC = () => {
               ) : (
                 <>
                   <FileDown className="h-4 w-4" />
-                  <span>Export for Quote ({selectedOrdersForExport.size})</span>
+                  <span>{getExportButtonText()}</span>
                 </>
               )}
             </button>

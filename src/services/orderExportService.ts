@@ -65,10 +65,70 @@ export function downloadExcelFile(blob: Blob, filename: string): void {
   window.URL.revokeObjectURL(url);
 }
 
+export async function exportMultipleOrders(
+  orderIds: string[],
+  options: ExportOptions = {}
+): Promise<Blob> {
+  const { templateType } = options;
+
+  try {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const token = (await supabase.auth.getSession()).data.session?.access_token;
+
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/export-order-template`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        orderIds,
+        templateType,
+        options
+      })
+    });
+
+    if (!response.ok) {
+      const contentType = response.headers.get('content-type');
+      if (contentType?.includes('application/json')) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Export failed with status ${response.status}`);
+      }
+      throw new Error(`Export failed with status ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    if (!blob || blob.size === 0) {
+      throw new Error('No data received from export function');
+    }
+
+    return blob;
+  } catch (err: any) {
+    console.error('Export multiple orders error:', err);
+    throw new Error(err.message || 'Failed to export multiple orders');
+  }
+}
+
 export function generateExportFilename(supplierName: string, orderNumber: string): string {
   const date = new Date().toISOString().split('T')[0];
   const sanitizedSupplier = supplierName.replace(/[^a-zA-Z0-9]/g, '_');
   return `PO_Request_${sanitizedSupplier}_${orderNumber}_${date}.xlsx`;
+}
+
+export function generateMultiOrderFilename(supplierName: string, orderNumbers: string[]): string {
+  const date = new Date().toISOString().split('T')[0];
+  const sanitizedSupplier = supplierName.replace(/[^a-zA-Z0-9]/g, '_');
+
+  if (orderNumbers.length <= 3) {
+    const orderNumbersStr = orderNumbers.join('_');
+    return `PO_Request_${sanitizedSupplier}_${orderNumbersStr}_${date}.xlsx`;
+  } else {
+    return `PO_Request_${sanitizedSupplier}_Combined_${orderNumbers.length}_Orders_${date}.xlsx`;
+  }
 }
 
 export async function logExportHistory(

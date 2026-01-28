@@ -128,8 +128,8 @@ function addPartsTable(
     'Description',
     'Specifications',
     'Qty',
-    'Unit Price (AUD)',
-    'Total (AUD)',
+    'Unit Price (JPY)',
+    'Total (JPY)',
     'Supplier Lead Time',
     'Notes'
   ];
@@ -175,10 +175,10 @@ function addPartsTable(
     row.getCell(5).alignment = { horizontal: 'center' };
 
     row.getCell(6).value = '';
-    row.getCell(6).numFmt = '$#,##0.00';
+    row.getCell(6).numFmt = '¥#,##0';
 
     row.getCell(7).value = { formula: `E${currentRow}*F${currentRow}` };
-    row.getCell(7).numFmt = '$#,##0.00';
+    row.getCell(7).numFmt = '¥#,##0';
 
     row.getCell(8).value = '';
     row.getCell(8).alignment = { horizontal: 'center' };
@@ -229,36 +229,26 @@ function addFooterSection(
   worksheet.getCell(currentRow, 6).font = { bold: true };
   worksheet.getCell(currentRow, 6).alignment = { horizontal: 'right' };
   worksheet.getCell(currentRow, 7).value = { formula: `SUM(G${firstPartRow}:G${lastPartRow})` };
-  worksheet.getCell(currentRow, 7).numFmt = '$#,##0.00';
+  worksheet.getCell(currentRow, 7).numFmt = '¥#,##0';
   worksheet.getCell(currentRow, 7).font = { bold: true };
+  const subtotalRow = currentRow;
   currentRow++;
 
   worksheet.getCell(currentRow, 6).value = 'Shipping (Est):';
   worksheet.getCell(currentRow, 6).font = { bold: true };
   worksheet.getCell(currentRow, 6).alignment = { horizontal: 'right' };
   worksheet.getCell(currentRow, 7).value = '';
-  worksheet.getCell(currentRow, 7).numFmt = '$#,##0.00';
+  worksheet.getCell(currentRow, 7).numFmt = '¥#,##0';
   const shippingCell = `G${currentRow}`;
-  currentRow++;
-
-  worksheet.getCell(currentRow, 6).value = 'GST (10%):';
-  worksheet.getCell(currentRow, 6).font = { bold: true };
-  worksheet.getCell(currentRow, 6).alignment = { horizontal: 'right' };
-  worksheet.getCell(currentRow, 7).value = {
-    formula: `(G${lastPartRow + 2}+${shippingCell})*0.1`
-  };
-  worksheet.getCell(currentRow, 7).numFmt = '$#,##0.00';
-  worksheet.getCell(currentRow, 7).font = { bold: true };
-  const gstCell = `G${currentRow}`;
   currentRow++;
 
   worksheet.getCell(currentRow, 6).value = 'GRAND TOTAL:';
   worksheet.getCell(currentRow, 6).font = { bold: true, size: 12 };
   worksheet.getCell(currentRow, 6).alignment = { horizontal: 'right' };
   worksheet.getCell(currentRow, 7).value = {
-    formula: `G${lastPartRow + 2}+${shippingCell}+${gstCell}`
+    formula: `G${subtotalRow}+${shippingCell}`
   };
-  worksheet.getCell(currentRow, 7).numFmt = '$#,##0.00';
+  worksheet.getCell(currentRow, 7).numFmt = '¥#,##0';
   worksheet.getCell(currentRow, 7).font = { bold: true, size: 12 };
   worksheet.getCell(currentRow, 7).fill = {
     type: 'pattern',
@@ -282,7 +272,7 @@ function addFooterSection(
   const terms = [
     `- Please provide complete quote by: ${quoteDeadline}`,
     '- Include lead times for all items',
-    '- Prices should be in AUD',
+    '- Prices should be in JPY',
     `- Payment terms: ${data.supplier.payment_terms}`,
     '- Please indicate any minimum order quantities',
   ];
