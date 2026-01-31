@@ -1,5 +1,6 @@
 import type ExcelJS from "npm:exceljs@4.4.0";
 import type { MultiOrderExportData } from "./types.ts";
+import type { LogoData } from "./logoLoader.ts";
 import { formatDateForExcel, formatSpecifications, getQuoteDeadline } from "./utils.ts";
 
 export const GENERIC_MULTI_COLORS = {
@@ -25,7 +26,9 @@ export const GENERIC_MULTI_COLUMN_WIDTHS = {
 export function applyGenericTemplateMulti(
   worksheet: ExcelJS.Worksheet,
   data: MultiOrderExportData,
-  config?: any
+  config?: any,
+  workbook?: ExcelJS.Workbook,
+  logoData?: LogoData | null
 ): void {
   const colors = config?.colors || GENERIC_MULTI_COLORS;
   const columnWidths = config?.columnWidths || GENERIC_MULTI_COLUMN_WIDTHS;

@@ -1,5 +1,6 @@
 import type ExcelJS from "npm:exceljs@4.4.0";
 import type { OrderExportData } from "./types.ts";
+import type { LogoData } from "./logoLoader.ts";
 import { formatDateForExcel, formatSpecifications, getQuoteDeadline } from "./utils.ts";
 
 export const HPI_COLORS = {
@@ -24,7 +25,9 @@ export const COLUMN_WIDTHS = {
 export function applyHPITemplate(
   worksheet: ExcelJS.Worksheet,
   data: OrderExportData,
-  config?: any
+  config?: any,
+  workbook?: ExcelJS.Workbook,
+  logoData?: LogoData | null
 ): void {
   worksheet.columns = [
     { width: COLUMN_WIDTHS.itemNo },
@@ -38,17 +41,36 @@ export function applyHPITemplate(
     { width: COLUMN_WIDTHS.notes },
   ];
 
-  addHeaderSection(worksheet, data);
+  addHeaderSection(worksheet, data, workbook, logoData);
   const lastPartRow = addPartsTable(worksheet, data);
   addFooterSection(worksheet, data, lastPartRow);
   configurePageSetup(worksheet, lastPartRow);
 }
 
-function addHeaderSection(worksheet: ExcelJS.Worksheet, data: OrderExportData): void {
+function addHeaderSection(
+  worksheet: ExcelJS.Worksheet,
+  data: OrderExportData,
+  workbook?: ExcelJS.Workbook,
+  logoData?: LogoData | null
+): void {
   worksheet.mergeCells('A1:B2');
-  worksheet.getCell('A1').value = 'LOGO PLACEHOLDER';
-  worksheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'center' };
-  worksheet.getCell('A1').font = { size: 9, color: { argb: '999999' } };
+
+  if (logoData && workbook) {
+    const imageId = workbook.addImage({
+      buffer: logoData.buffer,
+      extension: logoData.extension,
+    });
+
+    worksheet.addImage(imageId, {
+      tl: { col: 0, row: 0 },
+      ext: { width: logoData.width || 200, height: logoData.height || 100 },
+    });
+  } else {
+    worksheet.getCell('A1').value = 'LOGO PLACEHOLDER';
+    worksheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'center' };
+    worksheet.getCell('A1').font = { size: 9, color: { argb: '999999' } };
+  }
+
   worksheet.getCell('A1').border = {
     top: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },
     left: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },

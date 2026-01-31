@@ -1,5 +1,6 @@
 import type ExcelJS from "npm:exceljs@4.4.0";
 import type { OrderExportData } from "./types.ts";
+import type { LogoData } from "./logoLoader.ts";
 import { formatDateForExcel, formatSpecifications, getQuoteDeadline } from "./utils.ts";
 
 export const GENERIC_COLORS = {
@@ -24,7 +25,9 @@ export const GENERIC_COLUMN_WIDTHS = {
 export function applyGenericTemplate(
   worksheet: ExcelJS.Worksheet,
   data: OrderExportData,
-  config?: any
+  config?: any,
+  workbook?: ExcelJS.Workbook,
+  logoData?: LogoData | null
 ): void {
   const colors = config?.colors || GENERIC_COLORS;
   const columnWidths = config?.columnWidths || GENERIC_COLUMN_WIDTHS;

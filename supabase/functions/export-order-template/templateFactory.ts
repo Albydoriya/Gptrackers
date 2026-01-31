@@ -1,5 +1,6 @@
 import type ExcelJS from "npm:exceljs@4.4.0";
 import type { OrderExportData, MultiOrderExportData } from "./types.ts";
+import type { LogoData } from "./logoLoader.ts";
 import { applyHPITemplate } from "./hpiTemplate.ts";
 import { applyGenericTemplate } from "./genericTemplate.ts";
 import { applyHPITemplateMulti } from "./hpiTemplateMulti.ts";
@@ -8,13 +9,17 @@ import { applyGenericTemplateMulti } from "./genericTemplateMulti.ts";
 export type TemplateFunction = (
   worksheet: ExcelJS.Worksheet,
   data: OrderExportData,
-  config?: any
+  config?: any,
+  workbook?: ExcelJS.Workbook,
+  logoData?: LogoData | null
 ) => void;
 
 export type MultiOrderTemplateFunction = (
   worksheet: ExcelJS.Worksheet,
   data: MultiOrderExportData,
-  config?: any
+  config?: any,
+  workbook?: ExcelJS.Workbook,
+  logoData?: LogoData | null
 ) => void;
 
 export function getTemplateFunction(templateType: string): TemplateFunction {
