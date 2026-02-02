@@ -5,22 +5,26 @@ export interface LogoData {
   height?: number;
 }
 
-const LOGO_FILES = {
-  hpi: 'hpi-logo.png',
-  generic: 'generic-logo.png',
-};
-
+// Import logos as static assets using import.meta.resolve
+// This ensures they are bundled with the Edge Function
 export async function loadLogo(templateType: string): Promise<LogoData | null> {
   try {
-    const logoFileName = templateType.toLowerCase() === 'hpi' ? LOGO_FILES.hpi : LOGO_FILES.generic;
-    const logoPath = new URL(`./assets/${logoFileName}`, import.meta.url).pathname;
-
-    const fileData = await Deno.readFile(logoPath);
-
+    const logoFileName = templateType.toLowerCase() === 'hpi' ? 'hpi-logo.png' : 'generic-logo.png';
+    
+    // Use import.meta.resolve to get the correct path that works in Deno Deploy
+    const logoUrl = new URL(`./assets/${logoFileName}`, import.meta.url);
+    
+    // Read the file using fetch which works better in Edge Runtime
+    const response = await fetch(logoUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch logo: ${response.statusText}`);
+    }
+    
+    const arrayBuffer = await response.arrayBuffer();
     const extension = logoFileName.endsWith('.png') ? 'png' : 'jpeg';
 
     return {
-      buffer: fileData.buffer,
+      buffer: arrayBuffer,
       extension,
       width: 200,
       height: 100,
