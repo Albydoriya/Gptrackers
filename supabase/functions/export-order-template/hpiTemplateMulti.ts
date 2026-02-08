@@ -62,7 +62,7 @@ function addHeaderSection(
   worksheet.mergeCells('B1:E1');
   worksheet.getCell('B1').value = 'ORDER';
   worksheet.getCell('B1').alignment = { vertical: 'middle', horizontal: 'center' };
-  worksheet.getCell('B1').font = { name: 'Candara', size: 36, bold: true };
+  worksheet.getCell('B1').font = { name: 'Arial', size: 36, bold: true };
   worksheet.getRow(1).height = 35;
 
   if (logoData && workbook) {
@@ -83,7 +83,7 @@ function addHeaderSection(
   const supplierBox = worksheet.getCell('A3');
   supplierBox.value = `Purchasing name : ${data.company.name}`;
   supplierBox.alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
-  supplierBox.font = { name: 'Candara', size: 11 };
+  supplierBox.font = { name: 'Arial', size: 11 };
   supplierBox.border = {
     top: { style: 'medium', color: { argb: HPI_MULTI_COLORS.borderColor } },
     left: { style: 'medium', color: { argb: HPI_MULTI_COLORS.borderColor } },
@@ -96,15 +96,15 @@ function addHeaderSection(
 
   worksheet.getCell('K3').value = formatDateForExcel(minDate);
   worksheet.getCell('K3').alignment = { horizontal: 'right' };
-  worksheet.getCell('K3').font = { name: 'Candara', size: 10 };
+  worksheet.getCell('K3').font = { name: 'Arial', size: 10 };
 
   worksheet.getCell('G5').value = 'Purchaser: ALBERT HO -san';
   worksheet.getCell('G5').alignment = { horizontal: 'left' };
-  worksheet.getCell('G5').font = { name: 'Candara', size: 10 };
+  worksheet.getCell('G5').font = { name: 'Arial', size: 10 };
 
   worksheet.getCell('G6').value = `Estimate No,${formatDateAsYYYYMMDD()}`;
   worksheet.getCell('G6').alignment = { horizontal: 'left' };
-  worksheet.getCell('G6').font = { name: 'Candara', size: 10 };
+  worksheet.getCell('G6').font = { name: 'Arial', size: 10 };
 
   worksheet.getRow(10).height = 5;
 }
@@ -116,7 +116,7 @@ function addPartsTable(
   let currentRow = 11;
 
   worksheet.getCell(`A${currentRow}`).value = 'GP Order #';
-  worksheet.getCell(`A${currentRow}`).font = { name: 'Candara', bold: true, size: 10 };
+  worksheet.getCell(`A${currentRow}`).font = { name: 'Arial', bold: true, size: 10 };
   worksheet.getCell(`A${currentRow}`).alignment = { vertical: 'middle', horizontal: 'center' };
   worksheet.getCell(`A${currentRow}`).border = {
     top: { style: 'thin', color: { argb: HPI_MULTI_COLORS.borderColor } },
@@ -147,7 +147,7 @@ function addPartsTable(
   singleHeaders.forEach((header, index) => {
     const cell = worksheet.getCell(currentRow, 8 + index);
     cell.value = header;
-    cell.font = { name: 'Candara', bold: true, size: 10 };
+    cell.font = { name: 'Arial', bold: true, size: 10 };
     cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
     cell.border = {
       top: { style: 'thin', color: { argb: HPI_MULTI_COLORS.borderColor } },
@@ -166,40 +166,40 @@ function addPartsTable(
 
       row.getCell(1).value = orderData.order.order_number;
       row.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
-      row.getCell(1).font = { name: 'Candara', size: 10 };
+      row.getCell(1).font = { name: 'Arial', size: 10 };
 
       worksheet.mergeCells(`B${currentRow}:E${currentRow}`);
       row.getCell(2).value = `${part.name} ${part.part_number}`;
       row.getCell(2).alignment = { vertical: 'middle', horizontal: 'left' };
-      row.getCell(2).font = { name: 'Candara', size: 10 };
+      row.getCell(2).font = { name: 'Arial', size: 10 };
 
       worksheet.mergeCells(`F${currentRow}:G${currentRow}`);
       row.getCell(6).value = part.part_number;
       row.getCell(6).alignment = { vertical: 'middle', horizontal: 'right' };
-      row.getCell(6).font = { name: 'Candara', size: 10 };
+      row.getCell(6).font = { name: 'Arial', size: 10 };
 
       row.getCell(8).value = part.quantity;
       row.getCell(8).alignment = { horizontal: 'center' };
-      row.getCell(8).font = { name: 'Candara', size: 10 };
+      row.getCell(8).font = { name: 'Arial', size: 10 };
 
       row.getCell(9).value = '';
       row.getCell(9).numFmt = '¥#,##0';
-      row.getCell(9).font = { name: 'Candara', size: 10 };
+      row.getCell(9).font = { name: 'Arial', size: 10 };
 
       row.getCell(10).value = '';
       row.getCell(10).numFmt = '0%';
-      row.getCell(10).font = { name: 'Candara', size: 10 };
+      row.getCell(10).font = { name: 'Arial', size: 10 };
 
       row.getCell(11).value = '';
       row.getCell(11).numFmt = '¥#,##0';
-      row.getCell(11).font = { name: 'Candara', size: 10 };
+      row.getCell(11).font = { name: 'Arial', size: 10 };
 
       row.getCell(12).value = '';
       row.getCell(12).numFmt = '¥#,##0';
-      row.getCell(12).font = { name: 'Candara', size: 10 };
+      row.getCell(12).font = { name: 'Arial', size: 10 };
 
       row.getCell(13).value = '';
-      row.getCell(13).font = { name: 'Candara', size: 10 };
+      row.getCell(13).font = { name: 'Arial', size: 10 };
 
       for (let col = 1; col <= 13; col++) {
         row.getCell(col).border = {
@@ -227,22 +227,22 @@ function addFooterSection(
 
   worksheet.getCell(currentRow, 11).value = 'subtotal';
   worksheet.getCell(currentRow, 11).alignment = { horizontal: 'left' };
-  worksheet.getCell(currentRow, 11).font = { name: 'Candara', size: 10 };
+  worksheet.getCell(currentRow, 11).font = { name: 'Arial', size: 10 };
 
   worksheet.getCell(currentRow, 12).value = '';
   worksheet.getCell(currentRow, 12).numFmt = '¥#,##0';
-  worksheet.getCell(currentRow, 12).font = { name: 'Candara', size: 10 };
+  worksheet.getCell(currentRow, 12).font = { name: 'Arial', size: 10 };
   currentRow++;
 
   currentRow++;
 
   worksheet.getCell(currentRow, 11).value = 'TOTAL';
   worksheet.getCell(currentRow, 11).alignment = { horizontal: 'left' };
-  worksheet.getCell(currentRow, 11).font = { name: 'Candara', size: 10, bold: true };
+  worksheet.getCell(currentRow, 11).font = { name: 'Arial', size: 10, bold: true };
 
   worksheet.getCell(currentRow, 12).value = '';
   worksheet.getCell(currentRow, 12).numFmt = '¥#,##0';
-  worksheet.getCell(currentRow, 12).font = { name: 'Candara', size: 10 };
+  worksheet.getCell(currentRow, 12).font = { name: 'Arial', size: 10 };
   worksheet.getCell(currentRow, 12).border = {
     top: { style: 'thin', color: { argb: HPI_MULTI_COLORS.borderColor } },
     bottom: { style: 'thin', color: { argb: HPI_MULTI_COLORS.borderColor } },
@@ -267,7 +267,7 @@ function addFooterSection(
 
   bankCell.value = bankText;
   bankCell.alignment = { vertical: 'top', horizontal: 'center', wrapText: true };
-  bankCell.font = { name: 'Candara', size: 10, bold: false };
+  bankCell.font = { name: 'Arial', size: 10, bold: false };
   bankCell.border = {
     top: { style: 'thin', color: { argb: HPI_MULTI_COLORS.borderColor } },
     left: { style: 'thin', color: { argb: HPI_MULTI_COLORS.borderColor } },

@@ -20,7 +20,7 @@ export async function generateExcelFile(
   const logoData = await loadLogo(templateType);
 
   const isMultiOrder = isMultiOrderData(data);
-  const worksheetName = isMultiOrder ? 'Combined Purchase Orders' : 'Purchase Order Request';
+  const worksheetName = isMultiOrder ? 'HPI' : 'Purchase Order Request';
 
   const worksheet = workbook.addWorksheet(worksheetName, {
     properties: { tabColor: { argb: 'FF0066CC' } },
