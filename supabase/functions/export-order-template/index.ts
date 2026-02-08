@@ -15,6 +15,7 @@ async function handleMultiOrderExport(
   supabase: any,
   user: any,
   orderIds: string[],
+  companyData: { name: string; email: string | null; phone: string | null; address: string | null },
   requestedTemplateType?: string
 ): Promise<Response> {
   if (orderIds.length > MAX_ORDERS_PER_EXPORT) {
@@ -109,6 +110,7 @@ async function handleMultiOrderExport(
       export_template_type: firstOrder.supplier.export_template_type,
       template_config: firstOrder.supplier.template_config,
     },
+    company: companyData,
     orders: ordersData.map((orderData) => ({
       order: {
         id: orderData.id,
@@ -211,6 +213,18 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    const { data: companySettings } = await supabase
+      .from('company_settings')
+      .select('company_name, email, phone, address')
+      .single();
+
+    const companyData = {
+      name: companySettings?.company_name || 'Go Parts',
+      email: companySettings?.email || null,
+      phone: companySettings?.phone || null,
+      address: companySettings?.address || null,
+    };
+
     const requestBody: ExportRequest = await req.json();
     const { orderId, orderIds, templateType: requestedTemplateType } = requestBody;
 
@@ -222,7 +236,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (orderIds && orderIds.length > 0) {
-      return await handleMultiOrderExport(supabase, user, orderIds, requestedTemplateType);
+      return await handleMultiOrderExport(supabase, user, orderIds, companyData, requestedTemplateType);
     }
 
     const { data: orderData, error: orderError } = await supabase
@@ -307,6 +321,7 @@ Deno.serve(async (req: Request) => {
         export_template_type: orderData.supplier.export_template_type,
         template_config: orderData.supplier.template_config,
       },
+      company: companyData,
       parts: orderData.order_parts.map((op: any) => ({
         id: op.id,
         part_number: op.part.part_number,

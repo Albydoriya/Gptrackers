@@ -30,6 +30,12 @@ export interface OrderExportData {
     export_template_type: string | null;
     template_config: Record<string, any> | null;
   };
+  company: {
+    name: string;
+    email: string | null;
+    phone: string | null;
+    address: string | null;
+  };
   parts: Array<{
     id: string;
     part_number: string;
@@ -53,6 +59,12 @@ export interface MultiOrderExportData {
     logo_url: string | null;
     export_template_type: string | null;
     template_config: Record<string, any> | null;
+  };
+  company: {
+    name: string;
+    email: string | null;
+    phone: string | null;
+    address: string | null;
   };
   orders: Array<{
     order: {

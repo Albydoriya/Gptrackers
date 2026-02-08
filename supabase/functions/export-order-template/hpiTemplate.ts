@@ -1,7 +1,7 @@
 import type ExcelJS from "npm:exceljs@4.4.0";
 import type { OrderExportData } from "./types.ts";
 import type { LogoData } from "./logoLoader.ts";
-import { formatDateForExcel } from "./utils.ts";
+import { formatDateForExcel, formatDateAsYYYYMMDD } from "./utils.ts";
 
 export const HPI_COLORS = {
   borderColor: '000000',
@@ -79,7 +79,7 @@ function addHeaderSection(
 
   worksheet.mergeCells('A3:D9');
   const supplierBox = worksheet.getCell('A3');
-  supplierBox.value = `Purchasing name : ${data.supplier.name}`;
+  supplierBox.value = `Purchasing name : ${data.company.name}`;
   supplierBox.alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
   supplierBox.font = { size: 11 };
   supplierBox.border = {
@@ -97,7 +97,7 @@ function addHeaderSection(
   worksheet.getCell('F5').alignment = { horizontal: 'left' };
   worksheet.getCell('F5').font = { size: 10 };
 
-  worksheet.getCell('F6').value = `Estimate No,${data.order.order_number}`;
+  worksheet.getCell('F6').value = `Estimate No,${formatDateAsYYYYMMDD()}`;
   worksheet.getCell('F6').alignment = { horizontal: 'left' };
   worksheet.getCell('F6').font = { size: 10 };
 

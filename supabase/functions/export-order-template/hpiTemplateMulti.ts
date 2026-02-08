@@ -1,7 +1,7 @@
 import type ExcelJS from "npm:exceljs@4.4.0";
 import type { MultiOrderExportData } from "./types.ts";
 import type { LogoData } from "./logoLoader.ts";
-import { formatDateForExcel } from "./utils.ts";
+import { formatDateForExcel, formatDateAsYYYYMMDD } from "./utils.ts";
 
 export const HPI_MULTI_COLORS = {
   borderColor: '000000',
@@ -81,7 +81,7 @@ function addHeaderSection(
 
   worksheet.mergeCells('A3:E9');
   const supplierBox = worksheet.getCell('A3');
-  supplierBox.value = `Purchasing name : ${data.supplier.name}`;
+  supplierBox.value = `Purchasing name : ${data.company.name}`;
   supplierBox.alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
   supplierBox.font = { size: 11 };
   supplierBox.border = {
@@ -102,8 +102,7 @@ function addHeaderSection(
   worksheet.getCell('G5').alignment = { horizontal: 'left' };
   worksheet.getCell('G5').font = { size: 10 };
 
-  const orderNumbers = data.orders.map(o => o.order.order_number).join(', ');
-  worksheet.getCell('G6').value = `Estimate No,${orderNumbers}`;
+  worksheet.getCell('G6').value = `Estimate No,${formatDateAsYYYYMMDD()}`;
   worksheet.getCell('G6').alignment = { horizontal: 'left' };
   worksheet.getCell('G6').font = { size: 10 };
 
