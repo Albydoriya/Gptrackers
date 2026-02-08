@@ -9,12 +9,8 @@ export const HPI_COLORS = {
 };
 
 export const COLUMN_WIDTHS = {
-  productNameA: 8,
-  productNameB: 20,
-  productNameC: 15,
-  productNameD: 15,
-  partNumberE: 12,
-  partNumberF: 12,
+  productName: 58,
+  partNumber: 24,
   qty: 6,
   retail: 12,
   discount: 12,
@@ -31,12 +27,8 @@ export function applyHPITemplate(
   logoData?: LogoData | null
 ): void {
   worksheet.columns = [
-    { width: COLUMN_WIDTHS.productNameA },
-    { width: COLUMN_WIDTHS.productNameB },
-    { width: COLUMN_WIDTHS.productNameC },
-    { width: COLUMN_WIDTHS.productNameD },
-    { width: COLUMN_WIDTHS.partNumberE },
-    { width: COLUMN_WIDTHS.partNumberF },
+    { width: COLUMN_WIDTHS.productName },
+    { width: COLUMN_WIDTHS.partNumber },
     { width: COLUMN_WIDTHS.qty },
     { width: COLUMN_WIDTHS.retail },
     { width: COLUMN_WIDTHS.discount },
@@ -57,10 +49,10 @@ function addHeaderSection(
   workbook?: ExcelJS.Workbook,
   logoData?: LogoData | null
 ): void {
-  worksheet.mergeCells('B1:D1');
-  worksheet.getCell('B1').value = 'ORDER';
-  worksheet.getCell('B1').alignment = { vertical: 'middle', horizontal: 'center' };
-  worksheet.getCell('B1').font = { name: 'Arial', size: 36, bold: true };
+  worksheet.mergeCells('A1:B1');
+  worksheet.getCell('A1').value = 'ORDER';
+  worksheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'center' };
+  worksheet.getCell('A1').font = { name: 'Arial', size: 36, bold: true };
   worksheet.getRow(1).height = 35;
 
   if (logoData && workbook) {
@@ -70,14 +62,14 @@ function addHeaderSection(
     });
 
     worksheet.addImage(imageId, {
-      tl: { col: 5, row: 0 },
+      tl: { col: 3, row: 0 },
       ext: { width: logoData.width || 191, height: logoData.height || 37 },
     });
   }
 
   worksheet.getRow(2).height = 20;
 
-  worksheet.mergeCells('A3:D9');
+  worksheet.mergeCells('A3:B9');
   const supplierBox = worksheet.getCell('A3');
   supplierBox.value = `Purchasing name : ${data.company.name}`;
   supplierBox.alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
@@ -89,17 +81,17 @@ function addHeaderSection(
     right: { style: 'medium', color: { argb: HPI_COLORS.borderColor } },
   };
 
-  worksheet.getCell('I3').value = formatDateForExcel(data.order.order_date);
-  worksheet.getCell('I3').alignment = { horizontal: 'right' };
-  worksheet.getCell('I3').font = { name: 'Arial', size: 10 };
+  worksheet.getCell('E3').value = formatDateForExcel(data.order.order_date);
+  worksheet.getCell('E3').alignment = { horizontal: 'right' };
+  worksheet.getCell('E3').font = { name: 'Arial', size: 10 };
 
-  worksheet.getCell('F5').value = 'Purchaser: ALBERT HO -san';
-  worksheet.getCell('F5').alignment = { horizontal: 'left' };
-  worksheet.getCell('F5').font = { name: 'Arial', size: 10 };
+  worksheet.getCell('C5').value = 'Purchaser: ALBERT HO -san';
+  worksheet.getCell('C5').alignment = { horizontal: 'left' };
+  worksheet.getCell('C5').font = { name: 'Arial', size: 10 };
 
-  worksheet.getCell('F6').value = `Estimate No,${formatDateAsYYYYMMDD()}`;
-  worksheet.getCell('F6').alignment = { horizontal: 'left' };
-  worksheet.getCell('F6').font = { name: 'Arial', size: 10 };
+  worksheet.getCell('C6').value = `Estimate No,${formatDateAsYYYYMMDD()}`;
+  worksheet.getCell('C6').alignment = { horizontal: 'left' };
+  worksheet.getCell('C6').font = { name: 'Arial', size: 10 };
 
   worksheet.getRow(10).height = 5;
 }
@@ -107,27 +99,9 @@ function addHeaderSection(
 function addPartsTable(worksheet: ExcelJS.Worksheet, data: OrderExportData): number {
   let currentRow = 11;
 
-  worksheet.mergeCells(`A${currentRow}:D${currentRow}`);
-  worksheet.getCell(`A${currentRow}`).value = '';
-  worksheet.getCell(`A${currentRow}`).border = {
-    top: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },
-    left: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },
-    bottom: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },
-    right: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },
-  };
-
-  worksheet.mergeCells(`E${currentRow}:F${currentRow}`);
-  worksheet.getCell(`E${currentRow}`).value = '';
-  worksheet.getCell(`E${currentRow}`).border = {
-    top: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },
-    left: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },
-    bottom: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },
-    right: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },
-  };
-
-  const singleHeaders = ['QTY', 'Retail', 'Discount', 'unit Price', 'Cost', 'delivery'];
-  singleHeaders.forEach((header, index) => {
-    const cell = worksheet.getCell(currentRow, 7 + index);
+  const allHeaders = ['Product Name', 'Part Number', 'QTY', 'Retail', 'Discount', 'unit Price', 'Cost', 'delivery'];
+  allHeaders.forEach((header, index) => {
+    const cell = worksheet.getCell(currentRow, 1 + index);
     cell.value = header;
     cell.font = { name: 'Arial', bold: true, size: 10 };
     cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
@@ -145,40 +119,38 @@ function addPartsTable(worksheet: ExcelJS.Worksheet, data: OrderExportData): num
   data.parts.forEach((part) => {
     const row = worksheet.getRow(currentRow);
 
-    worksheet.mergeCells(`A${currentRow}:D${currentRow}`);
     row.getCell(1).value = `${part.name} ${part.part_number}`;
     row.getCell(1).alignment = { vertical: 'middle', horizontal: 'left' };
     row.getCell(1).font = { name: 'Arial', size: 10 };
 
-    worksheet.mergeCells(`E${currentRow}:F${currentRow}`);
-    row.getCell(5).value = part.part_number;
-    row.getCell(5).alignment = { vertical: 'middle', horizontal: 'right' };
+    row.getCell(2).value = part.part_number;
+    row.getCell(2).alignment = { vertical: 'middle', horizontal: 'right' };
+    row.getCell(2).font = { name: 'Arial', size: 10 };
+
+    row.getCell(3).value = part.quantity;
+    row.getCell(3).alignment = { horizontal: 'center' };
+    row.getCell(3).font = { name: 'Arial', size: 10 };
+
+    row.getCell(4).value = '';
+    row.getCell(4).numFmt = '¥#,##0';
+    row.getCell(4).font = { name: 'Arial', size: 10 };
+
+    row.getCell(5).value = '';
+    row.getCell(5).numFmt = '0%';
     row.getCell(5).font = { name: 'Arial', size: 10 };
 
-    row.getCell(7).value = part.quantity;
-    row.getCell(7).alignment = { horizontal: 'center' };
+    row.getCell(6).value = '';
+    row.getCell(6).numFmt = '¥#,##0';
+    row.getCell(6).font = { name: 'Arial', size: 10 };
+
+    row.getCell(7).value = '';
+    row.getCell(7).numFmt = '¥#,##0';
     row.getCell(7).font = { name: 'Arial', size: 10 };
 
     row.getCell(8).value = '';
-    row.getCell(8).numFmt = '¥#,##0';
     row.getCell(8).font = { name: 'Arial', size: 10 };
 
-    row.getCell(9).value = '';
-    row.getCell(9).numFmt = '0%';
-    row.getCell(9).font = { name: 'Arial', size: 10 };
-
-    row.getCell(10).value = '';
-    row.getCell(10).numFmt = '¥#,##0';
-    row.getCell(10).font = { name: 'Arial', size: 10 };
-
-    row.getCell(11).value = '';
-    row.getCell(11).numFmt = '¥#,##0';
-    row.getCell(11).font = { name: 'Arial', size: 10 };
-
-    row.getCell(12).value = '';
-    row.getCell(12).font = { name: 'Arial', size: 10 };
-
-    for (let col = 1; col <= 12; col++) {
+    for (let col = 1; col <= 8; col++) {
       row.getCell(col).border = {
         top: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },
         left: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },
@@ -201,26 +173,26 @@ function addFooterSection(
 ): void {
   let currentRow = lastPartRow + 2;
 
-  worksheet.getCell(currentRow, 10).value = 'subtotal';
-  worksheet.getCell(currentRow, 10).alignment = { horizontal: 'left' };
-  worksheet.getCell(currentRow, 10).font = { name: 'Arial', size: 10 };
+  worksheet.getCell(currentRow, 6).value = 'subtotal';
+  worksheet.getCell(currentRow, 6).alignment = { horizontal: 'left' };
+  worksheet.getCell(currentRow, 6).font = { name: 'Arial', size: 10 };
 
-  worksheet.getCell(currentRow, 11).value = { formula: `SUM(K12:K${lastPartRow + 1})` };
-  worksheet.getCell(currentRow, 11).numFmt = '¥#,##0';
-  worksheet.getCell(currentRow, 11).font = { name: 'Arial', size: 10 };
+  worksheet.getCell(currentRow, 7).value = { formula: `SUM(G12:G${lastPartRow + 1})` };
+  worksheet.getCell(currentRow, 7).numFmt = '¥#,##0';
+  worksheet.getCell(currentRow, 7).font = { name: 'Arial', size: 10 };
   const subtotalRow = currentRow;
   currentRow++;
 
   currentRow++;
 
-  worksheet.getCell(currentRow, 10).value = 'TOTAL';
-  worksheet.getCell(currentRow, 10).alignment = { horizontal: 'left' };
-  worksheet.getCell(currentRow, 10).font = { name: 'Arial', size: 10, bold: true };
+  worksheet.getCell(currentRow, 6).value = 'TOTAL';
+  worksheet.getCell(currentRow, 6).alignment = { horizontal: 'left' };
+  worksheet.getCell(currentRow, 6).font = { name: 'Arial', size: 10, bold: true };
 
-  worksheet.getCell(currentRow, 11).value = { formula: `K${subtotalRow}` };
-  worksheet.getCell(currentRow, 11).numFmt = '¥#,##0';
-  worksheet.getCell(currentRow, 11).font = { name: 'Arial', size: 10 };
-  worksheet.getCell(currentRow, 11).border = {
+  worksheet.getCell(currentRow, 7).value = { formula: `G${subtotalRow}` };
+  worksheet.getCell(currentRow, 7).numFmt = '¥#,##0';
+  worksheet.getCell(currentRow, 7).font = { name: 'Arial', size: 10 };
+  worksheet.getCell(currentRow, 7).border = {
     top: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },
     bottom: { style: 'thin', color: { argb: HPI_COLORS.borderColor } },
   };
@@ -229,8 +201,8 @@ function addFooterSection(
 
   const bankInfo = data.supplier.template_config?.bank_info;
 
-  worksheet.mergeCells(`G${bankInfoStartRow}:J${bankInfoStartRow + 6}`);
-  const bankCell = worksheet.getCell(`G${bankInfoStartRow}`);
+  worksheet.mergeCells(`C${bankInfoStartRow}:F${bankInfoStartRow + 6}`);
+  const bankCell = worksheet.getCell(`C${bankInfoStartRow}`);
 
   bankCell.value = {
     richText: [
@@ -274,5 +246,5 @@ function configurePageSetup(worksheet: ExcelJS.Worksheet, lastPartRow: number): 
     printTitlesRow: '1:11',
   };
 
-  worksheet.pageSetup.printArea = `A1:L${lastPartRow + 25}`;
+  worksheet.pageSetup.printArea = `A1:H${lastPartRow + 25}`;
 }
