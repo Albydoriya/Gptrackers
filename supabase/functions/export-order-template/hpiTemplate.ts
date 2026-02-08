@@ -205,9 +205,10 @@ function addFooterSection(
   worksheet.getCell(currentRow, 10).alignment = { horizontal: 'left' };
   worksheet.getCell(currentRow, 10).font = { name: 'Arial', size: 10 };
 
-  worksheet.getCell(currentRow, 11).value = '';
+  worksheet.getCell(currentRow, 11).value = { formula: `SUM(K12:K${lastPartRow + 1})` };
   worksheet.getCell(currentRow, 11).numFmt = '¥#,##0';
   worksheet.getCell(currentRow, 11).font = { name: 'Arial', size: 10 };
+  const subtotalRow = currentRow;
   currentRow++;
 
   currentRow++;
@@ -216,7 +217,7 @@ function addFooterSection(
   worksheet.getCell(currentRow, 10).alignment = { horizontal: 'left' };
   worksheet.getCell(currentRow, 10).font = { name: 'Arial', size: 10, bold: true };
 
-  worksheet.getCell(currentRow, 11).value = '';
+  worksheet.getCell(currentRow, 11).value = { formula: `K${subtotalRow}` };
   worksheet.getCell(currentRow, 11).numFmt = '¥#,##0';
   worksheet.getCell(currentRow, 11).font = { name: 'Arial', size: 10 };
   worksheet.getCell(currentRow, 11).border = {
