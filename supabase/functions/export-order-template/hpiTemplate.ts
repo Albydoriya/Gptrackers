@@ -71,7 +71,7 @@ function addHeaderSection(
 
     worksheet.addImage(imageId, {
       tl: { col: 5, row: 0 },
-      ext: { width: logoData.width || 382, height: logoData.height || 74 },
+      ext: { width: logoData.width || 191, height: logoData.height || 37 },
     });
   }
 
@@ -228,17 +228,21 @@ function addFooterSection(
 
   const bankInfo = data.supplier.template_config?.bank_info;
 
-  worksheet.mergeCells(`G${bankInfoStartRow}:J${bankInfoStartRow + 9}`);
+  worksheet.mergeCells(`G${bankInfoStartRow}:J${bankInfoStartRow + 6}`);
   const bankCell = worksheet.getCell(`G${bankInfoStartRow}`);
 
   bankCell.value = {
     richText: [
       { font: { name: 'Arial', size: 10, bold: true }, text: 'Bank Information' },
-      { font: { name: 'Arial', size: 10 }, text: '\n' + (bankInfo?.bank_name || 'Bank of Mitsubishi UFJ') },
-      { font: { name: 'Arial', size: 10 }, text: '\n' + `Branch Number: ${bankInfo?.branch_number || '463'}` },
-      { font: { name: 'Arial', size: 10 }, text: '\n' + `Branch Name: ${bankInfo?.branch_name || 'Komatsugawa Branch'}` },
-      { font: { name: 'Arial', size: 10 }, text: '\n' + `Account Number: ${bankInfo?.account_number || '0824029'}` },
-      { font: { name: 'Arial', size: 10 }, text: '\n' + `Account Name: ${bankInfo?.account_name || 'HPI Co., Ltd.'}` },
+      { font: { name: 'Arial', size: 10, bold: true }, text: '\n' + (bankInfo?.bank_name || 'Bank of Mitsubishi UFJ') },
+      { font: { name: 'Arial', size: 10, bold: true }, text: '\nBranch Number: ' },
+      { font: { name: 'Arial', size: 10 }, text: bankInfo?.branch_number || '463' },
+      { font: { name: 'Arial', size: 10, bold: true }, text: '\nBranch Name: ' },
+      { font: { name: 'Arial', size: 10 }, text: bankInfo?.branch_name || 'Komatsugawa Branch' },
+      { font: { name: 'Arial', size: 10, bold: true }, text: '\nAccount Number: ' },
+      { font: { name: 'Arial', size: 10 }, text: bankInfo?.account_number || '0824029' },
+      { font: { name: 'Arial', size: 10, bold: true }, text: '\nAccount Name: ' },
+      { font: { name: 'Arial', size: 10 }, text: bankInfo?.account_name || 'HPI Co., Ltd.' },
       { font: { name: 'Arial', size: 10 }, text: '\n' + `Swift Code: ${bankInfo?.swift_code || 'BOTKJPJT'}` },
     ]
   };

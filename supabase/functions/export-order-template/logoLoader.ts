@@ -31,8 +31,8 @@ export async function loadLogo(templateType: string): Promise<LogoData | null> {
     return {
       buffer: arrayBuffer,
       extension,
-      width: 382,
-      height: 74,
+      width: 191,
+      height: 37,
     };
   } catch (error) {
     console.warn(`Failed to load logo for template ${templateType}:`, error);
