@@ -9,7 +9,7 @@ export const HPI_MULTI_COLORS = {
 };
 
 export const HPI_MULTI_COLUMN_WIDTHS = {
-  orderNumber: 12,
+  orderNumber: 15,
   productNameA: 8,
   productNameB: 20,
   productNameC: 15,
@@ -17,11 +17,11 @@ export const HPI_MULTI_COLUMN_WIDTHS = {
   partNumberE: 12,
   partNumberF: 12,
   qty: 6,
-  retail: 10,
-  discount: 8,
-  unitPrice: 10,
-  cost: 10,
-  delivery: 10,
+  retail: 12,
+  discount: 12,
+  unitPrice: 12,
+  cost: 12,
+  delivery: 20,
 };
 
 export function applyHPITemplateMulti(
