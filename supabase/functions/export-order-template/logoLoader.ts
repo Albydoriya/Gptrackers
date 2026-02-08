@@ -1,5 +1,3 @@
-import { getLogoBase64 } from "./logoAssets.ts";
-
 export interface LogoData {
   buffer: ArrayBuffer;
   extension: 'png' | 'jpeg';
@@ -7,33 +5,28 @@ export interface LogoData {
   height?: number;
 }
 
-function base64ToArrayBuffer(base64: string): ArrayBuffer {
-  const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes.buffer;
-}
-
 export async function loadLogo(templateType: string): Promise<LogoData | null> {
   try {
-    const base64Data = getLogoBase64(templateType);
+    const normalizedType = templateType.toLowerCase();
 
-    if (!base64Data) {
-      console.warn(`No logo found for template ${templateType}`);
+    if (normalizedType !== 'hpi' && normalizedType !== 'generic') {
+      console.warn(`No logo support for template ${templateType}`);
       return null;
     }
 
-    const arrayBuffer = base64ToArrayBuffer(base64Data);
-    const extension = 'png';
+    if (normalizedType === 'hpi') {
+      const logoPath = new URL('./assets/hpi-logo.png', import.meta.url).pathname;
+      const fileData = await Deno.readFile(logoPath);
 
-    return {
-      buffer: arrayBuffer,
-      extension,
-      width: 191,
-      height: 37,
-    };
+      return {
+        buffer: fileData.buffer,
+        extension: 'png',
+        width: 191,
+        height: 37,
+      };
+    }
+
+    return null;
   } catch (error) {
     console.warn(`Failed to load logo for template ${templateType}:`, error);
     return null;
