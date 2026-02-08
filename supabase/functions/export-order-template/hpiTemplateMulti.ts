@@ -9,7 +9,7 @@ export const HPI_MULTI_COLORS = {
 };
 
 export const HPI_MULTI_COLUMN_WIDTHS = {
-  orderNumber: 15,
+  orderNumber: 20,
   productNameA: 8,
   productNameB: 20,
   productNameC: 15,
@@ -73,7 +73,7 @@ function addHeaderSection(
 
     worksheet.addImage(imageId, {
       tl: { col: 6, row: 0 },
-      ext: { width: logoData.width || 180, height: logoData.height || 60 },
+      ext: { width: logoData.width || 382, height: logoData.height || 74 },
     });
   }
 
@@ -248,26 +248,25 @@ function addFooterSection(
     bottom: { style: 'thin', color: { argb: HPI_MULTI_COLORS.borderColor } },
   };
 
-  const bankInfoStartRow = lastPartRow + 8;
+  const bankInfoStartRow = 21;
 
   const bankInfo = data.supplier.template_config?.bank_info;
 
   worksheet.mergeCells(`H${bankInfoStartRow}:L${bankInfoStartRow + 9}`);
   const bankCell = worksheet.getCell(`H${bankInfoStartRow}`);
 
-  const bankText = [
-    'Bank Information',
-    bankInfo?.bank_name || 'Bank of Mitsubishi UFJ',
-    `Branch Number: ${bankInfo?.branch_number || '463'}`,
-    `Branch Name: ${bankInfo?.branch_name || 'Komatsugawa Branch'}`,
-    `Account Number: ${bankInfo?.account_number || '0824029'}`,
-    `Account Name: ${bankInfo?.account_name || 'HPI Co., Ltd.'}`,
-    `Swift Code: ${bankInfo?.swift_code || 'BOTKJPJT'}`,
-  ].join('\n');
-
-  bankCell.value = bankText;
+  bankCell.value = {
+    richText: [
+      { font: { name: 'Arial', size: 10, bold: true }, text: 'Bank Information' },
+      { font: { name: 'Arial', size: 10 }, text: '\n' + (bankInfo?.bank_name || 'Bank of Mitsubishi UFJ') },
+      { font: { name: 'Arial', size: 10 }, text: '\n' + `Branch Number: ${bankInfo?.branch_number || '463'}` },
+      { font: { name: 'Arial', size: 10 }, text: '\n' + `Branch Name: ${bankInfo?.branch_name || 'Komatsugawa Branch'}` },
+      { font: { name: 'Arial', size: 10 }, text: '\n' + `Account Number: ${bankInfo?.account_number || '0824029'}` },
+      { font: { name: 'Arial', size: 10 }, text: '\n' + `Account Name: ${bankInfo?.account_name || 'HPI Co., Ltd.'}` },
+      { font: { name: 'Arial', size: 10 }, text: '\n' + `Swift Code: ${bankInfo?.swift_code || 'BOTKJPJT'}` },
+    ]
+  };
   bankCell.alignment = { vertical: 'top', horizontal: 'center', wrapText: true };
-  bankCell.font = { name: 'Arial', size: 10, bold: false };
   bankCell.border = {
     top: { style: 'thin', color: { argb: HPI_MULTI_COLORS.borderColor } },
     left: { style: 'thin', color: { argb: HPI_MULTI_COLORS.borderColor } },
