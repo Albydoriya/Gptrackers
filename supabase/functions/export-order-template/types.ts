@@ -95,3 +95,15 @@ export interface ExportResponse {
   fileName?: string;
   error?: string;
 }
+
+export interface SupplierGroup {
+  supplier_id: string;
+  supplier_name: string;
+  order_ids: string[];
+  order_count: number;
+}
+
+export interface MultiSupplierResponse {
+  multiSupplier: true;
+  groups: SupplierGroup[];
+}

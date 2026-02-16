@@ -6,6 +6,32 @@ export interface ExportOptions {
   includeTerms?: boolean;
 }
 
+export interface SupplierGroup {
+  supplier_id: string;
+  supplier_name: string;
+  order_ids: string[];
+  order_count: number;
+}
+
+export interface MultiSupplierResponse {
+  multiSupplier: true;
+  groups: SupplierGroup[];
+}
+
+export interface ExportResult {
+  success: boolean;
+  supplierName: string;
+  orderCount: number;
+  error?: string;
+}
+
+export interface MultiExportResult {
+  totalSuccessful: number;
+  totalFailed: number;
+  results: ExportResult[];
+  successfulOrderIds: string[];
+}
+
 export async function exportOrderTemplate(
   orderId: string,
   options: ExportOptions = {}
@@ -67,8 +93,9 @@ export function downloadExcelFile(blob: Blob, filename: string): void {
 
 export async function exportMultipleOrders(
   orderIds: string[],
-  options: ExportOptions = {}
-): Promise<Blob> {
+  options: ExportOptions = {},
+  onProgress?: (current: number, total: number, supplierName: string) => void
+): Promise<Blob | MultiSupplierResponse> {
   const { templateType } = options;
 
   try {
@@ -101,6 +128,15 @@ export async function exportMultipleOrders(
       throw new Error(`Export failed with status ${response.status}`);
     }
 
+    const contentType = response.headers.get('content-type');
+    if (contentType?.includes('application/json')) {
+      const data = await response.json();
+      if (data.multiSupplier) {
+        return data as MultiSupplierResponse;
+      }
+      throw new Error(data.error || 'Unexpected JSON response');
+    }
+
     const blob = await response.blob();
     if (!blob || blob.size === 0) {
       throw new Error('No data received from export function');
@@ -110,6 +146,70 @@ export async function exportMultipleOrders(
   } catch (err: any) {
     console.error('Export multiple orders error:', err);
     throw new Error(err.message || 'Failed to export multiple orders');
+  }
+}
+
+export async function processMultiSupplierExport(
+  orderIds: string[],
+  options: ExportOptions = {},
+  onProgress?: (current: number, total: number, supplierName: string) => void
+): Promise<MultiExportResult> {
+  try {
+    const response = await exportMultipleOrders(orderIds, options);
+
+    if (response instanceof Blob) {
+      throw new Error('Expected multi-supplier response but got single supplier blob');
+    }
+
+    const multiSupplierResponse = response as MultiSupplierResponse;
+    const results: ExportResult[] = [];
+    const successfulOrderIds: string[] = [];
+    let totalSuccessful = 0;
+    let totalFailed = 0;
+
+    for (let i = 0; i < multiSupplierResponse.groups.length; i++) {
+      const group = multiSupplierResponse.groups[i];
+
+      if (onProgress) {
+        onProgress(i + 1, multiSupplierResponse.groups.length, group.supplier_name);
+      }
+
+      try {
+        const blob = await exportMultipleOrders(group.order_ids, options) as Blob;
+
+        const orderNumbers = group.order_ids.map((_, idx) => `Order${idx + 1}`);
+        const filename = generateMultiOrderFilename(group.supplier_name, orderNumbers);
+        downloadExcelFile(blob, filename);
+
+        results.push({
+          success: true,
+          supplierName: group.supplier_name,
+          orderCount: group.order_count,
+        });
+
+        successfulOrderIds.push(...group.order_ids);
+        totalSuccessful += group.order_count;
+      } catch (error: any) {
+        console.error(`Failed to export for ${group.supplier_name}:`, error);
+        results.push({
+          success: false,
+          supplierName: group.supplier_name,
+          orderCount: group.order_count,
+          error: error.message || 'Unknown error',
+        });
+        totalFailed += group.order_count;
+      }
+    }
+
+    return {
+      totalSuccessful,
+      totalFailed,
+      results,
+      successfulOrderIds,
+    };
+  } catch (err: any) {
+    console.error('Multi-supplier export error:', err);
+    throw new Error(err.message || 'Failed to process multi-supplier export');
   }
 }
 

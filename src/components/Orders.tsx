@@ -40,7 +40,8 @@ import {
   downloadExcelFile,
   generateExportFilename,
   generateMultiOrderFilename,
-  updateOrderStatus as updateOrderStatusService
+  updateOrderStatus as updateOrderStatusService,
+  processMultiSupplierExport
 } from '../services/orderExportService';
 import {
   fetchOrders as fetchOrdersService,
@@ -95,6 +96,7 @@ const Orders: React.FC = () => {
   const [selectedSuppliers, setSelectedSuppliers] = useState<string[]>([]);
   const [availableSuppliers, setAvailableSuppliers] = useState<SupplierWithOrderCount[]>([]);
   const [isLoadingSuppliers, setIsLoadingSuppliers] = useState(false);
+  const [exportProgress, setExportProgress] = useState<{ current: number; total: number; supplierName: string } | null>(null);
 
   // Debounce search term
   useEffect(() => {
@@ -331,110 +333,96 @@ const Orders: React.FC = () => {
     setShippingCostOrder(null);
   };
 
-  // Export handler with smart supplier grouping
+  // Export handler with backend auto-grouping and sequential downloads
   const handleExportSelectedOrders = async () => {
     if (selectedOrdersForExport.size === 0) return;
 
     setIsExporting(true);
     setExportError(null);
+    setExportProgress(null);
 
     try {
-      const selectedOrders = ordersList.filter(o => selectedOrdersForExport.has(o.id));
-
-      const supplierGroups = new Map<string, Order[]>();
-      selectedOrders.forEach(order => {
-        if (!supplierGroups.has(order.supplierId)) {
-          supplierGroups.set(order.supplierId, []);
-        }
-        supplierGroups.get(order.supplierId)!.push(order);
+      const orderIds = Array.from(selectedOrdersForExport);
+      const response = await exportMultipleOrders(orderIds, {}, (current, total, supplierName) => {
+        setExportProgress({ current, total, supplierName });
       });
 
-      const supplierGroupsWithTooManyOrders = Array.from(supplierGroups.entries())
-        .filter(([_, orders]) => orders.length > 10);
+      if (response instanceof Blob) {
+        const selectedOrders = ordersList.filter(o => selectedOrdersForExport.has(o.id));
+        const supplierName = selectedOrders[0]?.supplier?.name || 'Unknown';
+        const orderNumbers = selectedOrders.map(o => o.orderNumber);
+        const filename = generateMultiOrderFilename(supplierName, orderNumbers);
+        downloadExcelFile(response, filename);
 
-      if (supplierGroupsWithTooManyOrders.length > 0) {
-        const supplierNames = supplierGroupsWithTooManyOrders
-          .map(([_, orders]) => `${orders[0].supplier.name} (${orders.length} orders)`)
-          .join(', ');
-        setExportError(`Maximum 10 orders per supplier. Please reduce selection for: ${supplierNames}`);
-        setIsExporting(false);
-        return;
-      }
-
-      let totalSuccessCount = 0;
-      const failedSuppliers: Array<{ supplierName: string; error: string }> = [];
-      const successfulSuppliers: Array<{ supplierName: string; orderCount: number }> = [];
-
-      for (const [supplierId, orders] of supplierGroups) {
-        const supplierName = orders[0].supplier.name;
-
-        try {
-          if (orders.length === 1) {
-            const order = orders[0];
-            const filename = generateExportFilename(order.supplier.name, order.orderNumber);
-            const blob = await exportOrderTemplate(order.id);
-            downloadExcelFile(blob, filename);
-          } else {
-            const orderIds = orders.map(o => o.id);
-            const orderNumbers = orders.map(o => o.orderNumber);
-            const filename = generateMultiOrderFilename(supplierName, orderNumbers);
-            const blob = await exportMultipleOrders(orderIds);
-            downloadExcelFile(blob, filename);
-          }
-
-          for (const order of orders) {
-            if (order.status === 'approved') {
-              try {
-                await updateOrderStatusService(order.id, 'supplier_quoting');
-              } catch (statusError) {
-                console.error(`Failed to update status for order ${order.orderNumber}:`, statusError);
-              }
+        for (const orderId of orderIds) {
+          const order = selectedOrders.find(o => o.id === orderId);
+          if (order && order.status === 'approved') {
+            try {
+              await updateOrderStatusService(orderId, 'supplier_quoting');
+            } catch (statusError) {
+              console.error(`Failed to update status for order ${order.orderNumber}:`, statusError);
             }
           }
-
-          totalSuccessCount += orders.length;
-          successfulSuppliers.push({ supplierName, orderCount: orders.length });
-        } catch (error: any) {
-          console.error(`Failed to export orders for ${supplierName}:`, error);
-          failedSuppliers.push({
-            supplierName,
-            error: error.message || 'Unknown error'
-          });
-        }
-      }
-
-      if (totalSuccessCount > 0) {
-        const supplierSummary = successfulSuppliers
-          .map(s => `${s.supplierName} (${s.orderCount} order${s.orderCount > 1 ? 's' : ''})`)
-          .join(', ');
-
-        if (failedSuppliers.length > 0) {
-          const failedDetails = failedSuppliers
-            .map(f => `${f.supplierName}: ${f.error}`)
-            .join('\n');
-          alert(
-            `Successfully exported ${totalSuccessCount} order(s) for: ${supplierSummary}\n\n` +
-            `Failed exports:\n${failedDetails}`
-          );
-        } else {
-          const fileCount = supplierGroups.size;
-          alert(
-            `Successfully exported ${totalSuccessCount} order(s) in ${fileCount} file${fileCount > 1 ? 's' : ''}: ${supplierSummary}`
-          );
         }
 
+        alert(`Successfully exported ${orderIds.length} order(s) for ${supplierName}`);
         setSelectedOrdersForExport(new Set());
         await fetchOrders();
         await loadStatusCounts();
       } else {
-        const errorDetails = failedSuppliers.map(f => `• ${f.supplierName}: ${f.error}`).join('\n');
-        throw new Error(`All exports failed:\n\n${errorDetails}`);
+        const multiResult = await processMultiSupplierExport(orderIds, {}, (current, total, supplierName) => {
+          setExportProgress({ current, total, supplierName });
+        });
+
+        for (const orderId of multiResult.successfulOrderIds) {
+          const order = ordersList.find(o => o.id === orderId);
+          if (order && order.status === 'approved') {
+            try {
+              await updateOrderStatusService(orderId, 'supplier_quoting');
+            } catch (statusError) {
+              console.error(`Failed to update status for order ${order.orderNumber}:`, statusError);
+            }
+          }
+        }
+
+        const successfulResults = multiResult.results.filter(r => r.success);
+        const failedResults = multiResult.results.filter(r => !r.success);
+
+        let message = '';
+        if (successfulResults.length > 0) {
+          const supplierSummary = successfulResults
+            .map(s => `${s.supplierName} (${s.orderCount} order${s.orderCount > 1 ? 's' : ''})`)
+            .join(', ');
+          message += `Successfully exported ${multiResult.totalSuccessful} order(s) for: ${supplierSummary}`;
+        }
+
+        if (failedResults.length > 0) {
+          const failedDetails = failedResults
+            .map(f => `${f.supplierName}: ${f.error}`)
+            .join('\n');
+          message += successfulResults.length > 0 ? `\n\nFailed exports:\n${failedDetails}` : `All exports failed:\n${failedDetails}`;
+        }
+
+        alert(message);
+
+        const failedOrderIds = new Set<string>();
+        failedResults.forEach(result => {
+          const failedGroup = (response as any).groups?.find((g: any) => g.supplier_name === result.supplierName);
+          if (failedGroup) {
+            failedGroup.order_ids.forEach((id: string) => failedOrderIds.add(id));
+          }
+        });
+
+        setSelectedOrdersForExport(failedOrderIds);
+        await fetchOrders();
+        await loadStatusCounts();
       }
     } catch (error: any) {
       console.error('Export error:', error);
       setExportError(error.message || 'Failed to export orders');
     } finally {
       setIsExporting(false);
+      setExportProgress(null);
     }
   };
 
@@ -504,7 +492,11 @@ const Orders: React.FC = () => {
               {isExporting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Exporting...</span>
+                  <span>
+                    {exportProgress
+                      ? `Exporting ${exportProgress.current} of ${exportProgress.total}: ${exportProgress.supplierName}`
+                      : 'Exporting...'}
+                  </span>
                 </>
               ) : (
                 <>

@@ -1,6 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.52.1";
-import type { ExportRequest, OrderExportData, MultiOrderExportData, ExportResponse } from "./types.ts";
+import type { ExportRequest, OrderExportData, MultiOrderExportData, ExportResponse, MultiSupplierResponse, SupplierGroup } from "./types.ts";
 import { MAX_ORDERS_PER_EXPORT } from "./types.ts";
 import { generateExcelFile } from "./excelGenerator.ts";
 import { generateFileName, generateMultiOrderFileName } from "./utils.ts";
@@ -87,10 +87,36 @@ async function handleMultiOrderExport(
 
   const supplierIds = new Set(ordersData.map((order) => order.supplier_id));
   if (supplierIds.size > 1) {
+    const supplierGroupsMap = new Map<string, typeof ordersData>();
+    ordersData.forEach((order) => {
+      if (!supplierGroupsMap.has(order.supplier_id)) {
+        supplierGroupsMap.set(order.supplier_id, []);
+      }
+      supplierGroupsMap.get(order.supplier_id)!.push(order);
+    });
+
+    const groups: SupplierGroup[] = Array.from(supplierGroupsMap.entries()).map(([supplierId, orders]) => {
+      const tooMany = orders.length > MAX_ORDERS_PER_EXPORT;
+      if (tooMany) {
+        orders = orders.slice(0, MAX_ORDERS_PER_EXPORT);
+      }
+      return {
+        supplier_id: supplierId,
+        supplier_name: orders[0].supplier.name,
+        order_ids: orders.map(o => o.id),
+        order_count: orders.length,
+      };
+    });
+
+    const response: MultiSupplierResponse = {
+      multiSupplier: true,
+      groups,
+    };
+
     return new Response(
-      JSON.stringify({ error: 'All orders in a batch must belong to the same supplier' }),
+      JSON.stringify(response),
       {
-        status: 400,
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
