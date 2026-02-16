@@ -23,7 +23,8 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
-  ExternalLink
+  ExternalLink,
+  ClipboardCheck
 } from 'lucide-react';
 import { getStatusColor, getStatusLabel } from '../data/mockData';
 import { Order, OrderStatus } from '../types';
@@ -34,6 +35,7 @@ import EditOrder from './EditOrder';
 import StatusUpdateModal from './StatusUpdateModal';
 import PricingUpdateModal from './PricingUpdateModal';
 import ShippingCostModal from './ShippingCostModal';
+import ArrivalChecklistModal from './ArrivalChecklistModal';
 import {
   exportOrderTemplate,
   exportMultipleOrders,
@@ -97,6 +99,8 @@ const Orders: React.FC = () => {
   const [availableSuppliers, setAvailableSuppliers] = useState<SupplierWithOrderCount[]>([]);
   const [isLoadingSuppliers, setIsLoadingSuppliers] = useState(false);
   const [exportProgress, setExportProgress] = useState<{ current: number; total: number; supplierName: string } | null>(null);
+  const [selectedOrdersForChecklist, setSelectedOrdersForChecklist] = useState<Set<string>>(new Set());
+  const [isChecklistModalOpen, setIsChecklistModalOpen] = useState(false);
 
   // Debounce search term
   useEffect(() => {
@@ -467,6 +471,44 @@ const Orders: React.FC = () => {
     return `Export for Quote (${selectedOrdersForExport.size} orders, ${supplierCount} suppliers)`;
   };
 
+  // Checklist handlers
+  const handleSelectOrderForChecklist = (orderId: string) => {
+    const newSelection = new Set(selectedOrdersForChecklist);
+    if (newSelection.has(orderId)) {
+      newSelection.delete(orderId);
+    } else {
+      newSelection.add(orderId);
+    }
+    setSelectedOrdersForChecklist(newSelection);
+  };
+
+  const handleSelectAllForChecklist = () => {
+    const inTransitOrders = ordersList.filter(order =>
+      order.status === 'in_transit'
+    );
+
+    if (selectedOrdersForChecklist.size === inTransitOrders.length && inTransitOrders.length > 0) {
+      setSelectedOrdersForChecklist(new Set());
+    } else {
+      setSelectedOrdersForChecklist(new Set(inTransitOrders.map(o => o.id)));
+    }
+  };
+
+  const canCreateChecklist = (order: Order) => {
+    return order.status === 'in_transit';
+  };
+
+  const handleOpenChecklist = () => {
+    if (selectedOrdersForChecklist.size > 0) {
+      setIsChecklistModalOpen(true);
+    }
+  };
+
+  const handleCloseChecklist = () => {
+    setIsChecklistModalOpen(false);
+    setSelectedOrdersForChecklist(new Set());
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -504,6 +546,15 @@ const Orders: React.FC = () => {
                   <span>{getExportButtonText()}</span>
                 </>
               )}
+            </button>
+          )}
+          {hasPermission('orders', 'read') && selectedOrdersForChecklist.size > 0 && (
+            <button
+              onClick={handleOpenChecklist}
+              className="flex items-center space-x-2 bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700 transition-colors"
+            >
+              <ClipboardCheck className="h-4 w-4" />
+              <span>Create Checklist ({selectedOrdersForChecklist.size})</span>
             </button>
           )}
           {hasPermission('orders', 'create') && (
@@ -759,6 +810,15 @@ const Orders: React.FC = () => {
                       onChange={() => handleSelectOrder(order.id)}
                       className="h-5 w-5 text-green-600 border-gray-300 dark:border-gray-600 rounded focus:ring-green-500 cursor-pointer"
                       title="Select for export"
+                    />
+                  )}
+                  {canCreateChecklist(order) && (
+                    <input
+                      type="checkbox"
+                      checked={selectedOrdersForChecklist.has(order.id)}
+                      onChange={() => handleSelectOrderForChecklist(order.id)}
+                      className="h-5 w-5 text-cyan-600 border-gray-300 dark:border-gray-600 rounded focus:ring-cyan-500 cursor-pointer"
+                      title="Select for arrival checklist"
                     />
                   )}
                   <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
@@ -1213,6 +1273,12 @@ const Orders: React.FC = () => {
         }}
         order={shippingCostOrder}
         onShippingUpdate={handleShippingUpdate}
+      />
+
+      <ArrivalChecklistModal
+        isOpen={isChecklistModalOpen}
+        onClose={handleCloseChecklist}
+        selectedOrders={ordersList.filter(o => selectedOrdersForChecklist.has(o.id))}
       />
     </div>
   );

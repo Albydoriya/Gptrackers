@@ -71,8 +71,179 @@
    .dark .bg-red-50 {
      @apply bg-gray-800;
    }
-   
+
    .dark .border-red-200 {
      @apply border-red-700;
    }
+}
+
+/* Print styles for arrival checklist */
+@media print {
+  @page {
+    size: A4;
+    margin: 1.5cm;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .print\:block {
+    display: block !important;
+  }
+
+  .print\:p-0 {
+    padding: 0 !important;
+  }
+
+  .print\:p-12 {
+    padding: 3rem !important;
+  }
+
+  .print\:bg-white {
+    background-color: white !important;
+  }
+
+  .print\:bg-gray-100 {
+    background-color: #f3f4f6 !important;
+  }
+
+  .print\:bg-gray-200 {
+    background-color: #e5e7eb !important;
+  }
+
+  .print\:text-black {
+    color: black !important;
+  }
+
+  .print\:text-gray-300 {
+    color: #d1d5db !important;
+  }
+
+  .print\:border-black {
+    border-color: black !important;
+  }
+
+  .print\:shadow-none {
+    box-shadow: none !important;
+  }
+
+  .print\:max-w-full {
+    max-width: 100% !important;
+  }
+
+  .print\:rounded-none {
+    border-radius: 0 !important;
+  }
+
+  .print\:mb-8 {
+    margin-bottom: 2rem !important;
+  }
+
+  .print\:mb-12 {
+    margin-bottom: 3rem !important;
+  }
+
+  .print\:mt-16 {
+    margin-top: 4rem !important;
+  }
+
+  .print\:break-inside-avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .print\:appearance-none {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+  }
+
+  .print\:border {
+    border-width: 1px !important;
+  }
+
+  .print\:border-2 {
+    border-width: 2px !important;
+  }
+
+  .print\:w-4 {
+    width: 1rem !important;
+  }
+
+  .print\:h-4 {
+    height: 1rem !important;
+  }
+
+  .print\:w-5 {
+    width: 1.25rem !important;
+  }
+
+  .print\:h-5 {
+    height: 1.25rem !important;
+  }
+
+  .print\:hover\:bg-white:hover {
+    background-color: white !important;
+  }
+
+  input[type="checkbox"] {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    border: 2px solid black !important;
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+    background-color: white !important;
+    display: inline-block !important;
+  }
+
+  table {
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tfoot {
+    display: table-footer-group;
+  }
+
+  * {
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+
+  a,
+  a:visited {
+    text-decoration: underline;
+  }
+
+  abbr[title]:after {
+    content: " (" attr(title) ")";
+  }
+
+  pre,
+  blockquote {
+    border: 1px solid #999;
+    page-break-inside: avoid;
+  }
+
+  img {
+    page-break-inside: avoid;
+  }
+
+  h2,
+  h3 {
+    page-break-after: avoid;
+  }
 }
