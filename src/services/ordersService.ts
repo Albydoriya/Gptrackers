@@ -5,6 +5,7 @@ import { mapSupabaseStatusToFrontendStatus } from '../data/mockData';
 export interface OrdersQueryParams {
   status?: string;
   searchTerm?: string;
+  supplierIds?: string[];
   sortBy?: 'date' | 'amount' | 'supplier';
   sortOrder?: 'asc' | 'desc';
   page?: number;
@@ -82,6 +83,7 @@ export const fetchOrders = async (params: OrdersQueryParams = {}): Promise<Order
   const {
     status = 'all',
     searchTerm = '',
+    supplierIds = [],
     sortBy = 'date',
     sortOrder = 'desc',
     page = 1,
@@ -142,6 +144,10 @@ export const fetchOrders = async (params: OrdersQueryParams = {}): Promise<Order
 
     if (status !== 'all') {
       query = query.eq('status', status);
+    }
+
+    if (supplierIds.length > 0) {
+      query = query.in('supplier_id', supplierIds);
     }
 
     if (searchTerm.trim()) {
@@ -313,5 +319,55 @@ export const getOrderById = async (orderId: string): Promise<Order | null> => {
   } catch (err: any) {
     console.error('Error fetching order:', err);
     throw new Error(err.message || 'Failed to fetch order');
+  }
+};
+
+export interface SupplierWithOrderCount {
+  id: string;
+  name: string;
+  orderCount: number;
+}
+
+export const fetchSuppliersWithOrderCounts = async (status?: string): Promise<SupplierWithOrderCount[]> => {
+  try {
+    let query = supabase
+      .from('orders')
+      .select('supplier_id, suppliers(id, name)');
+
+    if (status && status !== 'all') {
+      query = query.eq('status', status);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    const supplierMap = new Map<string, { name: string; count: number }>();
+
+    data?.forEach((order: any) => {
+      if (order.suppliers) {
+        const supplierId = order.suppliers.id;
+        const supplierName = order.suppliers.name;
+
+        if (supplierMap.has(supplierId)) {
+          supplierMap.get(supplierId)!.count++;
+        } else {
+          supplierMap.set(supplierId, { name: supplierName, count: 1 });
+        }
+      }
+    });
+
+    const suppliers: SupplierWithOrderCount[] = Array.from(supplierMap.entries())
+      .map(([id, { name, count }]) => ({
+        id,
+        name,
+        orderCount: count
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    return suppliers;
+  } catch (err: any) {
+    console.error('Error fetching suppliers with order counts:', err);
+    throw new Error(err.message || 'Failed to fetch suppliers');
   }
 };

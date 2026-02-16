@@ -42,7 +42,13 @@ import {
   generateMultiOrderFilename,
   updateOrderStatus as updateOrderStatusService
 } from '../services/orderExportService';
-import { fetchOrders as fetchOrdersService, fetchStatusCounts, StatusCounts } from '../services/ordersService';
+import {
+  fetchOrders as fetchOrdersService,
+  fetchStatusCounts,
+  fetchSuppliersWithOrderCounts,
+  StatusCounts,
+  SupplierWithOrderCount
+} from '../services/ordersService';
 
 const PAGE_SIZE = 25;
 const STORAGE_KEY = 'orders_status_filter';
@@ -86,6 +92,9 @@ const Orders: React.FC = () => {
   const [selectedOrdersForExport, setSelectedOrdersForExport] = useState<Set<string>>(new Set());
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [selectedSuppliers, setSelectedSuppliers] = useState<string[]>([]);
+  const [availableSuppliers, setAvailableSuppliers] = useState<SupplierWithOrderCount[]>([]);
+  const [isLoadingSuppliers, setIsLoadingSuppliers] = useState(false);
 
   // Debounce search term
   useEffect(() => {
@@ -106,6 +115,7 @@ const Orders: React.FC = () => {
       const result = await fetchOrdersService({
         status: statusFilter,
         searchTerm: debouncedSearchTerm,
+        supplierIds: selectedSuppliers,
         sortBy,
         sortOrder,
         page: currentPage,
@@ -121,7 +131,7 @@ const Orders: React.FC = () => {
     } finally {
       setIsLoadingOrders(false);
     }
-  }, [statusFilter, debouncedSearchTerm, sortBy, sortOrder, currentPage]);
+  }, [statusFilter, debouncedSearchTerm, selectedSuppliers, sortBy, sortOrder, currentPage]);
 
   // Fetch status counts
   const loadStatusCounts = useCallback(async () => {
@@ -133,6 +143,19 @@ const Orders: React.FC = () => {
     }
   }, []);
 
+  // Fetch suppliers with order counts
+  const loadSuppliers = useCallback(async () => {
+    setIsLoadingSuppliers(true);
+    try {
+      const suppliers = await fetchSuppliersWithOrderCounts(statusFilter);
+      setAvailableSuppliers(suppliers);
+    } catch (err: any) {
+      console.error('Error fetching suppliers:', err);
+    } finally {
+      setIsLoadingSuppliers(false);
+    }
+  }, [statusFilter]);
+
   // Fetch orders when dependencies change
   useEffect(() => {
     fetchOrders();
@@ -142,6 +165,11 @@ const Orders: React.FC = () => {
   useEffect(() => {
     loadStatusCounts();
   }, [loadStatusCounts]);
+
+  // Load suppliers when status filter changes
+  useEffect(() => {
+    loadSuppliers();
+  }, [loadSuppliers]);
 
   // Save status filter to localStorage
   useEffect(() => {
@@ -194,6 +222,32 @@ const Orders: React.FC = () => {
   // Clear search
   const clearSearch = () => {
     setSearchTerm('');
+  };
+
+  // Handle supplier filter change
+  const handleSupplierFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const options = Array.from(e.target.selectedOptions);
+    const values = options.map(option => option.value);
+    setSelectedSuppliers(values);
+    setCurrentPage(1);
+  };
+
+  // Clear supplier filter
+  const clearSupplierFilter = () => {
+    setSelectedSuppliers([]);
+    setCurrentPage(1);
+  };
+
+  // Toggle supplier selection
+  const toggleSupplier = (supplierId: string) => {
+    setSelectedSuppliers(prev => {
+      if (prev.includes(supplierId)) {
+        return prev.filter(id => id !== supplierId);
+      } else {
+        return [...prev, supplierId];
+      }
+    });
+    setCurrentPage(1);
   };
 
   // Toggle sort order
@@ -536,6 +590,39 @@ const Orders: React.FC = () => {
               )}
             </div>
             <div className="flex items-center space-x-2">
+              <User className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+              <div className="relative">
+                <select
+                  multiple
+                  value={selectedSuppliers}
+                  onChange={handleSupplierFilterChange}
+                  disabled={isLoadingOrders || isLoadingSuppliers}
+                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 min-w-[200px] h-[42px]"
+                  title="Hold Ctrl/Cmd to select multiple suppliers"
+                  size={1}
+                  style={{ overflow: 'hidden' }}
+                >
+                  <option value="" disabled>
+                    {isLoadingSuppliers ? 'Loading suppliers...' : `All Suppliers (${availableSuppliers.reduce((sum, s) => sum + s.orderCount, 0)})`}
+                  </option>
+                  {availableSuppliers.map(supplier => (
+                    <option key={supplier.id} value={supplier.id}>
+                      {supplier.name} ({supplier.orderCount})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {selectedSuppliers.length > 0 && (
+                <button
+                  onClick={clearSupplierFilter}
+                  className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400"
+                  title="Clear supplier filter"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            <div className="flex items-center space-x-2">
               <Filter className="h-4 w-4 text-gray-400 dark:text-gray-500" />
               <select
                 value={statusFilter}
@@ -552,6 +639,37 @@ const Orders: React.FC = () => {
               </select>
             </div>
           </div>
+
+          {/* Active Supplier Filters Display */}
+          {selectedSuppliers.length > 0 && (
+            <div className="flex flex-wrap gap-2 items-center">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filtered by suppliers:</span>
+              {selectedSuppliers.map(supplierId => {
+                const supplier = availableSuppliers.find(s => s.id === supplierId);
+                return supplier ? (
+                  <span
+                    key={supplierId}
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-full text-sm"
+                  >
+                    <User className="h-3 w-3" />
+                    {supplier.name}
+                    <button
+                      onClick={() => toggleSupplier(supplierId)}
+                      className="ml-1 hover:text-blue-600 dark:hover:text-blue-400"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ) : null;
+              })}
+              <button
+                onClick={clearSupplierFilter}
+                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
 
           {/* Sort Controls */}
           <div className="flex items-center justify-between">
