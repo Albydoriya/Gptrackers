@@ -142,45 +142,36 @@
     padding: 0 !important;
   }
 
-  /* CRITICAL: Hide ALL app content by default */
-  body > *,
-  #root,
-  #root > *,
-  #root > * > *,
+  /* Hide screen-only content (main app interface) */
+  .screen-only {
+    display: none !important;
+  }
+
+  /* Hide specific UI elements that should not print */
   nav,
   header,
   footer,
-  main,
-  .screen-only,
+  main.screen-only,
   .checklist-modal-overlay,
   button:not(.checklist-print-content button),
-  input:not(.checklist-print-content input),
-  select,
-  textarea {
+  input[type="button"]:not(.checklist-print-content input),
+  input[type="submit"]:not(.checklist-print-content input),
+  select:not(.checklist-print-content select),
+  textarea:not(.checklist-print-content textarea) {
     display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    position: absolute !important;
-    left: -9999px !important;
   }
 
-  /* ONLY show the print content and its children */
+  /* Show the print content */
   .checklist-print-content {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
-    position: fixed !important;
-    left: 0 !important;
-    top: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
+    position: relative !important;
     width: 100% !important;
-    height: 100% !important;
     background: white !important;
     color: black !important;
     margin: 0 !important;
-    padding: 1.5cm 1cm !important;
-    z-index: 99999 !important;
+    padding: 0 !important;
     overflow: visible !important;
   }
 
@@ -189,7 +180,6 @@
   .checklist-print-content * {
     visibility: visible !important;
     opacity: 1 !important;
-    display: revert !important;
   }
 
   /* Specific display types for print content elements */
