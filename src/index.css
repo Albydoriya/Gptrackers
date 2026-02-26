@@ -77,128 +77,189 @@
    }
 }
 
+/* Arrival Checklist Styles */
+
+/* Screen-only checkbox styles */
+.checklist-checkbox {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid #d1d5db;
+  border-radius: 0.25rem;
+  display: inline-block;
+  background-color: white;
+}
+
+.dark .checklist-checkbox {
+  border-color: #4b5563;
+}
+
+/* Screen-only signature and notes lines */
+.signature-line {
+  border-bottom: 2px solid #9ca3af;
+  height: 2.5rem;
+}
+
+.dark .signature-line {
+  border-color: #6b7280;
+}
+
+.notes-line {
+  border-bottom: 1px solid #9ca3af;
+  height: 1.5rem;
+}
+
+.dark .notes-line {
+  border-color: #6b7280;
+}
+
+.checklist-notes-line {
+  height: 2rem;
+  border-bottom: 1px dashed #d1d5db;
+}
+
+.dark .checklist-notes-line {
+  border-color: #4b5563;
+}
+
+/* Hide print content on screen */
+.checklist-print-content {
+  display: none;
+}
+
 /* Print styles for arrival checklist */
 @media print {
   @page {
-    size: A4;
-    margin: 1.5cm;
+    size: A4 portrait;
+    margin: 1.5cm 1cm;
   }
 
   body {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
+    background: white !important;
   }
 
-  .print\:hidden {
+  /* Hide the modal overlay completely during print */
+  .checklist-modal-overlay {
     display: none !important;
   }
 
-  .print\:block {
+  /* Show and properly format the print content */
+  .checklist-print-content {
     display: block !important;
+    width: 100%;
+    background: white;
+    color: black;
   }
 
-  .print\:p-0 {
-    padding: 0 !important;
+  /* Print Header Styling */
+  .checklist-print-header {
+    margin-bottom: 2rem;
+    page-break-after: avoid;
   }
 
-  .print\:p-12 {
-    padding: 3rem !important;
+  .checklist-print-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    color: black;
+    letter-spacing: 0.05em;
   }
 
-  .print\:bg-white {
-    background-color: white !important;
+  /* Print Order Styling */
+  .checklist-print-order {
+    margin-bottom: 2rem;
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 
-  .print\:bg-gray-100 {
+  .order-header {
+    margin-bottom: 1rem;
+    page-break-after: avoid;
+  }
+
+  /* Print Table Styling */
+  .checklist-print-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 10pt;
+  }
+
+  .checklist-print-table thead {
+    display: table-header-group;
+  }
+
+  .checklist-print-table thead tr {
     background-color: #f3f4f6 !important;
+    border: 2px solid black;
   }
 
-  .print\:bg-gray-200 {
+  .checklist-print-table th {
+    padding: 0.5rem 0.5rem;
+    text-align: left;
+    font-weight: 700;
+    font-size: 9pt;
+    text-transform: uppercase;
+    border: 1px solid black;
     background-color: #e5e7eb !important;
+    color: black;
   }
 
-  .print\:text-black {
-    color: black !important;
+  .checklist-print-table tbody tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    border: 1px solid black;
   }
 
-  .print\:text-gray-300 {
-    color: #d1d5db !important;
+  .checklist-print-table td {
+    padding: 0.5rem 0.5rem;
+    border: 1px solid black;
+    color: black;
+    vertical-align: top;
   }
 
-  .print\:border-black {
-    border-color: black !important;
+  /* Print Checkbox Styling */
+  .print-checkbox {
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2px solid black;
+    display: inline-block;
+    background-color: white;
+    margin: 0 auto;
   }
 
-  .print\:shadow-none {
-    box-shadow: none !important;
+  /* Print Notes Line */
+  .print-notes-line {
+    border-bottom: 1px solid black;
+    height: 1.5rem;
+    width: 100%;
   }
 
-  .print\:max-w-full {
-    max-width: 100% !important;
+  .print-notes-line-thick {
+    border-bottom: 1.5px solid black;
+    height: 2rem;
+    width: 100%;
   }
 
-  .print\:rounded-none {
-    border-radius: 0 !important;
+  /* Print Signature Line */
+  .print-signature-line {
+    border-bottom: 2px solid black;
+    height: 2.5rem;
+    margin-top: 0.25rem;
   }
 
-  .print\:mb-8 {
-    margin-bottom: 2rem !important;
+  /* Print Footer Styling */
+  .checklist-print-footer {
+    margin-top: 2rem;
+    page-break-inside: avoid;
   }
 
-  .print\:mb-12 {
-    margin-bottom: 3rem !important;
-  }
-
-  .print\:mt-16 {
-    margin-top: 4rem !important;
-  }
-
-  .print\:break-inside-avoid {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-  }
-
-  .print\:appearance-none {
-    appearance: none !important;
-    -webkit-appearance: none !important;
-  }
-
-  .print\:border {
-    border-width: 1px !important;
-  }
-
-  .print\:border-2 {
-    border-width: 2px !important;
-  }
-
-  .print\:w-4 {
-    width: 1rem !important;
-  }
-
-  .print\:h-4 {
-    height: 1rem !important;
-  }
-
-  .print\:w-5 {
-    width: 1.25rem !important;
-  }
-
-  .print\:h-5 {
-    height: 1.25rem !important;
-  }
-
-  .print\:hover\:bg-white:hover {
-    background-color: white !important;
-  }
-
-  input[type="checkbox"] {
-    appearance: none !important;
-    -webkit-appearance: none !important;
-    border: 2px solid black !important;
-    width: 1.25rem !important;
-    height: 1.25rem !important;
-    background-color: white !important;
-    display: inline-block !important;
+  /* Ensure proper page breaks */
+  h1, h2, h3 {
+    page-break-after: avoid;
+    break-after: avoid;
   }
 
   table {
@@ -218,9 +279,40 @@
     display: table-footer-group;
   }
 
+  /* Remove shadows and transitions for print */
   * {
     text-shadow: none !important;
     box-shadow: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+  /* Ensure black text for readability */
+  body, p, td, th, span, div {
+    color: black !important;
+  }
+
+  /* Override any background colors that might interfere */
+  .bg-gray-50 {
+    background-color: #f9fafb !important;
+  }
+
+  .bg-gray-200 {
+    background-color: #e5e7eb !important;
+  }
+
+  .bg-yellow-50 {
+    background-color: #fefce8 !important;
+  }
+
+  /* Ensure borders are visible */
+  .border-gray-300,
+  .border-gray-800 {
+    border-color: black !important;
+  }
+
+  .border-yellow-600 {
+    border-color: #ca8a04 !important;
   }
 
   a,
@@ -240,10 +332,5 @@
 
   img {
     page-break-inside: avoid;
-  }
-
-  h2,
-  h3 {
-    page-break-after: avoid;
   }
 }
