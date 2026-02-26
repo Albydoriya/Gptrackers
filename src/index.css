@@ -141,15 +141,8 @@
 
   /* Hide all screen-only elements completely during print */
   .screen-only,
-  .checklist-modal-overlay,
-  .checklist-modal-overlay * {
+  .checklist-modal-overlay {
     display: none !important;
-    visibility: hidden !important;
-    position: absolute !important;
-    left: -9999px !important;
-    width: 0 !important;
-    height: 0 !important;
-    overflow: hidden !important;
   }
 
   /* Show and properly format the print content */
