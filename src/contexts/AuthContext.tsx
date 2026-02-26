@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
+import { getPrintingState, initializePrintListeners } from '../utils/printState';
 
 interface User {
   id: string;
@@ -142,6 +143,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Helper function to safely reload the page (skips reload during print operations)
+  const safeReload = () => {
+    if (getPrintingState()) {
+      console.log('Skipping page reload during print operation');
+      return;
+    }
+    window.location.reload();
+  };
+
   // Helper function to cache user role
   const cacheUserRole = (userId: string, role: string) => {
     try {
@@ -199,6 +209,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   useEffect(() => {
+    // Initialize print event listeners
+    const cleanupPrintListeners = initializePrintListeners();
+
     // Get initial session
     const getInitialSession = async () => {
       try {
@@ -219,7 +232,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setUser(null);
           setIsLoading(false);
           // Force page reload to clear all browser state
-          window.location.reload();
+          safeReload();
           return;
         }
         
@@ -232,7 +245,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setUser(null);
           setIsLoading(false);
           // Force page reload to clear all browser state
-          window.location.reload();
+          safeReload();
           return;
         }
         
@@ -247,7 +260,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setUser(null);
             setIsLoading(false);
             // Force page reload to clear all browser state
-            window.location.reload();
+            safeReload();
           }
         } else {
           setUser(null);
@@ -291,7 +304,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setUser(null);
           setIsLoading(false);
           // Force page reload to clear all browser state
-          window.location.reload();
+          safeReload();
         }
       } catch (authChangeError) {
         console.error('Error handling auth state change:', authChangeError);
@@ -316,7 +329,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      cleanupPrintListeners();
+    };
   }, []);
 
   const createUserFromSession = async (supabaseUser: SupabaseUser) => {
@@ -623,14 +639,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(null);
 
       // Force reload to ensure clean state
-      window.location.reload();
+      safeReload();
     } catch (error: any) {
       // Even if signOut completely fails, clear local state
       console.error('Sign out error:', error);
       clearAuthStorage();
       setUser(null);
       // Force reload to ensure clean state
-      window.location.reload();
+      safeReload();
     }
   };
 
@@ -767,7 +783,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           await supabase.auth.signOut();
           setUser(null);
           // Force page reload to clear all browser state
-          window.location.reload();
+          safeReload();
           return false;
         }
       }
