@@ -130,7 +130,7 @@
 @media print {
   @page {
     size: A4 portrait;
-    margin: 1.5cm 1cm;
+    margin: 1.2cm 1cm;
   }
 
   /* Reset body completely for print */
@@ -220,37 +220,99 @@
 
   /* Print Header Styling */
   .checklist-print-header {
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     page-break-after: avoid;
   }
 
   .checklist-print-header h1 {
-    font-size: 2rem;
+    font-size: 1.75rem;
     font-weight: 700;
     text-align: center;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
     color: black;
     letter-spacing: 0.05em;
   }
 
+  .checklist-print-header > p {
+    margin-bottom: 0.25rem;
+    line-height: 1.3;
+  }
+
+  .checklist-print-header .border-2 {
+    margin-top: 0.75rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+  }
+
+  /* 3-Column Grid for Header Summary */
+  .checklist-print-header .grid-cols-3 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .checklist-print-header .grid-cols-3 p {
+    margin-bottom: 0.25rem;
+  }
+
+  .checklist-print-header .grid-cols-3 .text-2xl {
+    font-size: 1.5rem;
+  }
+
   /* Print Order Styling */
   .checklist-print-order {
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     page-break-inside: avoid;
     break-inside: avoid;
   }
 
   .order-header {
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     page-break-after: avoid;
+  }
+
+  .order-header h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .order-header .flex {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .order-header .flex span {
+    font-size: 9pt;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .order-header .border-2 {
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* 4-Column Grid for Order Information */
+  .order-header .grid-cols-4 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .order-header .grid-cols-4 p {
+    margin-bottom: 0.25rem;
+    font-size: 9.5pt;
+    line-height: 1.3;
   }
 
   /* Print Table Styling */
   .checklist-print-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 1rem;
-    font-size: 10pt;
+    margin-top: 0.5rem;
+    font-size: 9.5pt;
+    table-layout: fixed;
   }
 
   .checklist-print-table thead {
@@ -263,14 +325,38 @@
   }
 
   .checklist-print-table th {
-    padding: 0.5rem 0.5rem;
+    padding: 0.4rem 0.5rem;
     text-align: left;
     font-weight: 700;
-    font-size: 9pt;
+    font-size: 8.5pt;
     text-transform: uppercase;
     border: 1px solid black;
     background-color: #e5e7eb !important;
     color: black;
+  }
+
+  .checklist-print-table th:nth-child(1) {
+    width: 5%;
+  }
+
+  .checklist-print-table th:nth-child(2) {
+    width: 15%;
+  }
+
+  .checklist-print-table th:nth-child(3) {
+    width: 20%;
+  }
+
+  .checklist-print-table th:nth-child(4) {
+    width: 28%;
+  }
+
+  .checklist-print-table th:nth-child(5) {
+    width: 7%;
+  }
+
+  .checklist-print-table th:nth-child(6) {
+    width: 25%;
   }
 
   .checklist-print-table tbody tr {
@@ -280,16 +366,18 @@
   }
 
   .checklist-print-table td {
-    padding: 0.5rem 0.5rem;
+    padding: 0.4rem 0.5rem;
     border: 1px solid black;
     color: black;
     vertical-align: top;
+    font-size: 9.5pt;
+    line-height: 1.3;
   }
 
   /* Print Checkbox Styling */
   .print-checkbox {
-    width: 1.25rem;
-    height: 1.25rem;
+    width: 1.1rem;
+    height: 1.1rem;
     border: 2px solid black;
     display: inline-block;
     background-color: white;
@@ -299,27 +387,89 @@
   /* Print Notes Line */
   .print-notes-line {
     border-bottom: 1px solid black;
-    height: 1.5rem;
+    height: 1.25rem;
     width: 100%;
   }
 
   .print-notes-line-thick {
     border-bottom: 1.5px solid black;
-    height: 2rem;
+    height: 1.5rem;
     width: 100%;
+    margin-bottom: 0.5rem;
   }
 
   /* Print Signature Line */
   .print-signature-line {
     border-bottom: 2px solid black;
-    height: 2.5rem;
+    height: 2rem;
     margin-top: 0.25rem;
+  }
+
+  /* Order Notes Section */
+  .checklist-print-order > .border-2.border-yellow-600 {
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .checklist-print-order > .border-2.border-yellow-600 p {
+    margin-bottom: 0.25rem;
+    font-size: 9.5pt;
+    line-height: 1.3;
   }
 
   /* Print Footer Styling */
   .checklist-print-footer {
-    margin-top: 2rem;
+    margin-top: 1.25rem;
     page-break-inside: avoid;
+  }
+
+  .checklist-print-footer .border-t-4 {
+    padding-top: 1rem;
+    margin-top: 1rem;
+  }
+
+  /* 3-Column Grid for Signature Section */
+  .checklist-print-footer .grid-cols-3 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .checklist-print-footer .grid-cols-3 > div {
+    margin-bottom: 0;
+  }
+
+  .checklist-print-footer .grid-cols-3 p {
+    margin-bottom: 0.25rem;
+    font-size: 10pt;
+  }
+
+  .checklist-print-footer .border-2 {
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .checklist-print-footer .border-2 p {
+    margin-bottom: 0.5rem;
+    font-size: 9.5pt;
+  }
+
+  .checklist-print-footer .text-center {
+    margin-top: 0.75rem;
+  }
+
+  .checklist-print-footer .text-xs {
+    font-size: 8pt;
+  }
+
+  /* Space optimization for discrepancy report lines */
+  .checklist-print-footer .space-y-3 {
+    display: block;
+  }
+
+  .checklist-print-footer .space-y-3 > *:not(:last-child) {
+    margin-bottom: 0.5rem;
   }
 
   /* Ensure proper page breaks */
