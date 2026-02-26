@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Printer } from 'lucide-react';
 import { Order } from '../types';
 
@@ -45,6 +46,145 @@ const ArrivalChecklistModal: React.FC<ArrivalChecklistModalProps> = ({
     month: 'long',
     day: 'numeric'
   });
+
+  const printContent = (
+    <div className="checklist-print-content">
+        {/* Print Header */}
+        <div className="checklist-print-header">
+          <h1 className="text-4xl font-bold text-center mb-2">ARRIVAL CHECKLIST</h1>
+          <p className="text-center text-lg mb-1">Goods Receiving Inspection</p>
+          <p className="text-center text-gray-700">Date: {printDate}</p>
+          <div className="mt-6 mb-8 border-2 border-gray-800 p-4">
+            <div className="grid grid-cols-3 gap-6 text-center">
+              <div>
+                <p className="text-sm font-semibold mb-1">Total Orders</p>
+                <p className="text-2xl font-bold">{selectedOrders.length}</p>
+              </div>
+              <div>
+                <p className="text-sm font-semibold mb-1">Total Parts</p>
+                <p className="text-2xl font-bold">{totalParts}</p>
+              </div>
+              <div>
+                <p className="text-sm font-semibold mb-1">Document ID</p>
+                <p className="text-lg font-mono">{`CHK-${Date.now().toString().slice(-8)}`}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Print Orders */}
+        {selectedOrders.map((order, orderIndex) => (
+          <div key={order.id} className="checklist-print-order">
+            <div className="order-header">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold">Order #{order.orderNumber}</h2>
+                <span className="text-sm bg-gray-200 px-3 py-1 rounded">
+                  Order {orderIndex + 1} of {selectedOrders.length}
+                </span>
+              </div>
+              <div className="grid grid-cols-4 gap-4 text-sm border-2 border-gray-300 p-3 bg-gray-50">
+                <div>
+                  <p className="font-bold mb-1">Supplier:</p>
+                  <p>{order.supplier.name}</p>
+                </div>
+                <div>
+                  <p className="font-bold mb-1">Order Date:</p>
+                  <p>{new Date(order.orderDate).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <p className="font-bold mb-1">Expected Delivery:</p>
+                  <p>{new Date(order.expectedDelivery).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <p className="font-bold mb-1">Total Parts:</p>
+                  <p>{order.parts.length} items</p>
+                </div>
+              </div>
+            </div>
+
+            <table className="checklist-print-table">
+              <thead>
+                <tr>
+                  <th className="w-12">✓</th>
+                  <th className="text-left">Part Number</th>
+                  <th className="text-left">Part Name</th>
+                  <th className="text-left">Description</th>
+                  <th className="text-center w-16">Qty</th>
+                  <th className="text-left w-48">Condition / Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {order.parts.map((orderPart) => (
+                  <tr key={orderPart.id}>
+                    <td className="text-center">
+                      <div className="print-checkbox"></div>
+                    </td>
+                    <td className="font-mono font-bold">{orderPart.part.partNumber}</td>
+                    <td className="font-semibold">{orderPart.part.name}</td>
+                    <td className="text-sm">
+                      {orderPart.part.description.length > 100
+                        ? `${orderPart.part.description.substring(0, 100)}...`
+                        : orderPart.part.description}
+                    </td>
+                    <td className="text-center font-bold">{orderPart.quantity}</td>
+                    <td>
+                      <div className="print-notes-line"></div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {order.notes && (
+              <div className="mt-4 border-2 border-yellow-600 bg-yellow-50 p-3">
+                <p className="font-bold mb-1 text-sm">⚠ Order Notes:</p>
+                <p className="text-sm">{order.notes}</p>
+              </div>
+            )}
+          </div>
+        ))}
+
+        {/* Print Footer */}
+        <div className="checklist-print-footer">
+          <div className="border-t-4 border-gray-800 pt-6 mt-8">
+            <div className="grid grid-cols-3 gap-8 mb-8">
+              <div>
+                <p className="font-bold mb-2">Received By:</p>
+                <div className="print-signature-line"></div>
+                <p className="text-xs text-gray-600 mt-1">Name (Print)</p>
+              </div>
+              <div>
+                <p className="font-bold mb-2">Date & Time:</p>
+                <div className="print-signature-line"></div>
+                <p className="text-xs text-gray-600 mt-1">DD/MM/YYYY - HH:MM</p>
+              </div>
+              <div>
+                <p className="font-bold mb-2">Signature:</p>
+                <div className="print-signature-line"></div>
+                <p className="text-xs text-gray-600 mt-1">Authorized Signature</p>
+              </div>
+            </div>
+
+            <div className="border-2 border-gray-800 p-4 bg-gray-50">
+              <p className="font-bold mb-3 text-sm">DISCREPANCIES / DAMAGE REPORT:</p>
+              <div className="space-y-3">
+                <div className="print-notes-line-thick"></div>
+                <div className="print-notes-line-thick"></div>
+                <div className="print-notes-line-thick"></div>
+                <div className="print-notes-line-thick"></div>
+              </div>
+              <p className="text-xs text-gray-600 mt-3">
+                Note: Report any missing, damaged, or incorrect items immediately to procurement department.
+              </p>
+            </div>
+
+            <div className="text-center text-xs text-gray-500 mt-6">
+              <p>Generated: {new Date().toLocaleString()} | Document ID: CHK-{Date.now().toString().slice(-8)}</p>
+            </div>
+          </div>
+        </div>
+    </div>
+  );
 
   return (
     <>
@@ -233,143 +373,8 @@ const ArrivalChecklistModal: React.FC<ArrivalChecklistModalProps> = ({
         </div>
       </div>
 
-      {/* Print-Only Content - Only visible when printing */}
-      <div className="checklist-print-content">
-        {/* Print Header */}
-        <div className="checklist-print-header">
-          <h1 className="text-4xl font-bold text-center mb-2">ARRIVAL CHECKLIST</h1>
-          <p className="text-center text-lg mb-1">Goods Receiving Inspection</p>
-          <p className="text-center text-gray-700">Date: {printDate}</p>
-          <div className="mt-6 mb-8 border-2 border-gray-800 p-4">
-            <div className="grid grid-cols-3 gap-6 text-center">
-              <div>
-                <p className="text-sm font-semibold mb-1">Total Orders</p>
-                <p className="text-2xl font-bold">{selectedOrders.length}</p>
-              </div>
-              <div>
-                <p className="text-sm font-semibold mb-1">Total Parts</p>
-                <p className="text-2xl font-bold">{totalParts}</p>
-              </div>
-              <div>
-                <p className="text-sm font-semibold mb-1">Document ID</p>
-                <p className="text-lg font-mono">{`CHK-${Date.now().toString().slice(-8)}`}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Print Orders */}
-        {selectedOrders.map((order, orderIndex) => (
-          <div key={order.id} className="checklist-print-order">
-            <div className="order-header">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold">Order #{order.orderNumber}</h2>
-                <span className="text-sm bg-gray-200 px-3 py-1 rounded">
-                  Order {orderIndex + 1} of {selectedOrders.length}
-                </span>
-              </div>
-              <div className="grid grid-cols-4 gap-4 text-sm border-2 border-gray-300 p-3 bg-gray-50">
-                <div>
-                  <p className="font-bold mb-1">Supplier:</p>
-                  <p>{order.supplier.name}</p>
-                </div>
-                <div>
-                  <p className="font-bold mb-1">Order Date:</p>
-                  <p>{new Date(order.orderDate).toLocaleDateString()}</p>
-                </div>
-                <div>
-                  <p className="font-bold mb-1">Expected Delivery:</p>
-                  <p>{new Date(order.expectedDelivery).toLocaleDateString()}</p>
-                </div>
-                <div>
-                  <p className="font-bold mb-1">Total Parts:</p>
-                  <p>{order.parts.length} items</p>
-                </div>
-              </div>
-            </div>
-
-            <table className="checklist-print-table">
-              <thead>
-                <tr>
-                  <th className="w-12">✓</th>
-                  <th className="text-left">Part Number</th>
-                  <th className="text-left">Part Name</th>
-                  <th className="text-left">Description</th>
-                  <th className="text-center w-16">Qty</th>
-                  <th className="text-left w-48">Condition / Notes</th>
-                </tr>
-              </thead>
-              <tbody>
-                {order.parts.map((orderPart) => (
-                  <tr key={orderPart.id}>
-                    <td className="text-center">
-                      <div className="print-checkbox"></div>
-                    </td>
-                    <td className="font-mono font-bold">{orderPart.part.partNumber}</td>
-                    <td className="font-semibold">{orderPart.part.name}</td>
-                    <td className="text-sm">
-                      {orderPart.part.description.length > 100
-                        ? `${orderPart.part.description.substring(0, 100)}...`
-                        : orderPart.part.description}
-                    </td>
-                    <td className="text-center font-bold">{orderPart.quantity}</td>
-                    <td>
-                      <div className="print-notes-line"></div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {order.notes && (
-              <div className="mt-4 border-2 border-yellow-600 bg-yellow-50 p-3">
-                <p className="font-bold mb-1 text-sm">⚠ Order Notes:</p>
-                <p className="text-sm">{order.notes}</p>
-              </div>
-            )}
-          </div>
-        ))}
-
-        {/* Print Footer */}
-        <div className="checklist-print-footer">
-          <div className="border-t-4 border-gray-800 pt-6 mt-8">
-            <div className="grid grid-cols-3 gap-8 mb-8">
-              <div>
-                <p className="font-bold mb-2">Received By:</p>
-                <div className="print-signature-line"></div>
-                <p className="text-xs text-gray-600 mt-1">Name (Print)</p>
-              </div>
-              <div>
-                <p className="font-bold mb-2">Date & Time:</p>
-                <div className="print-signature-line"></div>
-                <p className="text-xs text-gray-600 mt-1">DD/MM/YYYY - HH:MM</p>
-              </div>
-              <div>
-                <p className="font-bold mb-2">Signature:</p>
-                <div className="print-signature-line"></div>
-                <p className="text-xs text-gray-600 mt-1">Authorized Signature</p>
-              </div>
-            </div>
-
-            <div className="border-2 border-gray-800 p-4 bg-gray-50">
-              <p className="font-bold mb-3 text-sm">DISCREPANCIES / DAMAGE REPORT:</p>
-              <div className="space-y-3">
-                <div className="print-notes-line-thick"></div>
-                <div className="print-notes-line-thick"></div>
-                <div className="print-notes-line-thick"></div>
-                <div className="print-notes-line-thick"></div>
-              </div>
-              <p className="text-xs text-gray-600 mt-3">
-                Note: Report any missing, damaged, or incorrect items immediately to procurement department.
-              </p>
-            </div>
-
-            <div className="text-center text-xs text-gray-500 mt-6">
-              <p>Generated: {new Date().toLocaleString()} | Document ID: CHK-{Date.now().toString().slice(-8)}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Render print content directly to document.body using portal */}
+      {createPortal(printContent, document.body)}
     </>
   );
 };

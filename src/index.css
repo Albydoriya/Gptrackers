@@ -144,11 +144,7 @@
 
   /* Hide screen-only content (main app interface) */
   .screen-only {
-    visibility: hidden !important;
-    position: absolute !important;
-    left: -9999px !important;
-    overflow: hidden !important;
-    height: 0 !important;
+    display: none !important;
   }
 
   /* Hide specific UI elements that should not print */
