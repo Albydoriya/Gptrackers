@@ -133,29 +133,97 @@
     margin: 1.5cm 1cm;
   }
 
+  /* Reset body completely for print */
   body {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
     background: white !important;
-  }
-
-  /* Hide all screen-only elements completely during print */
-  .screen-only,
-  .checklist-modal-overlay {
-    display: none !important;
-  }
-
-  /* Show and properly format the print content */
-  .checklist-print-content {
-    display: block !important;
-    width: 100%;
-    background: white !important;
-    color: black !important;
-    position: relative !important;
-    left: 0 !important;
-    top: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
+  }
+
+  /* CRITICAL: Hide ALL app content by default */
+  body > *,
+  #root,
+  #root > *,
+  #root > * > *,
+  nav,
+  header,
+  footer,
+  main,
+  .screen-only,
+  .checklist-modal-overlay,
+  button:not(.checklist-print-content button),
+  input:not(.checklist-print-content input),
+  select,
+  textarea {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    position: absolute !important;
+    left: -9999px !important;
+  }
+
+  /* ONLY show the print content and its children */
+  .checklist-print-content {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 1.5cm 1cm !important;
+    z-index: 99999 !important;
+    overflow: visible !important;
+  }
+
+  /* Ensure all children of print content are visible */
+  .checklist-print-content,
+  .checklist-print-content * {
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: revert !important;
+  }
+
+  /* Specific display types for print content elements */
+  .checklist-print-content div {
+    display: block !important;
+  }
+
+  .checklist-print-content table {
+    display: table !important;
+  }
+
+  .checklist-print-content thead {
+    display: table-header-group !important;
+  }
+
+  .checklist-print-content tbody {
+    display: table-row-group !important;
+  }
+
+  .checklist-print-content tr {
+    display: table-row !important;
+  }
+
+  .checklist-print-content td,
+  .checklist-print-content th {
+    display: table-cell !important;
+  }
+
+  .checklist-print-content span,
+  .checklist-print-content p,
+  .checklist-print-content h1,
+  .checklist-print-content h2,
+  .checklist-print-content h3 {
+    display: block !important;
   }
 
   /* Print Header Styling */
