@@ -50,7 +50,7 @@ const ArrivalChecklistModal: React.FC<ArrivalChecklistModalProps> = ({
     <>
       {/* Modal Overlay - Hidden during print */}
       <div
-        className="checklist-modal-overlay fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50"
+        className="checklist-modal-overlay screen-only fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50"
         onClick={onClose}
         onKeyDown={handleKeyDown}
         role="dialog"
