@@ -1,16 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Printer, Building2 } from 'lucide-react';
+import { X, Printer } from 'lucide-react';
 import { Order } from '../types';
-import { supabase } from '../lib/supabase';
-
-interface CompanySettings {
-  company_name: string;
-  logo_url: string | null;
-  email: string | null;
-  phone: string | null;
-  address: string | null;
-}
 
 interface ArrivalChecklistModalProps {
   isOpen: boolean;
@@ -24,13 +15,10 @@ const ArrivalChecklistModal: React.FC<ArrivalChecklistModalProps> = ({
   selectedOrders
 }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);
-  const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
-      fetchCompanySettings();
     } else {
       document.body.style.overflow = 'unset';
     }
@@ -38,29 +26,6 @@ const ArrivalChecklistModal: React.FC<ArrivalChecklistModalProps> = ({
       document.body.style.overflow = 'unset';
     };
   }, [isOpen]);
-
-  const fetchCompanySettings = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('company_settings')
-        .select('company_name, logo_url, email, phone, address')
-        .single();
-
-      if (error) throw error;
-      if (data) {
-        setCompanySettings(data);
-      }
-    } catch (error) {
-      console.error('Error fetching company settings:', error);
-      setCompanySettings({
-        company_name: 'Your Company Name',
-        logo_url: null,
-        email: null,
-        phone: null,
-        address: null,
-      });
-    }
-  };
 
   const handlePrint = () => {
     window.print();
@@ -86,56 +51,10 @@ const ArrivalChecklistModal: React.FC<ArrivalChecklistModalProps> = ({
     <div className="checklist-print-content">
         {/* Print Header */}
         <div className="checklist-print-header">
-          {/* Company Branding Section */}
-          <div className="flex justify-between items-start mb-6 pb-4 border-b-2 border-gray-300">
-            {/* Left: Company Logo */}
-            <div className="flex-shrink-0" style={{ width: '150px', height: '80px' }}>
-              {companySettings?.logo_url && !logoError ? (
-                <img
-                  src={companySettings.logo_url}
-                  alt="Company Logo"
-                  className="max-w-full max-h-full object-contain"
-                  onError={() => setLogoError(true)}
-                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                />
-              ) : (
-                <div className="w-full h-full border-2 border-gray-300 rounded flex items-center justify-center bg-gray-50">
-                  <div className="text-center">
-                    <Building2 className="h-8 w-8 mx-auto text-gray-400 mb-1" />
-                    <p className="text-xs text-gray-400">Company Logo</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Right: Company Information */}
-            <div className="text-right flex-shrink-0">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">
-                {companySettings?.company_name || 'Your Company Name'}
-              </h2>
-              {companySettings?.address && (
-                <p className="text-sm text-gray-700 mb-1">{companySettings.address}</p>
-              )}
-              <div className="text-sm text-gray-700">
-                {companySettings?.phone && (
-                  <span className="mr-3">Phone: {companySettings.phone}</span>
-                )}
-                {companySettings?.email && (
-                  <span>Email: {companySettings.email}</span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Document Title Section */}
-          <div className="text-center mb-6">
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">ARRIVAL CHECKLIST</h1>
-            <p className="text-lg text-gray-700 mb-1">Goods Receiving Inspection</p>
-            <p className="text-gray-600">Date: {printDate}</p>
-          </div>
-
-          {/* Summary Box */}
-          <div className="mb-8 border-2 border-gray-800 p-4">
+          <h1 className="text-4xl font-bold text-center mb-2">ARRIVAL CHECKLIST</h1>
+          <p className="text-center text-lg mb-1">Goods Receiving Inspection</p>
+          <p className="text-center text-gray-700">Date: {printDate}</p>
+          <div className="mt-6 mb-8 border-2 border-gray-800 p-4">
             <div className="grid grid-cols-3 gap-6 text-center">
               <div>
                 <p className="text-sm font-semibold mb-1">Total Orders</p>
@@ -259,14 +178,8 @@ const ArrivalChecklistModal: React.FC<ArrivalChecklistModalProps> = ({
               </p>
             </div>
 
-            <div className="text-center text-xs text-gray-500 mt-6 pt-4 border-t border-gray-300">
-              <p className="font-semibold text-gray-700 mb-1">
-                {companySettings?.company_name || 'Your Company Name'}
-              </p>
+            <div className="text-center text-xs text-gray-500 mt-6">
               <p>Generated: {new Date().toLocaleString()} | Document ID: CHK-{Date.now().toString().slice(-8)}</p>
-              {companySettings?.email && (
-                <p className="mt-1">Contact: {companySettings.email}</p>
-              )}
             </div>
           </div>
         </div>
