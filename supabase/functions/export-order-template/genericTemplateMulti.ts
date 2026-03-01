@@ -46,7 +46,7 @@ export function applyGenericTemplateMulti(
     { width: columnWidths.notes },
   ];
 
-  addHeaderSection(worksheet, data, colors);
+  addHeaderSection(worksheet, data, colors, workbook, logoData);
   const lastPartRow = addPartsTable(worksheet, data, colors);
   addFooterSection(worksheet, data, lastPartRow, colors);
   configurePageSetup(worksheet, lastPartRow);
@@ -55,21 +55,45 @@ export function applyGenericTemplateMulti(
 function addHeaderSection(
   worksheet: ExcelJS.Worksheet,
   data: MultiOrderExportData,
-  colors: any
+  colors: any,
+  workbook?: ExcelJS.Workbook,
+  logoData?: LogoData | null
 ): void {
   worksheet.mergeCells('A1:B2');
-  worksheet.getCell('A1').value = 'LOGO';
-  worksheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'center' };
-  worksheet.getCell('A1').font = { size: 9, color: { argb: '999999' } };
-  worksheet.getCell('A1').border = {
-    top: { style: 'thin', color: { argb: colors.borderColor } },
-    left: { style: 'thin', color: { argb: colors.borderColor } },
-    bottom: { style: 'thin', color: { argb: colors.borderColor } },
-    right: { style: 'thin', color: { argb: colors.borderColor } },
-  };
+
+  if (logoData && workbook) {
+    const imageId = workbook.addImage({
+      buffer: logoData.buffer,
+      extension: logoData.extension,
+    });
+
+    worksheet.addImage(imageId, {
+      tl: { col: 0, row: 0 },
+      br: { col: 2, row: 2 },
+    });
+  } else {
+    worksheet.getCell('A1').value = 'LOGO';
+    worksheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'center' };
+    worksheet.getCell('A1').font = { size: 9, color: { argb: '999999' } };
+    worksheet.getCell('A1').border = {
+      top: { style: 'thin', color: { argb: colors.borderColor } },
+      left: { style: 'thin', color: { argb: colors.borderColor } },
+      bottom: { style: 'thin', color: { argb: colors.borderColor } },
+      right: { style: 'thin', color: { argb: colors.borderColor } },
+    };
+  }
+
+  const companyInfo = [];
+  if (data.company.name) companyInfo.push(data.company.name);
+  if (data.company.address) companyInfo.push(data.company.address);
+
+  const contactInfo = [];
+  if (data.company.phone) contactInfo.push(data.company.phone);
+  if (data.company.email) contactInfo.push(data.company.email);
+  if (contactInfo.length > 0) companyInfo.push(contactInfo.join(' | '));
 
   worksheet.mergeCells('C1:G2');
-  worksheet.getCell('C1').value = 'Your Company Name\nAddress Line 1\nPhone | Email';
+  worksheet.getCell('C1').value = companyInfo.length > 0 ? companyInfo.join('\n') : 'Your Company Name\nAddress Line 1\nPhone | Email';
   worksheet.getCell('C1').alignment = { vertical: 'middle', horizontal: 'right', wrapText: true };
   worksheet.getCell('C1').font = { size: 11 };
 
