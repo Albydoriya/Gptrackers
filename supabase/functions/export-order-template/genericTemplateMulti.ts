@@ -4,10 +4,15 @@ import type { LogoData } from "./logoLoader.ts";
 import { formatDateForExcel, formatSpecifications, getQuoteDeadline } from "./utils.ts";
 
 export const GENERIC_MULTI_COLORS = {
-  headerBg: 'E8F4F8',
-  altRowBg: 'F9F9F9',
-  borderColor: 'D0D0D0',
+  headerBg: 'F8F9FA',
+  altRowBg: 'FAFBFC',
+  borderColor: 'BDBDBD',
   totalBg: 'FFF9E6',
+  accentColor: 'FFD54F',
+  sectionBg: 'F5F5F5',
+  titleBg: 'E0E0E0',
+  supplierBoxBg: 'FAFAFA',
+  supplierBoxBorder: '9E9E9E',
 };
 
 export const GENERIC_MULTI_COLUMN_WIDTHS = {
@@ -59,7 +64,11 @@ function addHeaderSection(
   workbook?: ExcelJS.Workbook,
   logoData?: LogoData | null
 ): void {
-  worksheet.mergeCells('A1:B2');
+  worksheet.mergeCells('A1:C4');
+  worksheet.getRow(1).height = 20;
+  worksheet.getRow(2).height = 20;
+  worksheet.getRow(3).height = 20;
+  worksheet.getRow(4).height = 20;
 
   if (logoData && workbook) {
     const imageId = workbook.addImage({
@@ -69,48 +78,78 @@ function addHeaderSection(
 
     worksheet.addImage(imageId, {
       tl: { col: 0, row: 0 },
-      br: { col: 2, row: 2 },
+      br: { col: 3, row: 4 },
     });
   } else {
     worksheet.getCell('A1').value = 'LOGO';
     worksheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'center' };
-    worksheet.getCell('A1').font = { size: 9, color: { argb: '999999' } };
-    worksheet.getCell('A1').border = {
-      top: { style: 'thin', color: { argb: colors.borderColor } },
-      left: { style: 'thin', color: { argb: colors.borderColor } },
-      bottom: { style: 'thin', color: { argb: colors.borderColor } },
-      right: { style: 'thin', color: { argb: colors.borderColor } },
-    };
+    worksheet.getCell('A1').font = { size: 11, color: { argb: '757575' } };
   }
 
-  const companyInfo = [];
-  if (data.company.name) companyInfo.push(data.company.name);
-  if (data.company.address) companyInfo.push(data.company.address);
+  for (let col = 1; col <= 3; col++) {
+    for (let row = 1; row <= 4; row++) {
+      const cell = worksheet.getCell(row, col);
+      cell.border = {
+        top: { style: 'thin', color: { argb: colors.borderColor } },
+        left: { style: 'thin', color: { argb: colors.borderColor } },
+        bottom: { style: 'thin', color: { argb: colors.borderColor } },
+        right: { style: 'thin', color: { argb: colors.borderColor } },
+      };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFFFFF' },
+      };
+    }
+  }
 
-  const contactInfo = [];
-  if (data.company.phone) contactInfo.push(data.company.phone);
-  if (data.company.email) contactInfo.push(data.company.email);
-  if (contactInfo.length > 0) companyInfo.push(contactInfo.join(' | '));
+  worksheet.mergeCells('D1:J1');
+  const companyNameCell = worksheet.getCell('D1');
+  companyNameCell.value = data.company.name || 'Your Company Name';
+  companyNameCell.alignment = { vertical: 'middle', horizontal: 'right' };
+  companyNameCell.font = { size: 14, bold: true };
 
-  worksheet.mergeCells('C1:G2');
-  worksheet.getCell('C1').value = companyInfo.length > 0 ? companyInfo.join('\n') : 'Your Company Name\nAddress Line 1\nPhone | Email';
-  worksheet.getCell('C1').alignment = { vertical: 'middle', horizontal: 'right', wrapText: true };
-  worksheet.getCell('C1').font = { size: 11 };
+  worksheet.mergeCells('D2:J2');
+  const addressCell = worksheet.getCell('D2');
+  addressCell.value = data.company.address || 'Company Address';
+  addressCell.alignment = { vertical: 'middle', horizontal: 'right' };
+  addressCell.font = { size: 10 };
 
-  worksheet.getRow(3).height = 5;
+  worksheet.mergeCells('D3:J3');
+  const phoneCell = worksheet.getCell('D3');
+  phoneCell.value = data.company.phone ? `Phone: ${data.company.phone}` : 'Phone: ___________';
+  phoneCell.alignment = { vertical: 'middle', horizontal: 'right' };
+  phoneCell.font = { size: 10 };
 
-  worksheet.mergeCells('A4:J4');
-  worksheet.getCell('A4').value = 'PURCHASE ORDER REQUESTS - COMBINED QUOTE';
-  worksheet.getCell('A4').alignment = { vertical: 'middle', horizontal: 'center' };
-  worksheet.getCell('A4').font = { size: 18, bold: true };
+  worksheet.mergeCells('D4:J4');
+  const emailCell = worksheet.getCell('D4');
+  emailCell.value = data.company.email ? `Email: ${data.company.email}` : 'Email: ___________';
+  emailCell.alignment = { vertical: 'middle', horizontal: 'right' };
+  emailCell.font = { size: 10 };
 
-  worksheet.getRow(5).height = 5;
+  worksheet.getRow(5).height = 8;
+
+  worksheet.mergeCells('A6:J6');
+  const titleCell = worksheet.getCell('A6');
+  titleCell.value = 'PURCHASE ORDER REQUESTS - COMBINED QUOTE';
+  titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+  titleCell.font = { size: 16, bold: true };
+  titleCell.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: colors.titleBg },
+  };
+  worksheet.getRow(6).height = 25;
+
+  worksheet.getRow(7).height = 8;
 
   const orderNumbers = data.orders.map(o => o.order.order_number).join(', ');
-  worksheet.mergeCells('A6:J6');
-  worksheet.getCell('A6').value = `Orders: ${orderNumbers}`;
-  worksheet.getCell('A6').alignment = { vertical: 'middle', horizontal: 'center' };
-  worksheet.getCell('A6').font = { size: 11, bold: true };
+  worksheet.mergeCells('A8:J8');
+  const orderNumCell = worksheet.getCell('A8');
+  orderNumCell.value = `Orders: ${orderNumbers}`;
+  orderNumCell.alignment = { vertical: 'middle', horizontal: 'center' };
+  orderNumCell.font = { size: 11, bold: true };
+  worksheet.getRow(8).height = 18;
 
   const orderDates = data.orders.map(o => new Date(o.order.order_date));
   const minDate = new Date(Math.min(...orderDates.map(d => d.getTime())));
@@ -119,31 +158,76 @@ function addHeaderSection(
     ? formatDateForExcel(minDate)
     : `${formatDateForExcel(minDate)} - ${formatDateForExcel(maxDate)}`;
 
-  worksheet.mergeCells('A7:J7');
-  worksheet.getCell('A7').value = `Order Dates: ${dateRange}`;
-  worksheet.getCell('A7').alignment = { vertical: 'middle', horizontal: 'center' };
-  worksheet.getCell('A7').font = { size: 10 };
+  worksheet.mergeCells('A9:J9');
+  const dateCell = worksheet.getCell('A9');
+  dateCell.value = `Order Dates: ${dateRange}`;
+  dateCell.alignment = { vertical: 'middle', horizontal: 'center' };
+  dateCell.font = { size: 10 };
+  worksheet.getRow(9).height = 18;
 
-  worksheet.getRow(8).height = 5;
+  worksheet.getRow(10).height = 10;
 
-  worksheet.getCell('A9').value = 'Supplier:';
-  worksheet.getCell('A9').font = { bold: true };
-  worksheet.getCell('B9').value = data.supplier.name;
+  worksheet.mergeCells('A11:J11');
+  const supplierHeaderCell = worksheet.getCell('A11');
+  supplierHeaderCell.value = 'SUPPLIER INFORMATION';
+  supplierHeaderCell.alignment = { vertical: 'middle', horizontal: 'left' };
+  supplierHeaderCell.font = { size: 11, bold: true };
+  supplierHeaderCell.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: colors.sectionBg },
+  };
+  worksheet.getRow(11).height = 20;
 
-  worksheet.getCell('E9').value = 'Contact:';
-  worksheet.getCell('E9').font = { bold: true };
-  worksheet.getCell('F9').value = data.supplier.contact_person;
+  for (let row = 12; row <= 14; row++) {
+    for (let col = 1; col <= 10; col++) {
+      const cell = worksheet.getCell(row, col);
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: colors.supplierBoxBg },
+      };
+      cell.border = {
+        top: { style: 'thin', color: { argb: colors.supplierBoxBorder } },
+        left: { style: 'thin', color: { argb: colors.supplierBoxBorder } },
+        bottom: { style: 'thin', color: { argb: colors.supplierBoxBorder } },
+        right: { style: 'thin', color: { argb: colors.supplierBoxBorder } },
+      };
+    }
+    worksheet.getRow(row).height = 20;
+  }
 
-  worksheet.getCell('A10').value = 'Email:';
-  worksheet.getCell('B10').value = data.supplier.email;
+  worksheet.getCell('A12').value = 'Supplier:';
+  worksheet.getCell('A12').font = { bold: true, size: 10 };
+  worksheet.mergeCells('B12:D12');
+  worksheet.getCell('B12').value = data.supplier.name;
+  worksheet.getCell('B12').font = { size: 10 };
 
-  worksheet.getCell('E10').value = 'Phone:';
-  worksheet.getCell('F10').value = data.supplier.phone;
+  worksheet.getCell('F12').value = 'Contact Person:';
+  worksheet.getCell('F12').font = { bold: true, size: 10 };
+  worksheet.mergeCells('G12:J12');
+  worksheet.getCell('G12').value = data.supplier.contact_person;
+  worksheet.getCell('G12').font = { size: 10 };
 
-  worksheet.getCell('A11').value = 'Payment Terms:';
-  worksheet.getCell('B11').value = data.supplier.payment_terms;
+  worksheet.getCell('A13').value = 'Email:';
+  worksheet.getCell('A13').font = { bold: true, size: 10 };
+  worksheet.mergeCells('B13:D13');
+  worksheet.getCell('B13').value = data.supplier.email;
+  worksheet.getCell('B13').font = { size: 10 };
 
-  worksheet.getRow(12).height = 10;
+  worksheet.getCell('F13').value = 'Phone:';
+  worksheet.getCell('F13').font = { bold: true, size: 10 };
+  worksheet.mergeCells('G13:J13');
+  worksheet.getCell('G13').value = data.supplier.phone;
+  worksheet.getCell('G13').font = { size: 10 };
+
+  worksheet.getCell('A14').value = 'Payment Terms:';
+  worksheet.getCell('A14').font = { bold: true, size: 10 };
+  worksheet.mergeCells('B14:D14');
+  worksheet.getCell('B14').value = data.supplier.payment_terms;
+  worksheet.getCell('B14').font = { size: 10 };
+
+  worksheet.getRow(15).height = 12;
 }
 
 function addPartsTable(
@@ -151,7 +235,7 @@ function addPartsTable(
   data: MultiOrderExportData,
   colors: any
 ): number {
-  let currentRow = 13;
+  let currentRow = 16;
 
   const headers = [
     'Order #',
@@ -169,7 +253,7 @@ function addPartsTable(
   headers.forEach((header, index) => {
     const cell = worksheet.getCell(currentRow, index + 1);
     cell.value = header;
-    cell.font = { bold: true, size: 10 };
+    cell.font = { bold: true, size: 10, color: { argb: '000000' } };
     cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
     cell.fill = {
       type: 'pattern',
@@ -177,14 +261,14 @@ function addPartsTable(
       fgColor: { argb: colors.headerBg },
     };
     cell.border = {
-      top: { style: 'thin', color: { argb: colors.borderColor } },
+      top: { style: 'medium', color: { argb: colors.borderColor } },
       left: { style: 'thin', color: { argb: colors.borderColor } },
-      bottom: { style: 'thin', color: { argb: colors.borderColor } },
+      bottom: { style: 'medium', color: { argb: colors.borderColor } },
       right: { style: 'thin', color: { argb: colors.borderColor } },
     };
   });
 
-  worksheet.getRow(currentRow).height = 30;
+  worksheet.getRow(currentRow).height = 35;
   currentRow++;
 
   let itemNumber = 1;
@@ -243,9 +327,9 @@ function addPartsTable(
       }
 
       if (specs.length > 50) {
-        row.height = 40;
+        row.height = 45;
       } else {
-        row.height = 25;
+        row.height = 30;
       }
 
       currentRow++;
@@ -263,42 +347,76 @@ function addFooterSection(
   colors: any
 ): void {
   let currentRow = lastPartRow + 2;
-  const firstPartRow = 14;
+  const firstPartRow = 17;
 
-  worksheet.getCell(currentRow, 7).value = 'Subtotal:';
-  worksheet.getCell(currentRow, 7).font = { bold: true };
-  worksheet.getCell(currentRow, 7).alignment = { horizontal: 'right' };
+  for (let row = currentRow; row <= currentRow + 2; row++) {
+    for (let col = 6; col <= 10; col++) {
+      const cell = worksheet.getCell(row, col);
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: colors.sectionBg },
+      };
+      cell.border = {
+        top: { style: 'thin', color: { argb: colors.borderColor } },
+        left: { style: 'thin', color: { argb: colors.borderColor } },
+        bottom: { style: 'thin', color: { argb: colors.borderColor } },
+        right: { style: 'thin', color: { argb: colors.borderColor } },
+      };
+    }
+  }
+
+  worksheet.mergeCells(currentRow, 6, currentRow, 7);
+  worksheet.getCell(currentRow, 6).value = 'Subtotal:';
+  worksheet.getCell(currentRow, 6).font = { bold: true, size: 11 };
+  worksheet.getCell(currentRow, 6).alignment = { horizontal: 'right', vertical: 'middle' };
+
+  worksheet.mergeCells(currentRow, 8, currentRow, 10);
   worksheet.getCell(currentRow, 8).value = { formula: `SUM(H${firstPartRow}:H${lastPartRow})` };
   worksheet.getCell(currentRow, 8).numFmt = '¥#,##0';
-  worksheet.getCell(currentRow, 8).font = { bold: true };
+  worksheet.getCell(currentRow, 8).font = { bold: true, size: 11 };
+  worksheet.getCell(currentRow, 8).alignment = { horizontal: 'right', vertical: 'middle' };
+  worksheet.getRow(currentRow).height = 25;
   const subtotalRow = currentRow;
   currentRow++;
 
-  worksheet.getCell(currentRow, 7).value = 'Shipping (Est):';
-  worksheet.getCell(currentRow, 7).font = { bold: true };
-  worksheet.getCell(currentRow, 7).alignment = { horizontal: 'right' };
+  worksheet.mergeCells(currentRow, 6, currentRow, 7);
+  worksheet.getCell(currentRow, 6).value = 'Shipping (Est):';
+  worksheet.getCell(currentRow, 6).font = { bold: true, size: 11 };
+  worksheet.getCell(currentRow, 6).alignment = { horizontal: 'right', vertical: 'middle' };
+
+  worksheet.mergeCells(currentRow, 8, currentRow, 10);
   worksheet.getCell(currentRow, 8).value = '';
   worksheet.getCell(currentRow, 8).numFmt = '¥#,##0';
+  worksheet.getCell(currentRow, 8).alignment = { horizontal: 'right', vertical: 'middle' };
+  worksheet.getRow(currentRow).height = 25;
   const shippingCell = `H${currentRow}`;
   currentRow++;
 
-  worksheet.getCell(currentRow, 7).value = 'GRAND TOTAL:';
-  worksheet.getCell(currentRow, 7).font = { bold: true, size: 12 };
-  worksheet.getCell(currentRow, 7).alignment = { horizontal: 'right' };
+  worksheet.mergeCells(currentRow, 6, currentRow, 7);
+  worksheet.getCell(currentRow, 6).value = 'GRAND TOTAL:';
+  worksheet.getCell(currentRow, 6).font = { bold: true, size: 13 };
+  worksheet.getCell(currentRow, 6).alignment = { horizontal: 'right', vertical: 'middle' };
+
+  worksheet.mergeCells(currentRow, 8, currentRow, 10);
   worksheet.getCell(currentRow, 8).value = {
     formula: `H${subtotalRow}+${shippingCell}`
   };
   worksheet.getCell(currentRow, 8).numFmt = '¥#,##0';
-  worksheet.getCell(currentRow, 8).font = { bold: true, size: 12 };
+  worksheet.getCell(currentRow, 8).font = { bold: true, size: 13 };
+  worksheet.getCell(currentRow, 8).alignment = { horizontal: 'right', vertical: 'middle' };
   worksheet.getCell(currentRow, 8).fill = {
     type: 'pattern',
     pattern: 'solid',
     fgColor: { argb: colors.totalBg },
   };
   worksheet.getCell(currentRow, 8).border = {
-    top: { style: 'double' },
-    bottom: { style: 'double' },
+    top: { style: 'double', color: { argb: colors.borderColor } },
+    left: { style: 'thin', color: { argb: colors.borderColor } },
+    bottom: { style: 'double', color: { argb: colors.borderColor } },
+    right: { style: 'thin', color: { argb: colors.borderColor } },
   };
+  worksheet.getRow(currentRow).height = 28;
 
   currentRow += 2;
 
@@ -308,46 +426,116 @@ function addFooterSection(
   const quoteDeadline = getQuoteDeadline(earliestOrderDate);
 
   worksheet.mergeCells(currentRow, 1, currentRow, 10);
-  worksheet.getCell(currentRow, 1).value = 'TERMS AND CONDITIONS:';
-  worksheet.getCell(currentRow, 1).font = { bold: true, size: 11 };
+  const termsHeaderCell = worksheet.getCell(currentRow, 1);
+  termsHeaderCell.value = 'TERMS AND CONDITIONS';
+  termsHeaderCell.font = { bold: true, size: 12 };
+  termsHeaderCell.alignment = { vertical: 'middle', horizontal: 'left' };
+  termsHeaderCell.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: colors.sectionBg },
+  };
+  worksheet.getRow(currentRow).height = 22;
   currentRow++;
 
   const terms = [
-    `- Please provide complete quote by: ${quoteDeadline}`,
-    '- Include lead times for all items',
-    '- Prices should be in JPY',
-    `- Payment terms: ${data.supplier.payment_terms}`,
-    '- Please indicate any minimum order quantities',
+    `Please provide complete quote by: ${quoteDeadline}`,
+    'Include lead times for all items',
+    'Prices should be in JPY',
+    `Payment terms: ${data.supplier.payment_terms}`,
+    'Please indicate any minimum order quantities',
   ];
 
-  terms.forEach(term => {
+  terms.forEach((term, index) => {
     worksheet.mergeCells(currentRow, 1, currentRow, 10);
-    worksheet.getCell(currentRow, 1).value = term;
-    worksheet.getCell(currentRow, 1).font = { size: 10 };
+    const termCell = worksheet.getCell(currentRow, 1);
+    termCell.value = `  ${index + 1}. ${term}`;
+    termCell.font = { size: 10 };
+    termCell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+    termCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FAFAFA' },
+    };
+    termCell.border = {
+      top: { style: 'thin', color: { argb: colors.borderColor } },
+      left: { style: 'thin', color: { argb: colors.borderColor } },
+      bottom: { style: 'thin', color: { argb: colors.borderColor } },
+      right: { style: 'thin', color: { argb: colors.borderColor } },
+    };
+    worksheet.getRow(currentRow).height = 20;
     currentRow++;
   });
 
   currentRow += 2;
 
   worksheet.mergeCells(currentRow, 1, currentRow, 10);
-  worksheet.getCell(currentRow, 1).value = 'SUPPLIER TO COMPLETE AND RETURN:';
-  worksheet.getCell(currentRow, 1).font = { bold: true, size: 11 };
-  currentRow += 2;
+  const supplierResponseHeader = worksheet.getCell(currentRow, 1);
+  supplierResponseHeader.value = 'SUPPLIER TO COMPLETE AND RETURN';
+  supplierResponseHeader.font = { bold: true, size: 12 };
+  supplierResponseHeader.alignment = { vertical: 'middle', horizontal: 'left' };
+  supplierResponseHeader.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: colors.sectionBg },
+  };
+  worksheet.getRow(currentRow).height = 22;
+  currentRow++;
+
+  for (let row = currentRow; row <= currentRow + 2; row++) {
+    for (let col = 1; col <= 10; col++) {
+      const cell = worksheet.getCell(row, col);
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FAFAFA' },
+      };
+      cell.border = {
+        top: { style: 'thin', color: { argb: colors.borderColor } },
+        left: { style: 'thin', color: { argb: colors.borderColor } },
+        bottom: { style: 'thin', color: { argb: colors.borderColor } },
+        right: { style: 'thin', color: { argb: colors.borderColor } },
+      };
+    }
+    worksheet.getRow(row).height = 25;
+  }
 
   worksheet.getCell(currentRow, 1).value = 'Quoted By:';
-  worksheet.getCell(currentRow, 2).value = '____________________';
-  worksheet.getCell(currentRow, 5).value = 'Date:';
-  worksheet.getCell(currentRow, 6).value = '____________';
-  currentRow += 2;
+  worksheet.getCell(currentRow, 1).font = { bold: true, size: 10 };
+  worksheet.getCell(currentRow, 1).alignment = { vertical: 'middle', horizontal: 'left' };
+  worksheet.mergeCells(currentRow, 2, currentRow, 4);
+  worksheet.getCell(currentRow, 2).value = '________________________________';
+  worksheet.getCell(currentRow, 2).alignment = { vertical: 'middle', horizontal: 'left' };
+
+  worksheet.getCell(currentRow, 6).value = 'Date:';
+  worksheet.getCell(currentRow, 6).font = { bold: true, size: 10 };
+  worksheet.getCell(currentRow, 6).alignment = { vertical: 'middle', horizontal: 'left' };
+  worksheet.mergeCells(currentRow, 7, currentRow, 10);
+  worksheet.getCell(currentRow, 7).value = '________________________________';
+  worksheet.getCell(currentRow, 7).alignment = { vertical: 'middle', horizontal: 'left' };
+  currentRow++;
 
   worksheet.getCell(currentRow, 1).value = 'Company:';
-  worksheet.getCell(currentRow, 2).value = '____________________';
-  worksheet.getCell(currentRow, 5).value = 'Valid Until:';
-  worksheet.getCell(currentRow, 6).value = '____________';
-  currentRow += 2;
+  worksheet.getCell(currentRow, 1).font = { bold: true, size: 10 };
+  worksheet.getCell(currentRow, 1).alignment = { vertical: 'middle', horizontal: 'left' };
+  worksheet.mergeCells(currentRow, 2, currentRow, 4);
+  worksheet.getCell(currentRow, 2).value = '________________________________';
+  worksheet.getCell(currentRow, 2).alignment = { vertical: 'middle', horizontal: 'left' };
+
+  worksheet.getCell(currentRow, 6).value = 'Valid Until:';
+  worksheet.getCell(currentRow, 6).font = { bold: true, size: 10 };
+  worksheet.getCell(currentRow, 6).alignment = { vertical: 'middle', horizontal: 'left' };
+  worksheet.mergeCells(currentRow, 7, currentRow, 10);
+  worksheet.getCell(currentRow, 7).value = '________________________________';
+  worksheet.getCell(currentRow, 7).alignment = { vertical: 'middle', horizontal: 'left' };
+  currentRow++;
 
   worksheet.getCell(currentRow, 1).value = 'Signature:';
-  worksheet.getCell(currentRow, 2).value = '____________________';
+  worksheet.getCell(currentRow, 1).font = { bold: true, size: 10 };
+  worksheet.getCell(currentRow, 1).alignment = { vertical: 'middle', horizontal: 'left' };
+  worksheet.mergeCells(currentRow, 2, currentRow, 4);
+  worksheet.getCell(currentRow, 2).value = '________________________________';
+  worksheet.getCell(currentRow, 2).alignment = { vertical: 'middle', horizontal: 'left' };
 }
 
 function configurePageSetup(worksheet: ExcelJS.Worksheet, lastPartRow: number): void {
@@ -365,8 +553,8 @@ function configurePageSetup(worksheet: ExcelJS.Worksheet, lastPartRow: number): 
       header: 0.3,
       footer: 0.3,
     },
-    printTitlesRow: '1:13',
+    printTitlesRow: '1:16',
   };
 
-  worksheet.pageSetup.printArea = `A1:J${lastPartRow + 20}`;
+  worksheet.pageSetup.printArea = `A1:J${lastPartRow + 25}`;
 }
