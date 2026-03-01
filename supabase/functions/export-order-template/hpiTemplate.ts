@@ -61,9 +61,16 @@ function addHeaderSection(
       extension: logoData.extension,
     });
 
+    const logoWidth = logoData.width || 191;
+    const logoHeight = logoData.height || 37;
+    const aspectRatio = logoWidth / logoHeight;
+
+    const targetHeight = 35;
+    const targetWidth = targetHeight * aspectRatio;
+
     worksheet.addImage(imageId, {
       tl: { col: 3, row: 0 },
-      ext: { width: logoData.width || 191, height: logoData.height || 37 },
+      ext: { width: targetWidth, height: targetHeight },
     });
   }
 
