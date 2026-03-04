@@ -35,6 +35,7 @@ interface SupplierFormData {
   isActive: boolean;
   website: string;
   notes: string;
+  exportTemplateType: string;
 }
 
 const AddSupplier: React.FC<AddSupplierProps> = ({ isOpen, onClose, onSupplierAdded }) => {
@@ -50,7 +51,8 @@ const AddSupplier: React.FC<AddSupplierProps> = ({ isOpen, onClose, onSupplierAd
     paymentTerms: 'Net 30',
     isActive: true,
     website: '',
-    notes: ''
+    notes: '',
+    exportTemplateType: 'generic'
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -66,6 +68,12 @@ const AddSupplier: React.FC<AddSupplierProps> = ({ isOpen, onClose, onSupplierAd
     'Prepaid',
     '2/10 Net 30',
     'Due on Receipt'
+  ];
+
+  const templateOptions = [
+    { value: 'generic', label: 'Generic Template', description: 'Standard Western business format' },
+    { value: 'japanese', label: 'Japanese Quotation (見積依頼書)', description: 'Traditional Japanese format' },
+    { value: 'hpi', label: 'HPI Supplier Template', description: 'Custom HPI format' }
   ];
 
   const validateForm = () => {
@@ -122,7 +130,8 @@ const AddSupplier: React.FC<AddSupplierProps> = ({ isOpen, onClose, onSupplierAd
         payment_terms: formData.paymentTerms,
         is_active: formData.isActive,
         website: formData.website.trim() || null,
-        notes: formData.notes.trim() || null
+        notes: formData.notes.trim() || null,
+        export_template_type: formData.exportTemplateType
       };
 
       // 2. Insert the supplier into Supabase
@@ -375,7 +384,7 @@ const AddSupplier: React.FC<AddSupplierProps> = ({ isOpen, onClose, onSupplierAd
             <div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
                 <DollarSign className="h-5 w-5 mr-2 text-purple-600 dark:text-purple-400" />
-                Business Terms
+                Business Terms & Export Settings
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
@@ -453,6 +462,27 @@ const AddSupplier: React.FC<AddSupplierProps> = ({ isOpen, onClose, onSupplierAd
                     </span>
                   </div>
                 </div>
+              </div>
+
+              {/* Export Template Selection */}
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Export Template Format
+                </label>
+                <select
+                  value={formData.exportTemplateType}
+                  onChange={(e) => handleInputChange('exportTemplateType', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  {templateOptions.map(template => (
+                    <option key={template.value} value={template.value}>
+                      {template.label} - {template.description}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  This template will be used when exporting purchase orders for this supplier
+                </p>
               </div>
             </div>
 

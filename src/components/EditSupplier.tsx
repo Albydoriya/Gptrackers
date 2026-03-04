@@ -37,6 +37,7 @@ interface SupplierFormData {
   isActive: boolean;
   website: string;
   notes: string;
+  exportTemplateType: string;
 }
 
 const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplierUpdated, supplier }) => {
@@ -51,7 +52,8 @@ const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplier
     paymentTerms: 'Net 30',
     isActive: true,
     website: '',
-    notes: ''
+    notes: '',
+    exportTemplateType: 'generic'
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -69,24 +71,60 @@ const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplier
     'Due on Receipt'
   ];
 
+  const templateOptions = [
+    { value: 'generic', label: 'Generic Template', description: 'Standard Western business format' },
+    { value: 'japanese', label: 'Japanese Quotation (見積依頼書)', description: 'Traditional Japanese format' },
+    { value: 'hpi', label: 'HPI Supplier Template', description: 'Custom HPI format' }
+  ];
+
   // Initialize form data when supplier changes
   useEffect(() => {
-    if (supplier) {
-      setFormData({
-        name: supplier.name,
-        contactPerson: supplier.contactPerson,
-        email: supplier.email,
-        phone: supplier.phone,
-        address: supplier.address,
-        rating: supplier.rating || 5.0,
-        deliveryTime: supplier.deliveryTime || 5,
-        paymentTerms: supplier.paymentTerms,
-        isActive: supplier.isActive,
-        website: '',
-        notes: ''
-      });
-      setErrors({});
-    }
+    const loadSupplierData = async () => {
+      if (supplier) {
+        // Fetch full supplier data including template type
+        const { data, error } = await supabase
+          .from('suppliers')
+          .select('*')
+          .eq('id', supplier.id)
+          .single();
+
+        if (!error && data) {
+          setFormData({
+            name: supplier.name,
+            contactPerson: supplier.contactPerson,
+            email: supplier.email,
+            phone: supplier.phone,
+            address: supplier.address,
+            rating: supplier.rating || 5.0,
+            deliveryTime: supplier.deliveryTime || 5,
+            paymentTerms: supplier.paymentTerms,
+            isActive: supplier.isActive,
+            website: data.website || '',
+            notes: data.notes || '',
+            exportTemplateType: data.export_template_type || 'generic'
+          });
+        } else {
+          // Fallback if fetch fails
+          setFormData({
+            name: supplier.name,
+            contactPerson: supplier.contactPerson,
+            email: supplier.email,
+            phone: supplier.phone,
+            address: supplier.address,
+            rating: supplier.rating || 5.0,
+            deliveryTime: supplier.deliveryTime || 5,
+            paymentTerms: supplier.paymentTerms,
+            isActive: supplier.isActive,
+            website: '',
+            notes: '',
+            exportTemplateType: 'generic'
+          });
+        }
+        setErrors({});
+      }
+    };
+
+    loadSupplierData();
   }, [supplier]);
 
   const validateForm = () => {
@@ -144,6 +182,7 @@ const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplier
         is_active: formData.isActive,
         website: formData.website.trim() || null,
         notes: formData.notes.trim() || null,
+        export_template_type: formData.exportTemplateType,
         updated_at: new Date().toISOString()
       };
 
@@ -384,7 +423,7 @@ const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplier
             <div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center">
                 <DollarSign className="h-5 w-5 mr-2 text-purple-600 dark:text-purple-400" />
-                Business Terms
+                Business Terms & Export Settings
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
@@ -462,6 +501,27 @@ const EditSupplier: React.FC<EditSupplierProps> = ({ isOpen, onClose, onSupplier
                     </span>
                   </div>
                 </div>
+              </div>
+
+              {/* Export Template Selection */}
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Export Template Format
+                </label>
+                <select
+                  value={formData.exportTemplateType}
+                  onChange={(e) => handleInputChange('exportTemplateType', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  {templateOptions.map(template => (
+                    <option key={template.value} value={template.value}>
+                      {template.label} - {template.description}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  This template will be used when exporting purchase orders for this supplier
+                </p>
               </div>
             </div>
 
