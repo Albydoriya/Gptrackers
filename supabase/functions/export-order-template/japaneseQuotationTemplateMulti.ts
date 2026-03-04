@@ -110,7 +110,7 @@ function addHeaderSection(
   addressCell.value = data.company.address || 'E12/20 Picrite Close, Pemulwuy, NSW 2145　Australia';
   addressCell.alignment = { vertical: 'middle', horizontal: 'right', wrapText: true };
   addressCell.font = { name: 'Arial', size: 10, color: { argb: colors.black } };
-  worksheet.getRow(8).height = 20;
+  worksheet.getRow(8).height = 32;
 
   // Phone
   worksheet.mergeCells('F9:I9');
@@ -170,7 +170,7 @@ function addPartsTable(
 
   // Headers - Row 12 (bilingual)
   const headers = [
-    { jp: 'Order #', en: 'Order #' },
+    { jp: 'GP Order #', en: 'GP Order #' },
     { jp: '#', en: '#' },
     { jp: '商品', en: 'ITEM' },
     { jp: '商品番号', en: 'ITEM #' },
