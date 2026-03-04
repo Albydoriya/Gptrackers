@@ -9,9 +9,9 @@ export const JAPANESE_COLORS = {
 
 export const JAPANESE_COLUMN_WIDTHS = {
   itemNo: 6,
-  item: 45,
-  itemNumber: 18,
-  chassisNumber: 18,
+  item: 50,
+  itemNumber: 20,
+  chassisNumber: 22,
   quantity: 10,
   price: 12,
   amount: 12,
@@ -53,7 +53,7 @@ function addHeaderSection(
   const titleCell = worksheet.getCell('A1');
   titleCell.value = 'REQUEST FOR QUOTATION　見積依頼書';
   titleCell.alignment = { vertical: 'middle', horizontal: 'left' };
-  titleCell.font = { size: 24, bold: true, color: { argb: colors.black } };
+  titleCell.font = { name: 'Arial', size: 24, bold: true, color: { argb: colors.black } };
   worksheet.getRow(1).height = 40;
 
   // Empty Row 2
@@ -75,21 +75,21 @@ function addHeaderSection(
   const dateCell = worksheet.getCell('F4');
   dateCell.value = `DATE :　　　　　　　${formatDateForExcel(data.order.order_date)}`;
   dateCell.alignment = { vertical: 'middle', horizontal: 'right' };
-  dateCell.font = { size: 10, color: { argb: colors.black } };
+  dateCell.font = { name: 'Arial', size: 10, color: { argb: colors.black } };
   worksheet.getRow(4).height = 18;
 
   worksheet.mergeCells('F5:H5');
   const quoteByLabelCell = worksheet.getCell('F5');
   quoteByLabelCell.value = 'Quote By:';
   quoteByLabelCell.alignment = { vertical: 'middle', horizontal: 'right' };
-  quoteByLabelCell.font = { size: 10, color: { argb: colors.black } };
+  quoteByLabelCell.font = { name: 'Arial', size: 10, color: { argb: colors.black } };
   worksheet.getRow(5).height = 18;
 
   worksheet.mergeCells('F6:H6');
   const companyNameCell = worksheet.getCell('F6');
   companyNameCell.value = data.company.name || 'Go Parts/Retro Wonders Pty Ltd';
   companyNameCell.alignment = { vertical: 'middle', horizontal: 'right' };
-  companyNameCell.font = { size: 10, color: { argb: colors.black } };
+  companyNameCell.font = { name: 'Arial', size: 10, color: { argb: colors.black } };
   worksheet.getRow(6).height = 18;
 
   // Contact Person (if available)
@@ -97,7 +97,7 @@ function addHeaderSection(
   const contactCell = worksheet.getCell('F7');
   contactCell.value = 'Yuka Ichimaru';
   contactCell.alignment = { vertical: 'middle', horizontal: 'right' };
-  contactCell.font = { size: 10, color: { argb: colors.black } };
+  contactCell.font = { name: 'Arial', size: 10, color: { argb: colors.black } };
   worksheet.getRow(7).height = 18;
 
   // Address
@@ -105,7 +105,7 @@ function addHeaderSection(
   const addressCell = worksheet.getCell('F8');
   addressCell.value = data.company.address || 'E12/20 Picrite Close, Pemulwuy, NSW 2145　Australia';
   addressCell.alignment = { vertical: 'middle', horizontal: 'right', wrapText: true };
-  addressCell.font = { size: 10, color: { argb: colors.black } };
+  addressCell.font = { name: 'Arial', size: 10, color: { argb: colors.black } };
   worksheet.getRow(8).height = 18;
 
   // Phone
@@ -113,7 +113,7 @@ function addHeaderSection(
   const phoneCell = worksheet.getCell('F9');
   phoneCell.value = data.company.phone || '+61 423335099';
   phoneCell.alignment = { vertical: 'middle', horizontal: 'right' };
-  phoneCell.font = { size: 10, color: { argb: colors.black } };
+  phoneCell.font = { name: 'Arial', size: 10, color: { argb: colors.black } };
   worksheet.getRow(9).height = 18;
 
   // Empty Row 4 (left side)
@@ -183,7 +183,7 @@ function addPartsTable(
     const cell = worksheet.getCell(currentRow, index + 1);
     // Bilingual header: Japanese on top line, English below
     cell.value = `${header.jp}\n${header.en}`;
-    cell.font = { bold: true, size: 10, color: { argb: colors.black } };
+    cell.font = { name: 'Arial', bold: true, size: 10, color: { argb: colors.black } };
     cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
     cell.border = {
       top: { style: 'medium', color: { argb: colors.black } },
@@ -205,7 +205,7 @@ function addPartsTable(
     // Item number
     row.getCell(1).value = index + 1;
     row.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
-    row.getCell(1).font = { size: 10, color: { argb: colors.black } };
+    row.getCell(1).font = { name: 'Arial', size: 10, color: { argb: colors.black } };
     row.getCell(1).border = {
       top: { style: 'medium', color: { argb: colors.black } },
       left: { style: 'medium', color: { argb: colors.black } },
@@ -216,7 +216,7 @@ function addPartsTable(
     // Item name
     row.getCell(2).value = part.name;
     row.getCell(2).alignment = { vertical: 'middle', horizontal: 'left' };
-    row.getCell(2).font = { size: 10, color: { argb: colors.black } };
+    row.getCell(2).font = { name: 'Arial', size: 10, color: { argb: colors.black } };
     row.getCell(2).border = {
       top: { style: 'medium', color: { argb: colors.black } },
       left: { style: 'medium', color: { argb: colors.black } },
@@ -227,7 +227,7 @@ function addPartsTable(
     // Part number
     row.getCell(3).value = part.part_number;
     row.getCell(3).alignment = { vertical: 'middle', horizontal: 'left' };
-    row.getCell(3).font = { size: 10, color: { argb: colors.black } };
+    row.getCell(3).font = { name: 'Arial', size: 10, color: { argb: colors.black } };
     row.getCell(3).border = {
       top: { style: 'medium', color: { argb: colors.black } },
       left: { style: 'medium', color: { argb: colors.black } },
@@ -238,7 +238,7 @@ function addPartsTable(
     // Chassis number (empty for supplier to fill in)
     row.getCell(4).value = '';
     row.getCell(4).alignment = { vertical: 'middle', horizontal: 'left' };
-    row.getCell(4).font = { size: 10, color: { argb: colors.black } };
+    row.getCell(4).font = { name: 'Arial', size: 10, color: { argb: colors.black } };
     row.getCell(4).border = {
       top: { style: 'medium', color: { argb: colors.black } },
       left: { style: 'medium', color: { argb: colors.black } },
@@ -249,7 +249,7 @@ function addPartsTable(
     // Quantity
     row.getCell(5).value = part.quantity;
     row.getCell(5).alignment = { horizontal: 'center', vertical: 'middle' };
-    row.getCell(5).font = { size: 10, color: { argb: colors.black } };
+    row.getCell(5).font = { name: 'Arial', size: 10, color: { argb: colors.black } };
     row.getCell(5).border = {
       top: { style: 'medium', color: { argb: colors.black } },
       left: { style: 'medium', color: { argb: colors.black } },
@@ -261,7 +261,7 @@ function addPartsTable(
     row.getCell(6).value = '';
     row.getCell(6).numFmt = '¥#,##0';
     row.getCell(6).alignment = { vertical: 'middle', horizontal: 'right' };
-    row.getCell(6).font = { size: 10, color: { argb: colors.black } };
+    row.getCell(6).font = { name: 'Arial', size: 10, color: { argb: colors.black } };
     row.getCell(6).border = {
       top: { style: 'medium', color: { argb: colors.black } },
       left: { style: 'medium', color: { argb: colors.black } },
@@ -273,7 +273,7 @@ function addPartsTable(
     row.getCell(7).value = { formula: `E${dataRow}*F${dataRow}` };
     row.getCell(7).numFmt = '¥#,##0';
     row.getCell(7).alignment = { vertical: 'middle', horizontal: 'right' };
-    row.getCell(7).font = { size: 10, color: { argb: colors.black } };
+    row.getCell(7).font = { name: 'Arial', size: 10, color: { argb: colors.black } };
     row.getCell(7).border = {
       top: { style: 'medium', color: { argb: colors.black } },
       left: { style: 'medium', color: { argb: colors.black } },
@@ -284,7 +284,7 @@ function addPartsTable(
     // ETA (empty for supplier to fill)
     row.getCell(8).value = '';
     row.getCell(8).alignment = { horizontal: 'center', vertical: 'middle' };
-    row.getCell(8).font = { size: 10, color: { argb: colors.black } };
+    row.getCell(8).font = { name: 'Arial', size: 10, color: { argb: colors.black } };
     row.getCell(8).border = {
       top: { style: 'medium', color: { argb: colors.black } },
       left: { style: 'medium', color: { argb: colors.black } },
@@ -315,7 +315,7 @@ function addFooterSection(
   const totalLabelCell = worksheet.getCell(footerRow, 6);
   totalLabelCell.value = 'TOTAL';
   totalLabelCell.alignment = { vertical: 'middle', horizontal: 'right' };
-  totalLabelCell.font = { size: 14, bold: true, color: { argb: colors.black } };
+  totalLabelCell.font = { name: 'Arial', size: 14, bold: true, color: { argb: colors.black } };
   totalLabelCell.border = {
     top: { style: 'thin', color: { argb: colors.black } },
   };
@@ -324,7 +324,7 @@ function addFooterSection(
   totalValueCell.value = { formula: `SUM(G13:G${lastPartRow})` };
   totalValueCell.numFmt = '¥#,##0';
   totalValueCell.alignment = { vertical: 'middle', horizontal: 'right' };
-  totalValueCell.font = { size: 14, bold: true, color: { argb: colors.black } };
+  totalValueCell.font = { name: 'Arial', size: 14, bold: true, color: { argb: colors.black } };
   totalValueCell.border = {
     top: { style: 'thin', color: { argb: colors.black } },
   };
