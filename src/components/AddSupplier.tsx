@@ -52,7 +52,7 @@ const AddSupplier: React.FC<AddSupplierProps> = ({ isOpen, onClose, onSupplierAd
     isActive: true,
     website: '',
     notes: '',
-    exportTemplateType: 'generic'
+    exportTemplateType: 'japanese'
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -172,7 +172,8 @@ const AddSupplier: React.FC<AddSupplierProps> = ({ isOpen, onClose, onSupplierAd
         paymentTerms: 'Net 30',
         isActive: true,
         website: '',
-        notes: ''
+        notes: '',
+        exportTemplateType: 'japanese'
       });
       
       // 6. Close modal

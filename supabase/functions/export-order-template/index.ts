@@ -159,7 +159,7 @@ async function handleMultiOrderExport(
     })),
   };
 
-  const templateType = multiOrderData.supplier.export_template_type || requestedTemplateType || 'generic';
+  const templateType = multiOrderData.supplier.export_template_type || requestedTemplateType || 'japanese';
   console.log('Generating multi-order Excel file for', orderIds.length, 'orders using template:', templateType);
 
   const excelBuffer = await generateExcelFile(multiOrderData, templateType);
@@ -359,7 +359,7 @@ Deno.serve(async (req: Request) => {
       })),
     };
 
-    const templateType = exportData.supplier.export_template_type || requestedTemplateType || 'generic';
+    const templateType = exportData.supplier.export_template_type || requestedTemplateType || 'japanese';
     console.log('Generating Excel file for order:', orderId, 'using template:', templateType);
 
     const excelBuffer = await generateExcelFile(exportData, templateType);
