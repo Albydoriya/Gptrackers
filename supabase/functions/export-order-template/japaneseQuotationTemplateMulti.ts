@@ -80,21 +80,21 @@ function addHeaderSection(
   dateCell.value = `DATE :　　　　　　　${formatDateForExcel(firstOrderDate)}`;
   dateCell.alignment = { vertical: 'middle', horizontal: 'right' };
   dateCell.font = { name: 'Arial', size: 10, color: { argb: colors.black } };
-  worksheet.getRow(4).height = 18;
+  worksheet.getRow(4).height = 20;
 
   worksheet.mergeCells('F5:I5');
   const quoteByLabelCell = worksheet.getCell('F5');
   quoteByLabelCell.value = 'Quote By:';
   quoteByLabelCell.alignment = { vertical: 'middle', horizontal: 'right' };
   quoteByLabelCell.font = { name: 'Arial', size: 10, color: { argb: colors.black } };
-  worksheet.getRow(5).height = 18;
+  worksheet.getRow(5).height = 20;
 
   worksheet.mergeCells('F6:I6');
   const companyNameCell = worksheet.getCell('F6');
   companyNameCell.value = data.company.name || 'Go Parts/Retro Wonders Pty Ltd';
   companyNameCell.alignment = { vertical: 'middle', horizontal: 'right' };
   companyNameCell.font = { name: 'Arial', size: 10, color: { argb: colors.black } };
-  worksheet.getRow(6).height = 18;
+  worksheet.getRow(6).height = 20;
 
   // Contact Person
   worksheet.mergeCells('F7:I7');
@@ -102,7 +102,7 @@ function addHeaderSection(
   contactCell.value = 'Yuka Ichimaru';
   contactCell.alignment = { vertical: 'middle', horizontal: 'right' };
   contactCell.font = { name: 'Arial', size: 10, color: { argb: colors.black } };
-  worksheet.getRow(7).height = 18;
+  worksheet.getRow(7).height = 20;
 
   // Address
   worksheet.mergeCells('F8:I8');
@@ -110,7 +110,7 @@ function addHeaderSection(
   addressCell.value = data.company.address || 'E12/20 Picrite Close, Pemulwuy, NSW 2145　Australia';
   addressCell.alignment = { vertical: 'middle', horizontal: 'right', wrapText: true };
   addressCell.font = { name: 'Arial', size: 10, color: { argb: colors.black } };
-  worksheet.getRow(8).height = 18;
+  worksheet.getRow(8).height = 20;
 
   // Phone
   worksheet.mergeCells('F9:I9');
@@ -118,7 +118,7 @@ function addHeaderSection(
   phoneCell.value = data.company.phone || '+61 423335099';
   phoneCell.alignment = { vertical: 'middle', horizontal: 'right' };
   phoneCell.font = { name: 'Arial', size: 10, color: { argb: colors.black } };
-  worksheet.getRow(9).height = 18;
+  worksheet.getRow(9).height = 20;
 
   // Greeting Text - Row 5-6 (left side)
   worksheet.mergeCells('A5:E5');
@@ -141,7 +141,7 @@ function addHeaderSection(
   const totalLabelCell = worksheet.getCell('E11');
   totalLabelCell.value = '見積もり合計金額 Total Amount :';
   totalLabelCell.alignment = { vertical: 'middle', horizontal: 'right' };
-  totalLabelCell.font = { size: 10, bold: true, color: { argb: colors.black } };
+  totalLabelCell.font = { name: 'Arial', size: 10, bold: true, color: { argb: colors.black } };
   totalLabelCell.border = {
     top: { style: 'medium', color: { argb: colors.black } },
     left: { style: 'medium', color: { argb: colors.black } },
@@ -152,7 +152,7 @@ function addHeaderSection(
   totalValueCell.value = { formula: `SUM(H13:H100)` }; // Will adjust range dynamically
   totalValueCell.numFmt = '¥#,##0';
   totalValueCell.alignment = { vertical: 'middle', horizontal: 'right' };
-  totalValueCell.font = { size: 10, bold: true, color: { argb: colors.black } };
+  totalValueCell.font = { name: 'Arial', size: 10, bold: true, color: { argb: colors.black } };
   totalValueCell.border = {
     top: { style: 'medium', color: { argb: colors.black } },
     right: { style: 'medium', color: { argb: colors.black } },
