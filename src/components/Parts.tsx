@@ -1,20 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Plus,
-  Search,
-  Filter,
-  Package,
-  TrendingUp,
-  AlertTriangle,
-  Edit,
-  Archive,
-  RefreshCw,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  BarChart3,
-  FolderOpen
-} from 'lucide-react';
+import { Plus, Search, Filter, Package, TrendingUp, AlertTriangle, CreditCard as Edit, Archive, RefreshCw, X, ChevronLeft, ChevronRight, BarChart3, FolderOpen } from 'lucide-react';
 import { Part } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
