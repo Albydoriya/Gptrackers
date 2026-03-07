@@ -239,5 +239,85 @@ export const partsService = {
       console.error('Error fetching search suggestions:', error);
       return [];
     }
+  },
+
+  async archivePart(partId: string): Promise<{ success: boolean; error?: string; message?: string }> {
+    try {
+      const { data, error } = await supabase.rpc('archive_part', {
+        part_id: partId
+      });
+
+      if (error) throw error;
+
+      return data as { success: boolean; error?: string; message?: string };
+    } catch (error: any) {
+      console.error('Error archiving part:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to archive part'
+      };
+    }
+  },
+
+  async unarchivePart(partId: string): Promise<{ success: boolean; error?: string; message?: string }> {
+    try {
+      const { data, error } = await supabase.rpc('unarchive_part', {
+        part_id: partId
+      });
+
+      if (error) throw error;
+
+      return data as { success: boolean; error?: string; message?: string };
+    } catch (error: any) {
+      console.error('Error unarchiving part:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to unarchive part'
+      };
+    }
+  },
+
+  async addPartWithInitialPrice(partData: {
+    partNumber: string;
+    description: string;
+    categoryId: string;
+    quantityOnHand?: number;
+    reorderPoint?: number;
+    unitOfMeasure?: string;
+    weightKg?: number;
+    lengthCm?: number;
+    widthCm?: number;
+    heightCm?: number;
+    supplierId?: string;
+    supplierPartNumber?: string;
+    unitCost?: number;
+  }): Promise<{ success: boolean; error?: string; message?: string; partId?: string }> {
+    try {
+      const { data, error } = await supabase.rpc('add_part_with_initial_price', {
+        p_part_number: partData.partNumber,
+        p_description: partData.description,
+        p_category_id: partData.categoryId,
+        p_quantity_on_hand: partData.quantityOnHand ?? 0,
+        p_reorder_point: partData.reorderPoint ?? 0,
+        p_unit_of_measure: partData.unitOfMeasure ?? 'pcs',
+        p_weight_kg: partData.weightKg ?? null,
+        p_length_cm: partData.lengthCm ?? null,
+        p_width_cm: partData.widthCm ?? null,
+        p_height_cm: partData.heightCm ?? null,
+        p_supplier_id: partData.supplierId ?? null,
+        p_supplier_part_number: partData.supplierPartNumber ?? null,
+        p_unit_cost: partData.unitCost ?? null
+      });
+
+      if (error) throw error;
+
+      return data as { success: boolean; error?: string; message?: string; partId?: string };
+    } catch (error: any) {
+      console.error('Error adding part with initial price:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to add part'
+      };
+    }
   }
 };

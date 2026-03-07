@@ -28,7 +28,7 @@ const PAGE_SIZE_OPTIONS = [25, 50, 100];
 const DEFAULT_PAGE_SIZE = 50;
 
 function Parts() {
-  const { hasPermission } = useAuth();
+  const { hasPermission, hasRole } = useAuth();
 
   const [activeSubTab, setActiveSubTab] = useState(() => {
     return localStorage.getItem('parts_active_sub_tab') || 'parts-list';
@@ -181,15 +181,11 @@ function Parts() {
     setError(null);
 
     try {
-      const { error: archiveError } = await supabase
-        .from('parts')
-        .update({
-          is_archived: true,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', partId);
+      const result = await partsService.archivePart(partId);
 
-      if (archiveError) throw archiveError;
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to archive part');
+      }
 
       await fetchParts();
       await fetchCategories();
@@ -455,7 +451,7 @@ function Parts() {
                       onEditPart={handleEditPart}
                       onArchivePart={handleArchivePart}
                       canEdit={hasPermission('parts', 'update')}
-                      canDelete={hasPermission('parts', 'delete')}
+                      canDelete={hasRole('admin') || hasRole('manager')}
                     />
                   ))}
                 </div>
@@ -660,7 +656,7 @@ function Parts() {
                 </div>
               )}
 
-              {selectedPart.priceHistory && selectedPart.priceHistory.length > 0 && (
+              {!hasRole('viewer') && selectedPart.priceHistory && selectedPart.priceHistory.length > 0 && (
                 <div>
                   <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Price History</h4>
                   <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
