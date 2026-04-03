@@ -59,8 +59,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
     tradeMarkupPercentage: 30,
     retailMarkupPercentage: 50
   });
-  const [showWeightSection, setShowWeightSection] = useState(false);
-  const [showMarkupSection, setShowMarkupSection] = useState(false);
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [formData, setFormData] = useState<QuoteFormData>({
     quoteNumber: `QUO-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
     customer: null,
@@ -916,12 +915,8 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                           Add New Part to Catalog
                         </h5>
                         <div className="space-y-4">
-                          {/* Basic Information */}
+                          {/* Essential Fields */}
                           <div className="space-y-3">
-                            <h6 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center">
-                              <FileText className="h-4 w-4 mr-1 text-blue-600 dark:text-blue-400" />
-                              Basic Information
-                            </h6>
                             <div className="grid grid-cols-2 gap-2">
                               <input
                                 type="text"
@@ -954,118 +949,120 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                               rows={2}
                               className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                             />
-                          </div>
-
-                          {/* Pricing Information */}
-                          <div className="space-y-3">
-                            <h6 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center">
-                              <DollarSign className="h-4 w-4 mr-1 text-green-600 dark:text-green-400" />
-                              Pricing Information
-                            </h6>
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <input
-                                  type="number"
-                                  placeholder="Base Price (can be 0)"
-                                  step="0.01"
-                                  min="0"
-                                  value={newPart.price || ''}
-                                  onChange={(e) => setNewPart(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
-                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                                />
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave as 0 if unknown</p>
-                              </div>
+                            <div>
                               <input
-                                type="text"
-                                placeholder="Supplier (optional)"
-                                value={newPart.supplier}
-                                onChange={(e) => setNewPart(prev => ({ ...prev, supplier: e.target.value }))}
-                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                                type="number"
+                                placeholder="Base Price (optional, can be 0)"
+                                step="0.01"
+                                min="0"
+                                value={newPart.price || ''}
+                                onChange={(e) => setNewPart(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                               />
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave as 0 if unknown</p>
                             </div>
                           </div>
 
-                          {/* Stock Information */}
-                          <div className="space-y-3">
-                            <h6 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center">
-                              <Package className="h-4 w-4 mr-1 text-purple-600 dark:text-purple-400" />
-                              Stock Information
-                            </h6>
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <input
-                                  type="number"
-                                  placeholder="Current Stock"
-                                  min="0"
-                                  value={newPart.currentStock || ''}
-                                  onChange={(e) => setNewPart(prev => ({ ...prev, currentStock: parseInt(e.target.value) || 0 }))}
-                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                                />
-                              </div>
-                              <div>
-                                <input
-                                  type="number"
-                                  placeholder="Minimum Stock Level"
-                                  min="0"
-                                  value={newPart.minStock || ''}
-                                  onChange={(e) => setNewPart(prev => ({ ...prev, minStock: parseInt(e.target.value) || 0 }))}
-                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Weight & Dimensions - Collapsible */}
-                          <div className="space-y-2">
+                          {/* More Options Toggle */}
+                          <div className="pt-2">
                             <button
                               type="button"
-                              onClick={() => setShowWeightSection(!showWeightSection)}
-                              className="w-full flex items-center justify-between text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                              onClick={() => setShowMoreOptions(!showMoreOptions)}
+                              className="w-full flex items-center justify-center space-x-2 px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors border border-blue-200 dark:border-blue-800"
                             >
-                              <span className="flex items-center">
-                                <Weight className="h-4 w-4 mr-1 text-orange-600 dark:text-orange-400" />
-                                Weight & Dimensions (Optional)
-                              </span>
-                              {showWeightSection ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                              {showMoreOptions ? (
+                                <>
+                                  <ChevronUp className="h-4 w-4" />
+                                  <span>Hide More Options</span>
+                                </>
+                              ) : (
+                                <>
+                                  <ChevronDown className="h-4 w-4" />
+                                  <span>Show More Options (Stock, Weight, Markups, Supplier)</span>
+                                </>
+                              )}
                             </button>
+                          </div>
 
-                            {showWeightSection && (
-                              <div className="space-y-3 pl-5 border-l-2 border-orange-200 dark:border-orange-800">
+                          {/* More Options Content */}
+                          {showMoreOptions && (
+                            <div className="space-y-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                              {/* Supplier */}
+                              <div>
+                                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 flex items-center">
+                                  <Building className="h-3 w-3 mr-1" />
+                                  Supplier (optional)
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Supplier name"
+                                  value={newPart.supplier}
+                                  onChange={(e) => setNewPart(prev => ({ ...prev, supplier: e.target.value }))}
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                                />
+                              </div>
+
+                              {/* Stock Information */}
+                              <div>
+                                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2 flex items-center">
+                                  <Package className="h-3 w-3 mr-1" />
+                                  Stock Information
+                                </label>
                                 <div className="grid grid-cols-2 gap-2">
-                                  <div>
-                                    <input
-                                      type="number"
-                                      placeholder="Actual Weight (kg)"
-                                      step="0.001"
-                                      min="0"
-                                      value={newPart.actualWeightKg || ''}
-                                      onChange={(e) => setNewPart(prev => ({ ...prev, actualWeightKg: parseFloat(e.target.value) || 0 }))}
-                                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                                    />
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Physical weight</p>
-                                  </div>
-                                  <div>
-                                    <input
-                                      type="number"
-                                      placeholder="Dim Factor"
-                                      step="1"
-                                      min="1"
-                                      value={newPart.dimFactor || 5000}
-                                      onChange={(e) => setNewPart(prev => ({ ...prev, dimFactor: parseFloat(e.target.value) || 5000 }))}
-                                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                                    />
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Default: 5000</p>
-                                  </div>
+                                  <input
+                                    type="number"
+                                    placeholder="Current Stock"
+                                    min="0"
+                                    value={newPart.currentStock || ''}
+                                    onChange={(e) => setNewPart(prev => ({ ...prev, currentStock: parseInt(e.target.value) || 0 }))}
+                                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                                  />
+                                  <input
+                                    type="number"
+                                    placeholder="Min Stock Level"
+                                    min="0"
+                                    value={newPart.minStock || ''}
+                                    onChange={(e) => setNewPart(prev => ({ ...prev, minStock: parseInt(e.target.value) || 0 }))}
+                                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                                  />
                                 </div>
-                                <div>
-                                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1 flex items-center">
-                                    <Ruler className="h-3 w-3 mr-1" />
-                                    Dimensions (cm)
-                                  </label>
+                              </div>
+
+                              {/* Weight & Dimensions */}
+                              <div>
+                                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2 flex items-center">
+                                  <Weight className="h-3 w-3 mr-1" />
+                                  Weight & Dimensions
+                                </label>
+                                <div className="space-y-2">
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                      <input
+                                        type="number"
+                                        placeholder="Actual Weight (kg)"
+                                        step="0.001"
+                                        min="0"
+                                        value={newPart.actualWeightKg || ''}
+                                        onChange={(e) => setNewPart(prev => ({ ...prev, actualWeightKg: parseFloat(e.target.value) || 0 }))}
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                                      />
+                                    </div>
+                                    <div>
+                                      <input
+                                        type="number"
+                                        placeholder="Dim Factor"
+                                        step="1"
+                                        min="1"
+                                        value={newPart.dimFactor || 5000}
+                                        onChange={(e) => setNewPart(prev => ({ ...prev, dimFactor: parseFloat(e.target.value) || 5000 }))}
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                                      />
+                                    </div>
+                                  </div>
                                   <div className="grid grid-cols-3 gap-2">
                                     <input
                                       type="number"
-                                      placeholder="Length"
+                                      placeholder="Length (cm)"
                                       step="0.01"
                                       min="0"
                                       value={newPart.lengthCm || ''}
@@ -1074,7 +1071,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                                     />
                                     <input
                                       type="number"
-                                      placeholder="Width"
+                                      placeholder="Width (cm)"
                                       step="0.01"
                                       min="0"
                                       value={newPart.widthCm || ''}
@@ -1083,7 +1080,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                                     />
                                     <input
                                       type="number"
-                                      placeholder="Height"
+                                      placeholder="Height (cm)"
                                       step="0.01"
                                       min="0"
                                       value={newPart.heightCm || ''}
@@ -1091,62 +1088,50 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                                       className="px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                     />
                                   </div>
-                                </div>
 
-                                {(newPart.actualWeightKg > 0 || (newPart.lengthCm > 0 && newPart.widthCm > 0 && newPart.heightCm > 0)) && (
-                                  <div className="p-2 bg-orange-50 dark:bg-orange-900/20 rounded border border-orange-200 dark:border-orange-800">
-                                    <div className="grid grid-cols-3 gap-2 text-xs">
-                                      <div>
-                                        <p className="text-gray-600 dark:text-gray-400">Vol. Weight</p>
-                                        <p className="font-bold text-orange-600 dark:text-orange-400">
-                                          {newPart.lengthCm > 0 && newPart.widthCm > 0 && newPart.heightCm > 0 && newPart.dimFactor > 0
-                                            ? ((newPart.lengthCm * newPart.widthCm * newPart.heightCm) / newPart.dimFactor).toFixed(3)
-                                            : '0.000'} kg
-                                        </p>
-                                      </div>
-                                      <div>
-                                        <p className="text-gray-600 dark:text-gray-400">Actual</p>
-                                        <p className="font-bold text-gray-700 dark:text-gray-300">
-                                          {newPart.actualWeightKg.toFixed(3)} kg
-                                        </p>
-                                      </div>
-                                      <div>
-                                        <p className="text-gray-600 dark:text-gray-400">Chargeable</p>
-                                        <p className="font-bold text-green-600 dark:text-green-400">
-                                          {(() => {
-                                            const volWeight = newPart.lengthCm > 0 && newPart.widthCm > 0 && newPart.heightCm > 0 && newPart.dimFactor > 0
-                                              ? (newPart.lengthCm * newPart.widthCm * newPart.heightCm) / newPart.dimFactor
-                                              : 0;
-                                            return Math.max(newPart.actualWeightKg, volWeight).toFixed(3);
-                                          })()} kg
-                                        </p>
+                                  {(newPart.actualWeightKg > 0 || (newPart.lengthCm > 0 && newPart.widthCm > 0 && newPart.heightCm > 0)) && (
+                                    <div className="p-2 bg-orange-50 dark:bg-orange-900/20 rounded border border-orange-200 dark:border-orange-800">
+                                      <div className="grid grid-cols-3 gap-2 text-xs">
+                                        <div>
+                                          <p className="text-gray-600 dark:text-gray-400">Vol. Weight</p>
+                                          <p className="font-bold text-orange-600 dark:text-orange-400">
+                                            {newPart.lengthCm > 0 && newPart.widthCm > 0 && newPart.heightCm > 0 && newPart.dimFactor > 0
+                                              ? ((newPart.lengthCm * newPart.widthCm * newPart.heightCm) / newPart.dimFactor).toFixed(3)
+                                              : '0.000'} kg
+                                          </p>
+                                        </div>
+                                        <div>
+                                          <p className="text-gray-600 dark:text-gray-400">Actual</p>
+                                          <p className="font-bold text-gray-700 dark:text-gray-300">
+                                            {newPart.actualWeightKg.toFixed(3)} kg
+                                          </p>
+                                        </div>
+                                        <div>
+                                          <p className="text-gray-600 dark:text-gray-400">Chargeable</p>
+                                          <p className="font-bold text-green-600 dark:text-green-400">
+                                            {(() => {
+                                              const volWeight = newPart.lengthCm > 0 && newPart.widthCm > 0 && newPart.heightCm > 0 && newPart.dimFactor > 0
+                                                ? (newPart.lengthCm * newPart.widthCm * newPart.heightCm) / newPart.dimFactor
+                                                : 0;
+                                              return Math.max(newPart.actualWeightKg, volWeight).toFixed(3);
+                                            })()} kg
+                                          </p>
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                )}
+                                  )}
+                                </div>
                               </div>
-                            )}
-                          </div>
 
-                          {/* Markup Percentages - Collapsible */}
-                          <div className="space-y-2">
-                            <button
-                              type="button"
-                              onClick={() => setShowMarkupSection(!showMarkupSection)}
-                              className="w-full flex items-center justify-between text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                            >
-                              <span className="flex items-center">
-                                <Calculator className="h-4 w-4 mr-1 text-blue-600 dark:text-blue-400" />
-                                Markup Percentages (Defaults Applied)
-                              </span>
-                              {showMarkupSection ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                            </button>
-
-                            {showMarkupSection && (
-                              <div className="space-y-2 pl-5 border-l-2 border-blue-200 dark:border-blue-800">
+                              {/* Markup Percentages */}
+                              <div>
+                                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2 flex items-center">
+                                  <Calculator className="h-3 w-3 mr-1" />
+                                  Markup Percentages
+                                </label>
                                 <div className="grid grid-cols-2 gap-2">
                                   <div>
-                                    <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Internal Usage %</label>
+                                    <label className="block text-xs text-gray-500 dark:text-gray-500 mb-1">Internal Usage %</label>
                                     <input
                                       type="number"
                                       step="0.1"
@@ -1157,7 +1142,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                                     />
                                   </div>
                                   <div>
-                                    <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Wholesale %</label>
+                                    <label className="block text-xs text-gray-500 dark:text-gray-500 mb-1">Wholesale %</label>
                                     <input
                                       type="number"
                                       step="0.1"
@@ -1168,7 +1153,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                                     />
                                   </div>
                                   <div>
-                                    <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Trade %</label>
+                                    <label className="block text-xs text-gray-500 dark:text-gray-500 mb-1">Trade %</label>
                                     <input
                                       type="number"
                                       step="0.1"
@@ -1179,7 +1164,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                                     />
                                   </div>
                                   <div>
-                                    <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Retail %</label>
+                                    <label className="block text-xs text-gray-500 dark:text-gray-500 mb-1">Retail %</label>
                                     <input
                                       type="number"
                                       step="0.1"
@@ -1191,8 +1176,8 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                                   </div>
                                 </div>
                               </div>
-                            )}
-                          </div>
+                            </div>
+                          )}
 
                           {/* Action Buttons */}
                           <div className="flex space-x-2 pt-2">
@@ -1217,8 +1202,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                             <button
                               onClick={() => {
                                 setShowAddNewPart(false);
-                                setShowWeightSection(false);
-                                setShowMarkupSection(false);
+                                setShowMoreOptions(false);
                               }}
                               disabled={isAddingPart}
                               className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
