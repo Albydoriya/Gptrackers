@@ -152,16 +152,47 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     window.location.reload();
   };
 
-  // Helper function to cache user role
-  const cacheUserRole = (userId: string, role: string) => {
+  // Helper function to cache user profile (not just role)
+  const cacheUserProfile = (userId: string, profile: any) => {
     try {
-      localStorage.setItem(`user_role_${userId}`, role);
+      const cacheData = {
+        role: profile.role,
+        full_name: profile.full_name,
+        email: profile.email,
+        department: profile.department,
+        preferences: profile.preferences,
+        cached_at: new Date().toISOString()
+      };
+      sessionStorage.setItem(`user_profile_${userId}`, JSON.stringify(cacheData));
+      localStorage.setItem(`user_role_${userId}`, profile.role);
     } catch (error) {
-      console.warn('Error caching user role:', error);
+      console.warn('Error caching user profile:', error);
     }
   };
 
-  // Helper function to get cached user role
+  // Helper function to get cached user profile
+  const getCachedUserProfile = (userId: string): any | null => {
+    try {
+      const cached = sessionStorage.getItem(`user_profile_${userId}`);
+      if (!cached) return null;
+
+      const cacheData = JSON.parse(cached);
+      const cacheAge = Date.now() - new Date(cacheData.cached_at).getTime();
+
+      // Cache valid for 5 minutes
+      if (cacheAge > 5 * 60 * 1000) {
+        sessionStorage.removeItem(`user_profile_${userId}`);
+        return null;
+      }
+
+      return cacheData;
+    } catch (error) {
+      console.warn('Error getting cached user profile:', error);
+      return null;
+    }
+  };
+
+  // Helper function to get cached user role (fallback)
   const getCachedUserRole = (userId: string): string | null => {
     try {
       return localStorage.getItem(`user_role_${userId}`);
@@ -171,12 +202,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  // Helper function to clear cached user role
-  const clearCachedUserRole = (userId: string) => {
+  // Helper function to clear cached user profile
+  const clearCachedUserProfile = (userId: string) => {
     try {
+      sessionStorage.removeItem(`user_profile_${userId}`);
       localStorage.removeItem(`user_role_${userId}`);
     } catch (error) {
-      console.warn('Error clearing cached user role:', error);
+      console.warn('Error clearing cached user profile:', error);
     }
   };
 
@@ -372,32 +404,62 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.log('User verified in allowed_users list');
       }
 
-      // Try to get existing user profile with timeout
-      console.log('Attempting to fetch user profile from database...');
-      const profileResult = await Promise.race([
+      // Check for cached profile first
+      console.log('Checking for cached user profile...');
+      const cachedProfile = getCachedUserProfile(supabaseUser.id);
+
+      let profile = null;
+      let profileError = null;
+
+      if (cachedProfile) {
+        console.log('Using cached profile data');
+        profile = cachedProfile;
+
+        // Fetch fresh profile in background (non-blocking)
         supabase
           .from('user_profiles')
           .select('id, full_name, avatar_url, role, department, email, preferences, last_login, created_at, updated_at')
           .eq('id', supabaseUser.id)
           .single()
-          .then(result => ({ type: 'success', ...result })),
-        new Promise(resolve =>
-          setTimeout(() => resolve({ type: 'timeout', data: null, error: { message: 'Network timeout while fetching user profile. Please check your connection and try again.' } }), 30000)
-        )
-      ]) as any;
+          .then(({ data, error }) => {
+            if (data && !error) {
+              console.log('Background profile refresh completed');
+              cacheUserProfile(supabaseUser.id, data);
+            }
+          })
+          .catch(err => console.warn('Background profile refresh failed (non-critical):', err));
+      } else {
+        // No cache, fetch from database with shorter timeout
+        console.log('No cached profile, fetching from database...');
+        const profileResult = await Promise.race([
+          supabase
+            .from('user_profiles')
+            .select('id, full_name, avatar_url, role, department, email, preferences, last_login, created_at, updated_at')
+            .eq('id', supabaseUser.id)
+            .single()
+            .then(result => ({ type: 'success', ...result })),
+          new Promise(resolve =>
+            setTimeout(() => resolve({ type: 'timeout', data: null, error: { message: 'Profile fetch is taking longer than expected' } }), 5000)
+          )
+        ]) as any;
 
-      const { data: profile, error: profileError } = profileResult.type === 'timeout'
-        ? { data: null, error: profileResult.error }
-        : profileResult;
+        if (profileResult.type === 'timeout') {
+          console.warn('Profile fetch timed out after 5s');
+          profileError = profileResult.error;
+        } else {
+          profile = profileResult.data;
+          profileError = profileResult.error;
+        }
 
-      console.log('Profile fetch completed. Error:', profileError, 'Data exists:', !!profile, 'Timeout:', profileResult.type === 'timeout');
+        console.log('Profile fetch completed. Error:', profileError, 'Data exists:', !!profile);
+      }
 
       let userRole: UserRole;
       let fullName = supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User';
 
       // If profile exists, use the data from the profile
       if (profile && !profileError) {
-        console.log('Using existing profile data');
+        console.log('Using profile data');
         const roleFromProfile = mockRoles.find(role => role.name === profile.role);
         if (!roleFromProfile) {
           console.error('Invalid role found in profile:', profile.role);
@@ -405,15 +467,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
         userRole = roleFromProfile;
 
-        // Cache the user's role for fallback during timeouts
-        cacheUserRole(supabaseUser.id, profile.role);
+        // Cache the user's profile for fast subsequent loads
+        cacheUserProfile(supabaseUser.id, profile);
 
         if (profile.full_name) {
           fullName = profile.full_name;
         }
 
-        // Update last login for existing profile
-        console.log('Updating last login timestamp (non-blocking)');
+        // Update last login for existing profile (background, non-blocking)
+        console.log('Updating last login timestamp (background)');
         supabase
           .from('user_profiles')
           .update({
@@ -421,88 +483,67 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             updated_at: new Date().toISOString()
           })
           .eq('id', supabaseUser.id)
-          .then(() => console.log('Last login updated successfully'))
+          .then(() => console.log('Last login updated'))
           .catch(err => console.warn('Failed to update last login (non-critical):', err));
-      } else if (profileError?.code === 'PGRST116' || profileResult.type === 'timeout') {
-        // Profile doesn't exist (PGRST116 = no rows found) or fetch timed out
-        if (profileResult.type === 'timeout') {
-          console.warn('Profile fetch timed out, checking for cached role...');
+      } else if (profileError?.code === 'PGRST116') {
+        // Profile doesn't exist (PGRST116 = no rows found)
+        console.log('Profile not found, creating new profile with default viewer role...');
 
-          // Try to get cached role for existing users
-          const cachedRole = getCachedUserRole(supabaseUser.id);
+        // For new users, start with viewer role - admin can upgrade later
+        userRole = mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
 
-          if (cachedRole) {
-            console.log('Using cached role:', cachedRole);
-            const roleFromCache = mockRoles.find(role => role.name === cachedRole);
-            if (roleFromCache) {
-              userRole = roleFromCache;
-            } else {
-              console.warn('Cached role not found in mockRoles, defaulting to viewer');
-              userRole = mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
+        // Create profile with shorter timeout
+        const profileDataToUpsert = {
+          id: supabaseUser.id,
+          full_name: fullName,
+          email: supabaseUser.email,
+          role: userRole.name as 'admin' | 'manager' | 'buyer' | 'viewer',
+          preferences: {},
+          last_login: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+
+        const insertResult = await Promise.race([
+          supabase
+            .from('user_profiles')
+            .upsert(profileDataToUpsert, { onConflict: 'id' })
+            .select('id, full_name, avatar_url, role, department, email, preferences, last_login, created_at, updated_at')
+            .single()
+            .then(result => ({ type: 'success', ...result })),
+          new Promise(resolve =>
+            setTimeout(() => resolve({ type: 'timeout', data: null, error: { message: 'Profile creation timeout' } }), 5000)
+          )
+        ]) as any;
+
+        if (insertResult.type === 'timeout') {
+          console.warn('Profile creation timed out, proceeding with default profile');
+        } else if (insertResult.data && !insertResult.error) {
+          console.log('Successfully created new user profile');
+          const roleFromProfile = mockRoles.find(role => role.name === insertResult.data.role);
+          if (roleFromProfile) {
+            userRole = roleFromProfile;
+            cacheUserProfile(supabaseUser.id, insertResult.data);
+            if (insertResult.data.full_name) {
+              fullName = insertResult.data.full_name;
             }
-          } else {
-            console.warn('No cached role found, defaulting to viewer for new user');
-            userRole = mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
           }
         } else {
-          console.log('Profile not found, creating new profile with default viewer role...');
-          
-          // For new users, start with viewer role - admin can upgrade later
-          userRole = mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
-        }
-        
-        // Only attempt to create profile if it's not a timeout
-        if (profileResult.type !== 'timeout') {
-          // Use upsert to handle potential race conditions
-          const profileDataToUpsert = {
-            id: supabaseUser.id,
-            full_name: fullName,
-            email: supabaseUser.email,
-            role: userRole.name as 'admin' | 'manager' | 'buyer' | 'viewer',
-            preferences: {},
-            last_login: new Date().toISOString(),
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
-
-          // Wrap profile creation in timeout to prevent application freeze
-          const insertResult = await Promise.race([
-            supabase
-              .from('user_profiles')
-              .upsert(profileDataToUpsert, { onConflict: 'id' })
-              .select('id, full_name, avatar_url, role, department, email, preferences, last_login, created_at, updated_at')
-              .single()
-              .then(result => ({ type: 'success', ...result })),
-            new Promise(resolve =>
-              setTimeout(() => resolve({ type: 'timeout', data: null, error: { message: 'Network timeout while creating user profile. Please try again.' } }), 30000)
-            )
-          ]) as any;
-          
-          const { data: upsertedProfile, error: insertError } = insertResult.type === 'timeout' 
-            ? { data: null, error: insertResult.error }
-            : insertResult;
-          
-          console.log('Profile creation completed. Error:', insertError, 'Timeout:', insertResult.type === 'timeout');
-
-          if (insertError || insertResult.type === 'timeout') {
-            console.warn('Profile creation failed or timed out, proceeding with default profile:', insertError || 'timeout');
-            // Don't throw error, proceed with default profile
-          } else if (upsertedProfile) {
-            console.log('Successfully created new user profile');
-            const roleFromProfile = mockRoles.find(role => role.name === upsertedProfile.role);
-            if (roleFromProfile) {
-              userRole = roleFromProfile;
-              // Cache the newly created role
-              cacheUserRole(supabaseUser.id, upsertedProfile.role);
-              if (upsertedProfile.full_name) {
-                fullName = upsertedProfile.full_name;
-              }
-            }
-          }
+          console.warn('Profile creation failed, proceeding with default profile:', insertResult.error);
         }
       } else if (profileError) {
-        console.error('Critical profile fetch error:', profileError);
-        throw new Error(`Unable to fetch user profile: ${profileError.message}`);
+        // Timeout or other error - try to use cached role as fallback
+        console.warn('Profile fetch failed, checking for cached role...');
+        const cachedRole = getCachedUserRole(supabaseUser.id);
+
+        if (cachedRole) {
+          console.log('Using cached role as fallback:', cachedRole);
+          const roleFromCache = mockRoles.find(role => role.name === cachedRole);
+          userRole = roleFromCache || mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
+        } else {
+          console.warn('No cached role, defaulting to viewer');
+          userRole = mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
+        }
       }
 
       console.log('Creating user data object...');
@@ -618,9 +659,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const signOut = async () => {
     try {
-      // Clear cached role before signing out
+      // Clear cached profile before signing out
       if (user) {
-        clearCachedUserRole(user.id);
+        clearCachedUserProfile(user.id);
       }
 
       // Clear all auth storage first to ensure clean state
@@ -717,18 +758,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const checkAndRefreshSession = async (): Promise<boolean> => {
     setIsLoading(true);
-    
+
     try {
       console.log('Checking session validity...');
-      
-      // Check session with timeout
+
+      // Check session with shorter timeout (5s instead of 30s)
       const sessionResult = await Promise.race([
         supabase.auth.getSession(),
         new Promise((resolve) =>
-          setTimeout(() => resolve({ data: { session: null }, error: { message: 'Network timeout during session check. Please try again.' } }), 30000)
+          setTimeout(() => resolve({ data: { session: null }, error: { message: 'Session check timeout' } }), 5000)
         )
       ]) as any;
-      
+
       const { data: { session }, error } = sessionResult;
       
       // Handle timeout gracefully

@@ -535,20 +535,45 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
       return;
     }
 
+    const tempId = `temp-${Date.now()}`;
+    const optimisticCustomer: Customer = {
+      id: tempId,
+      name: newCustomer.name.trim(),
+      contactPerson: newCustomer.contactPerson.trim(),
+      email: newCustomer.email.trim(),
+      phone: newCustomer.phone.trim(),
+      address: newCustomer.address.trim(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    setCustomers(prev => [optimisticCustomer, ...prev]);
+    setFormData(prev => ({ ...prev, customer: optimisticCustomer }));
+    setShowAddNewCustomer(false);
+    setNewCustomer({
+      name: '',
+      contactPerson: '',
+      email: '',
+      phone: '',
+      address: ''
+    });
+
     try {
       const customerObject = {
-        name: newCustomer.name.trim(),
-        contact_person: newCustomer.contactPerson.trim(),
-        email: newCustomer.email.trim(),
-        phone: newCustomer.phone.trim(),
-        address: newCustomer.address.trim()
+        name: optimisticCustomer.name,
+        contact_person: optimisticCustomer.contactPerson,
+        email: optimisticCustomer.email,
+        phone: optimisticCustomer.phone,
+        address: optimisticCustomer.address
       };
 
+      console.time('Customer Insert');
       const { data: insertedCustomer, error: customerError } = await supabase
         .from('customers')
         .insert([customerObject])
         .select()
         .single();
+      console.timeEnd('Customer Insert');
 
       if (customerError) throw customerError;
 
@@ -563,20 +588,23 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
         updatedAt: insertedCustomer.updated_at
       };
 
-      setCustomers(prev => [newCustomerObj, ...prev]);
-      setFormData(prev => ({ ...prev, customer: newCustomerObj }));
-      
-      setNewCustomer({
-        name: '',
-        contactPerson: '',
-        email: '',
-        phone: '',
-        address: ''
-      });
-      
-      setShowAddNewCustomer(false);
+      setCustomers(prev => prev.map(c => c.id === tempId ? newCustomerObj : c));
+      setFormData(prev => ({
+        ...prev,
+        customer: prev.customer?.id === tempId ? newCustomerObj : prev.customer
+      }));
+
+      console.log('Customer created successfully:', newCustomerObj.id);
     } catch (error: any) {
       console.error('Error adding customer:', error);
+
+      setCustomers(prev => prev.filter(c => c.id !== tempId));
+      setFormData(prev => ({
+        ...prev,
+        customer: prev.customer?.id === tempId ? null : prev.customer
+      }));
+
+      setShowAddNewCustomer(true);
       setSubmitError(error.message || 'Failed to add customer. Please try again.');
     }
   };

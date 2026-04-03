@@ -165,7 +165,7 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -174,6 +174,8 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
     setError(null);
 
     try {
+      console.time('Part Insert');
+
       // 1. Insert the new part into Supabase
       const partObject = {
         part_number: formData.partNumber.trim(),
@@ -200,6 +202,8 @@ const AddPart: React.FC<AddPartProps> = ({ isOpen, onClose, onPartAdded }) => {
         .insert([partObject])
         .select('id')
         .single();
+
+      console.timeEnd('Part Insert');
 
       if (partError) throw partError;
 
