@@ -393,11 +393,8 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
         console.log('Creating new part in catalog');
         
         // 2. Insert the new part into the parts table
-        const volumetricWeightKg = newPart.lengthCm > 0 && newPart.widthCm > 0 && newPart.heightCm > 0 && newPart.dimFactor > 0
-          ? (newPart.lengthCm * newPart.widthCm * newPart.heightCm) / newPart.dimFactor
-          : 0;
-        const chargeableWeightKg = Math.max(newPart.actualWeightKg, volumetricWeightKg);
-
+        // Note: volumetric_weight_kg and chargeable_weight_kg are generated columns
+        // and will be calculated automatically by the database
         const partObject = {
           part_number: newPart.partNumber.trim(),
           name: newPart.name.trim(),
@@ -413,14 +410,13 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
           wholesale_markup_percentage: newPart.wholesaleMarkupPercentage,
           trade_markup_percentage: newPart.tradeMarkupPercentage,
           retail_markup_percentage: newPart.retailMarkupPercentage,
-          // Weight and dimensions
+          // Weight and dimensions (optional fields)
           actual_weight_kg: newPart.actualWeightKg > 0 ? newPart.actualWeightKg : null,
           length_cm: newPart.lengthCm > 0 ? newPart.lengthCm : null,
           width_cm: newPart.widthCm > 0 ? newPart.widthCm : null,
           height_cm: newPart.heightCm > 0 ? newPart.heightCm : null,
-          dim_factor: newPart.dimFactor > 0 ? newPart.dimFactor : null,
-          volumetric_weight_kg: volumetricWeightKg > 0 ? volumetricWeightKg : null,
-          chargeable_weight_kg: chargeableWeightKg > 0 ? chargeableWeightKg : null
+          dim_factor: newPart.dimFactor > 0 ? newPart.dimFactor : null
+          // volumetric_weight_kg and chargeable_weight_kg are NOT included - they are generated columns
         };
 
         const { data: insertedPart, error: partError } = await supabase
@@ -451,6 +447,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
         }
 
         // 4. Create the Part object for the quote
+        // Note: Generated columns will be calculated by the database, so we don't include them here
         partToUse = {
           id: insertedPart.id,
           partNumber: newPart.partNumber.trim(),
@@ -475,9 +472,8 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
           lengthCm: newPart.lengthCm > 0 ? newPart.lengthCm : undefined,
           widthCm: newPart.widthCm > 0 ? newPart.widthCm : undefined,
           heightCm: newPart.heightCm > 0 ? newPart.heightCm : undefined,
-          dimFactor: newPart.dimFactor > 0 ? newPart.dimFactor : undefined,
-          volumetricWeightKg: volumetricWeightKg > 0 ? volumetricWeightKg : undefined,
-          chargeableWeightKg: chargeableWeightKg > 0 ? chargeableWeightKg : undefined
+          dimFactor: newPart.dimFactor > 0 ? newPart.dimFactor : undefined
+          // volumetricWeightKg and chargeableWeightKg are generated columns - not needed here
         };
 
         // 5. Update the available parts list to include the new part
