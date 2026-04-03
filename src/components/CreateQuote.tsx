@@ -309,9 +309,15 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
     } else {
       // Calculate price based on pricing tier
       let unitPrice = 0;
-      const latestPrice = part.priceHistory.length > 0 
-        ? part.priceHistory[part.priceHistory.length - 1].price 
+      const latestPrice = part.priceHistory.length > 0
+        ? part.priceHistory[part.priceHistory.length - 1].price
         : 0;
+
+      // Check if part has no pricing
+      if (latestPrice === 0) {
+        setSubmitError(`Cannot add "${part.name}" - this part has no price history. Please add a price to the part first or manually set a price after adding it.`);
+        return;
+      }
 
       switch (pricingTier) {
         case 'internal':
@@ -327,7 +333,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
           unitPrice = latestPrice * (1 + (part.retailMarkupPercentage || 50) / 100);
           break;
       }
-      
+
       const newQuotePart: QuotePart = {
         id: crypto.randomUUID(),
         part,
@@ -336,7 +342,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
         totalPrice: unitPrice,
         isCustomPart: false
       };
-      
+
       setFormData(prev => ({
         ...prev,
         parts: [...prev.parts, newQuotePart]
@@ -347,6 +353,11 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
   const addNewPartToOrder = async () => {
     if (!newPart.partNumber || !newPart.name || !newPart.description) {
       setSubmitError('Please fill in all required fields for the new part (Part Number, Name, and Description)');
+      return;
+    }
+
+    if (newPart.price <= 0) {
+      setSubmitError('Part price must be greater than $0.00');
       return;
     }
 
@@ -630,14 +641,17 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
   };
 
   const updatePartPrice = (partId: string, unitPrice: number) => {
+    // Ensure unit price is at least 0.01 to meet database constraint
+    const validatedPrice = unitPrice <= 0 ? 0.01 : unitPrice;
+
     setFormData(prev => ({
       ...prev,
-      parts: prev.parts.map(quotePart => 
-        quotePart.part?.id === partId 
-          ? { 
-              ...quotePart, 
-              unitPrice, 
-              totalPrice: unitPrice * quotePart.quantity 
+      parts: prev.parts.map(quotePart =>
+        quotePart.part?.id === partId
+          ? {
+              ...quotePart,
+              unitPrice: validatedPrice,
+              totalPrice: validatedPrice * quotePart.quantity
             }
           : quotePart
       )
@@ -745,6 +759,16 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
   const createQuoteInSupabase = async (status: 'draft' | 'sent') => {
     if (!formData.customer || formData.parts.length === 0 || !user) {
       setSubmitError('Please ensure all required fields are filled');
+      return;
+    }
+
+    // Validate that all parts have valid unit prices (> 0)
+    const invalidParts = formData.parts.filter(part => part.unitPrice <= 0);
+    if (invalidParts.length > 0) {
+      const partNames = invalidParts.map(p =>
+        p.part?.name || p.customPartName || 'Unknown Part'
+      ).join(', ');
+      setSubmitError(`Cannot create quote: The following parts have invalid prices (must be greater than $0.00): ${partNames}. Please update their prices before submitting.`);
       return;
     }
 
@@ -1007,14 +1031,14 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                               <div>
                                 <input
                                   type="number"
-                                  placeholder="Base Price (optional, can be 0)"
+                                  placeholder="Base Price (required, min $0.01)"
                                   step="0.01"
-                                  min="0"
+                                  min="0.01"
                                   value={newPart.price || ''}
                                   onChange={(e) => setNewPart(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
                                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                                 />
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave as 0 if unknown</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Must be greater than $0.00</p>
                               </div>
                               <select
                                 value={newPart.category}
@@ -1408,6 +1432,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                                 <input
                                   type="number"
                                   step="0.01"
+                                  min="0.01"
                                   value={quotePart.unitPrice}
                                   onChange={(e) => updatePartPrice(quotePart.part?.id || quotePart.id, parseFloat(e.target.value) || 0)}
                                   className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100"
