@@ -1,29 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  X,
-  Plus,
-  Search,
-  Package,
-  User,
-  DollarSign,
-  Calendar,
-  FileText,
-  Send,
-  Save,
-  Trash2,
-  ChevronLeft,
-  ChevronRight,
-  AlertCircle,
-  Edit3,
-  Building,
-  Mail,
-  Phone,
-  Truck,
-  Calculator,
-  Loader2,
-  Plane,
-  Weight
-} from 'lucide-react';
+import { X, Plus, Search, Package, User, DollarSign, Calendar, FileText, Send, Save, Trash2, ChevronLeft, ChevronRight, AlertCircle, CreditCard as Edit3, Building, Mail, Phone, Truck, Calculator, Loader2, Plane, Weight, Ruler, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Part, Customer, QuotePart, Quote, SeaFreightPriceListItem } from '../types';
@@ -69,8 +45,22 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
     description: '',
     category: 'Electronics',
     price: 0,
-    specifications: {} as Record<string, string>
+    supplier: '',
+    currentStock: 0,
+    minStock: 0,
+    specifications: {} as Record<string, string>,
+    actualWeightKg: 0,
+    lengthCm: 0,
+    widthCm: 0,
+    heightCm: 0,
+    dimFactor: 5000,
+    internalUsageMarkupPercentage: 10,
+    wholesaleMarkupPercentage: 20,
+    tradeMarkupPercentage: 30,
+    retailMarkupPercentage: 50
   });
+  const [showWeightSection, setShowWeightSection] = useState(false);
+  const [showMarkupSection, setShowMarkupSection] = useState(false);
   const [formData, setFormData] = useState<QuoteFormData>({
     quoteNumber: `QUO-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
     customer: null,
@@ -320,8 +310,8 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
   };
 
   const addNewPartToOrder = async () => {
-    if (!newPart.partNumber || !newPart.name || !newPart.description || newPart.price <= 0) {
-      setSubmitError('Please fill in all required fields for the new part (Part Number, Name, Description, and Price)');
+    if (!newPart.partNumber || !newPart.name || !newPart.description) {
+      setSubmitError('Please fill in all required fields for the new part (Part Number, Name, and Description)');
       return;
     }
 
@@ -368,21 +358,34 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
         console.log('Creating new part in catalog');
         
         // 2. Insert the new part into the parts table
+        const volumetricWeightKg = newPart.lengthCm > 0 && newPart.widthCm > 0 && newPart.heightCm > 0 && newPart.dimFactor > 0
+          ? (newPart.lengthCm * newPart.widthCm * newPart.heightCm) / newPart.dimFactor
+          : 0;
+        const chargeableWeightKg = Math.max(newPart.actualWeightKg, volumetricWeightKg);
+
         const partObject = {
           part_number: newPart.partNumber.trim(),
           name: newPart.name.trim(),
           description: newPart.description.trim(),
           category: newPart.category,
           specifications: newPart.specifications,
-          current_stock: 0, // Default stock for new parts
-          min_stock: 0, // Default minimum stock
+          current_stock: newPart.currentStock,
+          min_stock: newPart.minStock,
           preferred_suppliers: [], // Empty array for new parts
           is_archived: false,
-          // Default markup percentages
-          internal_usage_markup_percentage: 10,
-          wholesale_markup_percentage: 20,
-          trade_markup_percentage: 30,
-          retail_markup_percentage: 50
+          // Markup percentages
+          internal_usage_markup_percentage: newPart.internalUsageMarkupPercentage,
+          wholesale_markup_percentage: newPart.wholesaleMarkupPercentage,
+          trade_markup_percentage: newPart.tradeMarkupPercentage,
+          retail_markup_percentage: newPart.retailMarkupPercentage,
+          // Weight and dimensions
+          actual_weight_kg: newPart.actualWeightKg > 0 ? newPart.actualWeightKg : null,
+          length_cm: newPart.lengthCm > 0 ? newPart.lengthCm : null,
+          width_cm: newPart.widthCm > 0 ? newPart.widthCm : null,
+          height_cm: newPart.heightCm > 0 ? newPart.heightCm : null,
+          dim_factor: newPart.dimFactor > 0 ? newPart.dimFactor : null,
+          volumetric_weight_kg: volumetricWeightKg > 0 ? volumetricWeightKg : null,
+          chargeable_weight_kg: chargeableWeightKg > 0 ? chargeableWeightKg : null
         };
 
         const { data: insertedPart, error: partError } = await supabase
@@ -393,22 +396,24 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
 
         if (partError) throw partError;
 
-        // 3. Insert initial price history
-        const priceHistoryEntry = {
-          part_id: insertedPart.id,
-          price: newPart.price,
-          supplier_name: formData.customer?.name || 'Quote Customer',
-          quantity: 1,
-          effective_date: new Date().toISOString().split('T')[0],
-          reason: 'Initial entry from quote creation',
-          created_by: user?.id || null
-        };
+        // 3. Insert initial price history (only if price > 0)
+        if (newPart.price > 0) {
+          const priceHistoryEntry = {
+            part_id: insertedPart.id,
+            price: newPart.price,
+            supplier_name: newPart.supplier || formData.customer?.name || 'Quote Customer',
+            quantity: 1,
+            effective_date: new Date().toISOString().split('T')[0],
+            reason: 'Initial entry from quote creation',
+            created_by: user?.id || null
+          };
 
-        const { error: priceError } = await supabase
-          .from('part_price_history')
-          .insert([priceHistoryEntry]);
+          const { error: priceError } = await supabase
+            .from('part_price_history')
+            .insert([priceHistoryEntry]);
 
-        if (priceError) throw priceError;
+          if (priceError) throw priceError;
+        }
 
         // 4. Create the Part object for the quote
         partToUse = {
@@ -418,19 +423,26 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
           description: newPart.description.trim(),
           category: newPart.category,
           specifications: newPart.specifications,
-          priceHistory: [{
+          priceHistory: newPart.price > 0 ? [{
             date: new Date().toISOString().split('T')[0],
             price: newPart.price,
-            supplier: formData.customer?.name || 'Quote Customer',
+            supplier: newPart.supplier || formData.customer?.name || 'Quote Customer',
             quantity: 1
-          }],
-          currentStock: 0,
-          minStock: 0,
+          }] : [],
+          currentStock: newPart.currentStock,
+          minStock: newPart.minStock,
           preferredSuppliers: [],
-          internalUsageMarkupPercentage: 10,
-          wholesaleMarkupPercentage: 20,
-          tradeMarkupPercentage: 30,
-          retailMarkupPercentage: 50
+          internalUsageMarkupPercentage: newPart.internalUsageMarkupPercentage,
+          wholesaleMarkupPercentage: newPart.wholesaleMarkupPercentage,
+          tradeMarkupPercentage: newPart.tradeMarkupPercentage,
+          retailMarkupPercentage: newPart.retailMarkupPercentage,
+          actualWeightKg: newPart.actualWeightKg > 0 ? newPart.actualWeightKg : undefined,
+          lengthCm: newPart.lengthCm > 0 ? newPart.lengthCm : undefined,
+          widthCm: newPart.widthCm > 0 ? newPart.widthCm : undefined,
+          heightCm: newPart.heightCm > 0 ? newPart.heightCm : undefined,
+          dimFactor: newPart.dimFactor > 0 ? newPart.dimFactor : undefined,
+          volumetricWeightKg: volumetricWeightKg > 0 ? volumetricWeightKg : undefined,
+          chargeableWeightKg: chargeableWeightKg > 0 ? chargeableWeightKg : undefined
         };
 
         // 5. Update the available parts list to include the new part
@@ -461,10 +473,24 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
         description: '',
         category: 'Electronics',
         price: 0,
-        specifications: {}
+        supplier: '',
+        currentStock: 0,
+        minStock: 0,
+        specifications: {},
+        actualWeightKg: 0,
+        lengthCm: 0,
+        widthCm: 0,
+        heightCm: 0,
+        dimFactor: 5000,
+        internalUsageMarkupPercentage: 10,
+        wholesaleMarkupPercentage: 20,
+        tradeMarkupPercentage: 30,
+        retailMarkupPercentage: 50
       });
-      
+
       setShowAddNewPart(false);
+      setShowWeightSection(false);
+      setShowMarkupSection(false);
       
     } catch (error: any) {
       console.error('Error adding part to catalog:', error);
@@ -884,82 +910,324 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                     
                     {/* Add New Part Form */}
                     {showAddNewPart && (
-                      <div className="mb-4 p-4 border border-blue-200 dark:border-blue-800 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                      <div className="mb-4 p-4 border border-blue-200 dark:border-blue-800 rounded-lg bg-blue-50 dark:bg-blue-900/20 max-h-[600px] overflow-y-auto">
                         <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-3 flex items-center">
                           <Edit3 className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
                           Add New Part to Catalog
                         </h5>
-                        <div className="grid grid-cols-1 gap-3">
-                          <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-4">
+                          {/* Basic Information */}
+                          <div className="space-y-3">
+                            <h6 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center">
+                              <FileText className="h-4 w-4 mr-1 text-blue-600 dark:text-blue-400" />
+                              Basic Information
+                            </h6>
+                            <div className="grid grid-cols-2 gap-2">
+                              <input
+                                type="text"
+                                placeholder="Part Number *"
+                                value={newPart.partNumber}
+                                onChange={(e) => setNewPart(prev => ({ ...prev, partNumber: e.target.value }))}
+                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                              />
+                              <select
+                                value={newPart.category}
+                                onChange={(e) => setNewPart(prev => ({ ...prev, category: e.target.value }))}
+                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                              >
+                                {categories.filter(c => c !== 'all').map(category => (
+                                  <option key={category} value={category}>{category}</option>
+                                ))}
+                              </select>
+                            </div>
                             <input
                               type="text"
-                              placeholder="Part Number *"
-                              value={newPart.partNumber}
-                              onChange={(e) => setNewPart(prev => ({ ...prev, partNumber: e.target.value }))}
+                              placeholder="Part Name *"
+                              value={newPart.name}
+                              onChange={(e) => setNewPart(prev => ({ ...prev, name: e.target.value }))}
                               className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                             />
-                            <input
-                              type="number"
-                              placeholder="Base Price *"
-                              step="0.01"
-                              value={newPart.price || ''}
-                              onChange={(e) => setNewPart(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                            <textarea
+                              placeholder="Description *"
+                              value={newPart.description}
+                              onChange={(e) => setNewPart(prev => ({ ...prev, description: e.target.value }))}
+                              rows={2}
                               className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                             />
                           </div>
-                          <input
-                            type="text"
-                            placeholder="Part Name *"
-                            value={newPart.name}
-                            onChange={(e) => setNewPart(prev => ({ ...prev, name: e.target.value }))}
-                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                          />
-                          <textarea
-                            placeholder="Description *"
-                            value={newPart.description}
-                            onChange={(e) => setNewPart(prev => ({ ...prev, description: e.target.value }))}
-                            rows={2}
-                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                          />
-                          <div className="grid grid-cols-2 gap-2">
-                            <select
-                              value={newPart.category}
-                              onChange={(e) => setNewPart(prev => ({ ...prev, category: e.target.value }))}
-                              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                            >
-                              {categories.filter(c => c !== 'all').map(category => (
-                                <option key={category} value={category}>{category}</option>
-                              ))}
-                            </select>
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={addNewPartToOrder}
-                                disabled={!newPart.partNumber || !newPart.name || !newPart.description || newPart.price <= 0 || isAddingPart}
-                                className={`flex-1 px-3 py-2 rounded-md text-sm transition-colors ${
-                                  newPart.partNumber && newPart.name && newPart.description && newPart.price > 0 && !isAddingPart
-                                    ? 'bg-blue-600 dark:bg-blue-700 text-white hover:bg-blue-700 dark:hover:bg-blue-600'
-                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                }`}
-                              >
-                                {isAddingPart ? (
-                                  <div className="flex items-center justify-center space-x-1">
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                    <span>Adding...</span>
-                                  </div>
-                                ) : (
-                                  'Add to Catalog'
-                                )}
-                              </button>
-                              <button
-                                onClick={() => setShowAddNewPart(false)}
-                                disabled={isAddingPart}
-                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                              >
-                                Cancel
-                              </button>
+
+                          {/* Pricing Information */}
+                          <div className="space-y-3">
+                            <h6 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center">
+                              <DollarSign className="h-4 w-4 mr-1 text-green-600 dark:text-green-400" />
+                              Pricing Information
+                            </h6>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <input
+                                  type="number"
+                                  placeholder="Base Price (can be 0)"
+                                  step="0.01"
+                                  min="0"
+                                  value={newPart.price || ''}
+                                  onChange={(e) => setNewPart(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                                />
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave as 0 if unknown</p>
+                              </div>
+                              <input
+                                type="text"
+                                placeholder="Supplier (optional)"
+                                value={newPart.supplier}
+                                onChange={(e) => setNewPart(prev => ({ ...prev, supplier: e.target.value }))}
+                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                              />
                             </div>
                           </div>
+
+                          {/* Stock Information */}
+                          <div className="space-y-3">
+                            <h6 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center">
+                              <Package className="h-4 w-4 mr-1 text-purple-600 dark:text-purple-400" />
+                              Stock Information
+                            </h6>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <input
+                                  type="number"
+                                  placeholder="Current Stock"
+                                  min="0"
+                                  value={newPart.currentStock || ''}
+                                  onChange={(e) => setNewPart(prev => ({ ...prev, currentStock: parseInt(e.target.value) || 0 }))}
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                                />
+                              </div>
+                              <div>
+                                <input
+                                  type="number"
+                                  placeholder="Minimum Stock Level"
+                                  min="0"
+                                  value={newPart.minStock || ''}
+                                  onChange={(e) => setNewPart(prev => ({ ...prev, minStock: parseInt(e.target.value) || 0 }))}
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Weight & Dimensions - Collapsible */}
+                          <div className="space-y-2">
+                            <button
+                              type="button"
+                              onClick={() => setShowWeightSection(!showWeightSection)}
+                              className="w-full flex items-center justify-between text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                            >
+                              <span className="flex items-center">
+                                <Weight className="h-4 w-4 mr-1 text-orange-600 dark:text-orange-400" />
+                                Weight & Dimensions (Optional)
+                              </span>
+                              {showWeightSection ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            </button>
+
+                            {showWeightSection && (
+                              <div className="space-y-3 pl-5 border-l-2 border-orange-200 dark:border-orange-800">
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div>
+                                    <input
+                                      type="number"
+                                      placeholder="Actual Weight (kg)"
+                                      step="0.001"
+                                      min="0"
+                                      value={newPart.actualWeightKg || ''}
+                                      onChange={(e) => setNewPart(prev => ({ ...prev, actualWeightKg: parseFloat(e.target.value) || 0 }))}
+                                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                                    />
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Physical weight</p>
+                                  </div>
+                                  <div>
+                                    <input
+                                      type="number"
+                                      placeholder="Dim Factor"
+                                      step="1"
+                                      min="1"
+                                      value={newPart.dimFactor || 5000}
+                                      onChange={(e) => setNewPart(prev => ({ ...prev, dimFactor: parseFloat(e.target.value) || 5000 }))}
+                                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                                    />
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Default: 5000</p>
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1 flex items-center">
+                                    <Ruler className="h-3 w-3 mr-1" />
+                                    Dimensions (cm)
+                                  </label>
+                                  <div className="grid grid-cols-3 gap-2">
+                                    <input
+                                      type="number"
+                                      placeholder="Length"
+                                      step="0.01"
+                                      min="0"
+                                      value={newPart.lengthCm || ''}
+                                      onChange={(e) => setNewPart(prev => ({ ...prev, lengthCm: parseFloat(e.target.value) || 0 }))}
+                                      className="px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                    />
+                                    <input
+                                      type="number"
+                                      placeholder="Width"
+                                      step="0.01"
+                                      min="0"
+                                      value={newPart.widthCm || ''}
+                                      onChange={(e) => setNewPart(prev => ({ ...prev, widthCm: parseFloat(e.target.value) || 0 }))}
+                                      className="px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                    />
+                                    <input
+                                      type="number"
+                                      placeholder="Height"
+                                      step="0.01"
+                                      min="0"
+                                      value={newPart.heightCm || ''}
+                                      onChange={(e) => setNewPart(prev => ({ ...prev, heightCm: parseFloat(e.target.value) || 0 }))}
+                                      className="px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                    />
+                                  </div>
+                                </div>
+
+                                {(newPart.actualWeightKg > 0 || (newPart.lengthCm > 0 && newPart.widthCm > 0 && newPart.heightCm > 0)) && (
+                                  <div className="p-2 bg-orange-50 dark:bg-orange-900/20 rounded border border-orange-200 dark:border-orange-800">
+                                    <div className="grid grid-cols-3 gap-2 text-xs">
+                                      <div>
+                                        <p className="text-gray-600 dark:text-gray-400">Vol. Weight</p>
+                                        <p className="font-bold text-orange-600 dark:text-orange-400">
+                                          {newPart.lengthCm > 0 && newPart.widthCm > 0 && newPart.heightCm > 0 && newPart.dimFactor > 0
+                                            ? ((newPart.lengthCm * newPart.widthCm * newPart.heightCm) / newPart.dimFactor).toFixed(3)
+                                            : '0.000'} kg
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <p className="text-gray-600 dark:text-gray-400">Actual</p>
+                                        <p className="font-bold text-gray-700 dark:text-gray-300">
+                                          {newPart.actualWeightKg.toFixed(3)} kg
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <p className="text-gray-600 dark:text-gray-400">Chargeable</p>
+                                        <p className="font-bold text-green-600 dark:text-green-400">
+                                          {(() => {
+                                            const volWeight = newPart.lengthCm > 0 && newPart.widthCm > 0 && newPart.heightCm > 0 && newPart.dimFactor > 0
+                                              ? (newPart.lengthCm * newPart.widthCm * newPart.heightCm) / newPart.dimFactor
+                                              : 0;
+                                            return Math.max(newPart.actualWeightKg, volWeight).toFixed(3);
+                                          })()} kg
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Markup Percentages - Collapsible */}
+                          <div className="space-y-2">
+                            <button
+                              type="button"
+                              onClick={() => setShowMarkupSection(!showMarkupSection)}
+                              className="w-full flex items-center justify-between text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                            >
+                              <span className="flex items-center">
+                                <Calculator className="h-4 w-4 mr-1 text-blue-600 dark:text-blue-400" />
+                                Markup Percentages (Defaults Applied)
+                              </span>
+                              {showMarkupSection ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            </button>
+
+                            {showMarkupSection && (
+                              <div className="space-y-2 pl-5 border-l-2 border-blue-200 dark:border-blue-800">
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div>
+                                    <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Internal Usage %</label>
+                                    <input
+                                      type="number"
+                                      step="0.1"
+                                      min="0"
+                                      value={newPart.internalUsageMarkupPercentage || ''}
+                                      onChange={(e) => setNewPart(prev => ({ ...prev, internalUsageMarkupPercentage: parseFloat(e.target.value) || 0 }))}
+                                      className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Wholesale %</label>
+                                    <input
+                                      type="number"
+                                      step="0.1"
+                                      min="0"
+                                      value={newPart.wholesaleMarkupPercentage || ''}
+                                      onChange={(e) => setNewPart(prev => ({ ...prev, wholesaleMarkupPercentage: parseFloat(e.target.value) || 0 }))}
+                                      className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Trade %</label>
+                                    <input
+                                      type="number"
+                                      step="0.1"
+                                      min="0"
+                                      value={newPart.tradeMarkupPercentage || ''}
+                                      onChange={(e) => setNewPart(prev => ({ ...prev, tradeMarkupPercentage: parseFloat(e.target.value) || 0 }))}
+                                      className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Retail %</label>
+                                    <input
+                                      type="number"
+                                      step="0.1"
+                                      min="0"
+                                      value={newPart.retailMarkupPercentage || ''}
+                                      onChange={(e) => setNewPart(prev => ({ ...prev, retailMarkupPercentage: parseFloat(e.target.value) || 0 }))}
+                                      className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex space-x-2 pt-2">
+                            <button
+                              onClick={addNewPartToOrder}
+                              disabled={!newPart.partNumber || !newPart.name || !newPart.description || isAddingPart}
+                              className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                                newPart.partNumber && newPart.name && newPart.description && !isAddingPart
+                                  ? 'bg-blue-600 dark:bg-blue-700 text-white hover:bg-blue-700 dark:hover:bg-blue-600'
+                                  : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                              }`}
+                            >
+                              {isAddingPart ? (
+                                <div className="flex items-center justify-center space-x-1">
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                  <span>Adding...</span>
+                                </div>
+                              ) : (
+                                'Add to Catalog'
+                              )}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setShowAddNewPart(false);
+                                setShowWeightSection(false);
+                                setShowMarkupSection(false);
+                              }}
+                              disabled={isAddingPart}
+                              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          </div>
                         </div>
+
                         <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                           <p className="text-sm text-green-800 dark:text-green-300">
                             <strong>Note:</strong> This part will be added to the Parts Catalog and will be available for future quotes and orders.
