@@ -520,9 +520,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
       });
 
       setShowAddNewPart(false);
-      setShowWeightSection(false);
-      setShowMarkupSection(false);
-      
+
     } catch (error: any) {
       console.error('Error adding part to catalog:', error);
       setSubmitError(error.message || 'Failed to add part to catalog. Please try again.');
