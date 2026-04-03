@@ -43,7 +43,7 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
     partNumber: '',
     name: '',
     description: '',
-    category: 'Electronics',
+    category: '',
     price: 0,
     supplier: '',
     currentStock: 0,
@@ -96,6 +96,11 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
     currency: string;
   }>>([]);
   const [selectedAirCarrier, setSelectedAirCarrier] = useState<string | null>(null);
+  const [partCategories, setPartCategories] = useState<Array<{
+    name: string;
+    display_order: number;
+    is_active: boolean;
+  }>>([]);
 
   const categories = ['all', ...new Set(availableParts.map(p => p.category))];
   
@@ -222,6 +227,37 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
       supabase.removeChannel(channel);
     };
   }, []);
+
+  // Fetch part categories from Supabase
+  useEffect(() => {
+    const fetchPartCategories = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('part_categories')
+          .select('name, display_order, is_active')
+          .order('display_order', { ascending: true });
+
+        if (error) throw error;
+
+        setPartCategories(data || []);
+      } catch (error) {
+        console.error('Error fetching part categories:', error);
+        setPartCategories([{ name: 'Uncategorized', display_order: 999, is_active: true }]);
+      }
+    };
+
+    fetchPartCategories();
+  }, []);
+
+  // Set default category when categories load
+  useEffect(() => {
+    if (partCategories.length > 0 && !newPart.category) {
+      const firstActiveCategory = partCategories.find(cat => cat.is_active);
+      if (firstActiveCategory) {
+        setNewPart(prev => ({ ...prev, category: firstActiveCategory.name }));
+      }
+    }
+  }, [partCategories]);
 
   // Calculate total chargeable weight of all parts in the quote
   const calculateTotalChargeableWeight = (): number => {
@@ -917,25 +953,14 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                         <div className="space-y-4">
                           {/* Essential Fields */}
                           <div className="space-y-3">
-                            {/* Row 1: Part Number + Category */}
-                            <div className="grid grid-cols-2 gap-2">
-                              <input
-                                type="text"
-                                placeholder="Part Number *"
-                                value={newPart.partNumber}
-                                onChange={(e) => setNewPart(prev => ({ ...prev, partNumber: e.target.value }))}
-                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                              />
-                              <select
-                                value={newPart.category}
-                                onChange={(e) => setNewPart(prev => ({ ...prev, category: e.target.value }))}
-                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                              >
-                                {categories.filter(c => c !== 'all').map(category => (
-                                  <option key={category} value={category}>{category}</option>
-                                ))}
-                              </select>
-                            </div>
+                            {/* Row 1: Part Number - Full Width */}
+                            <input
+                              type="text"
+                              placeholder="Part Number *"
+                              value={newPart.partNumber}
+                              onChange={(e) => setNewPart(prev => ({ ...prev, partNumber: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                            />
 
                             {/* Row 2: Part Name - Full Width */}
                             <input
@@ -955,18 +980,39 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
                               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                             />
 
-                            {/* Row 4: Base Price - Smaller Width */}
-                            <div className="max-w-[200px]">
-                              <input
-                                type="number"
-                                placeholder="Base Price (optional, can be 0)"
-                                step="0.01"
-                                min="0"
-                                value={newPart.price || ''}
-                                onChange={(e) => setNewPart(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                              />
-                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave as 0 if unknown</p>
+                            {/* Row 4: Base Price + Category - 2 Column Layout */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <input
+                                  type="number"
+                                  placeholder="Base Price (optional, can be 0)"
+                                  step="0.01"
+                                  min="0"
+                                  value={newPart.price || ''}
+                                  onChange={(e) => setNewPart(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                                />
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave as 0 if unknown</p>
+                              </div>
+                              <select
+                                value={newPart.category}
+                                onChange={(e) => setNewPart(prev => ({ ...prev, category: e.target.value }))}
+                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                              >
+                                {partCategories.length === 0 ? (
+                                  <option value="">Loading...</option>
+                                ) : (
+                                  partCategories.map(category => (
+                                    <option
+                                      key={category.name}
+                                      value={category.name}
+                                      className={!category.is_active ? 'text-gray-400 dark:text-gray-500' : ''}
+                                    >
+                                      {category.name}{!category.is_active ? ' (Inactive)' : ''}
+                                    </option>
+                                  ))
+                                )}
+                              </select>
                             </div>
                           </div>
 
