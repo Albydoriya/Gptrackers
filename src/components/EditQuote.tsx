@@ -403,9 +403,11 @@ const EditQuote: React.FC<EditQuoteProps> = ({ isOpen, onClose, onQuoteUpdated, 
           .insert([{
             part_id: insertedPart.id,
             price: newPart.price,
-            effective_date: new Date().toISOString(),
-            supplier_name: newPart.supplier || null,
-            quantity: 1
+            effective_date: new Date().toISOString().split('T')[0],
+            supplier_name: newPart.supplier || formData.customer?.name || 'Quote Customer',
+            quantity: 1,
+            reason: 'Initial entry from quote editing',
+            created_by: user?.id || null
           }]);
 
         if (priceError) {
