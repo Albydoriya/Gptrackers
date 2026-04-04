@@ -145,6 +145,7 @@ export interface Quote {
   priceListAppliedAt?: string;
   manualPriceOverride?: boolean;
   priceListSnapshot?: SeaFreightPriceListItem;
+  airFreightCarrierId?: string;
 }
 
 export interface QuotePart {

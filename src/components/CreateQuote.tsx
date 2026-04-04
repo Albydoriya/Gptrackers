@@ -798,7 +798,8 @@ const CreateQuote: React.FC<CreateQuoteProps> = ({ isOpen, onClose, onQuoteCreat
         sea_freight_price_list_id: formData.seaFreightPriceListId || null,
         price_list_applied_at: formData.seaFreightPriceListId ? new Date().toISOString() : null,
         manual_price_override: formData.manualPriceOverride,
-        price_list_snapshot: formData.priceListSnapshot || null
+        price_list_snapshot: formData.priceListSnapshot || null,
+        air_freight_carrier_id: formData.airFreightCarrierId || null
       };
 
       // Insert the main quote

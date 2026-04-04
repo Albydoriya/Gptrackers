@@ -213,7 +213,8 @@ export const quotesService = {
         seaFreightPriceListId: quoteData.sea_freight_price_list_id,
         priceListAppliedAt: quoteData.price_list_applied_at,
         manualPriceOverride: quoteData.manual_price_override,
-        priceListSnapshot: quoteData.price_list_snapshot
+        priceListSnapshot: quoteData.price_list_snapshot,
+        airFreightCarrierId: quoteData.air_freight_carrier_id
       };
     });
 
@@ -346,7 +347,8 @@ export const quotesService = {
       seaFreightPriceListId: quoteData.sea_freight_price_list_id,
       priceListAppliedAt: quoteData.price_list_applied_at,
       manualPriceOverride: quoteData.manual_price_override,
-      priceListSnapshot: quoteData.price_list_snapshot
+      priceListSnapshot: quoteData.price_list_snapshot,
+      airFreightCarrierId: quoteData.air_freight_carrier_id
     };
   }
 };
