@@ -1,22 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Users, 
-  Search, 
-  Filter, 
-  Edit, 
-  Save, 
-  X, 
-  Shield, 
-  Mail, 
-  Calendar,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  User,
-  Settings,
-  Loader2,
-  RefreshCw
-} from 'lucide-react';
+import { Users, Search, Filter, CreditCard as Edit, Save, X, Shield, Mail, Calendar, AlertCircle, CheckCircle, Clock, User, Settings, Loader2, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -122,9 +105,18 @@ const UserManagement: React.FC = () => {
 
       if (error) throw error;
 
+      // Invalidate any cached profile for this user so they pick up the new role
+      // on their next login/session check instead of using a stale cached role.
+      try {
+        sessionStorage.removeItem(`user_profile_${userId}`);
+        localStorage.removeItem(`user_role_${userId}`);
+      } catch {
+        // Cache clearing is best-effort; never block the UI update
+      }
+
       // Update local state
-      setUsers(prev => prev.map(user => 
-        user.id === userId 
+      setUsers(prev => prev.map(user =>
+        user.id === userId
           ? { ...user, role: newRole, updated_at: new Date().toISOString() }
           : user
       ));

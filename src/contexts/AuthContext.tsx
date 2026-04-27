@@ -486,63 +486,70 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           .then(() => console.log('Last login updated'))
           .catch(err => console.warn('Failed to update last login (non-critical):', err));
       } else if (profileError?.code === 'PGRST116') {
-        // Profile doesn't exist (PGRST116 = no rows found)
-        console.log('Profile not found, creating new profile with default viewer role...');
+        // Profile doesn't exist (PGRST116 = no rows found) - this is a genuinely new user.
+        // Use the safe RPC which will INSERT with viewer role if the row truly doesn't exist,
+        // or return the existing row with its current role if a concurrent request already
+        // created it. Either way the role column is never blindly overwritten.
+        console.log('Profile not found, calling create_or_get_user_profile RPC...');
 
-        // For new users, start with viewer role - admin can upgrade later
-        userRole = mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
-
-        // Create profile with shorter timeout
-        const profileDataToUpsert = {
-          id: supabaseUser.id,
-          full_name: fullName,
-          email: supabaseUser.email,
-          role: userRole.name as 'admin' | 'manager' | 'buyer' | 'viewer',
-          preferences: {},
-          last_login: new Date().toISOString(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-
-        const insertResult = await Promise.race([
+        const rpcResult = await Promise.race([
           supabase
-            .from('user_profiles')
-            .upsert(profileDataToUpsert, { onConflict: 'id' })
-            .select('id, full_name, avatar_url, role, department, email, preferences, last_login, created_at, updated_at')
-            .single()
+            .rpc('create_or_get_user_profile', {
+              p_user_id:   supabaseUser.id,
+              p_full_name: fullName,
+              p_email:     supabaseUser.email ?? ''
+            })
             .then(result => ({ type: 'success', ...result })),
           new Promise(resolve =>
             setTimeout(() => resolve({ type: 'timeout', data: null, error: { message: 'Profile creation timeout' } }), 5000)
           )
         ]) as any;
 
-        if (insertResult.type === 'timeout') {
-          console.warn('Profile creation timed out, proceeding with default profile');
-        } else if (insertResult.data && !insertResult.error) {
-          console.log('Successfully created new user profile');
-          const roleFromProfile = mockRoles.find(role => role.name === insertResult.data.role);
-          if (roleFromProfile) {
-            userRole = roleFromProfile;
-            cacheUserProfile(supabaseUser.id, insertResult.data);
-            if (insertResult.data.full_name) {
-              fullName = insertResult.data.full_name;
-            }
+        if (rpcResult.type === 'timeout') {
+          console.warn('Profile creation timed out, proceeding with viewer role');
+          userRole = mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
+        } else if (rpcResult.data && !rpcResult.error) {
+          console.log('create_or_get_user_profile succeeded, role:', rpcResult.data.role);
+          const roleFromRpc = mockRoles.find(role => role.name === rpcResult.data.role);
+          userRole = roleFromRpc || mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
+          cacheUserProfile(supabaseUser.id, rpcResult.data);
+          if (rpcResult.data.full_name) {
+            fullName = rpcResult.data.full_name;
           }
         } else {
-          console.warn('Profile creation failed, proceeding with default profile:', insertResult.error);
+          console.warn('create_or_get_user_profile failed, defaulting to viewer:', rpcResult.error);
+          userRole = mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
         }
       } else if (profileError) {
-        // Timeout or other error - try to use cached role as fallback
-        console.warn('Profile fetch failed, checking for cached role...');
-        const cachedRole = getCachedUserRole(supabaseUser.id);
+        // Timeout or other transient error - the user almost certainly already has a profile.
+        // Try a fresh fetch before falling back to cached/viewer to avoid mis-classifying an
+        // existing user as new and inadvertently downgrading their role.
+        console.warn('Profile fetch failed, attempting recovery fetch...');
+        const recoveryResult = await supabase
+          .from('user_profiles')
+          .select('id, full_name, avatar_url, role, department, email, preferences, last_login, created_at, updated_at')
+          .eq('id', supabaseUser.id)
+          .maybeSingle();
 
-        if (cachedRole) {
-          console.log('Using cached role as fallback:', cachedRole);
-          const roleFromCache = mockRoles.find(role => role.name === cachedRole);
-          userRole = roleFromCache || mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
+        if (recoveryResult.data && !recoveryResult.error) {
+          console.log('Recovery fetch succeeded, role:', recoveryResult.data.role);
+          const roleFromRecovery = mockRoles.find(role => role.name === recoveryResult.data!.role);
+          userRole = roleFromRecovery || mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
+          cacheUserProfile(supabaseUser.id, recoveryResult.data);
+          if (recoveryResult.data.full_name) {
+            fullName = recoveryResult.data.full_name;
+          }
         } else {
-          console.warn('No cached role, defaulting to viewer');
-          userRole = mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
+          // Recovery failed too - use cached role if available, otherwise viewer
+          const cachedRole = getCachedUserRole(supabaseUser.id);
+          if (cachedRole) {
+            console.log('Using cached role as final fallback:', cachedRole);
+            const roleFromCache = mockRoles.find(role => role.name === cachedRole);
+            userRole = roleFromCache || mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
+          } else {
+            console.warn('No cached role and recovery failed, defaulting to viewer');
+            userRole = mockRoles.find(role => role.name === 'viewer') || mockRoles[3];
+          }
         }
       }
 
